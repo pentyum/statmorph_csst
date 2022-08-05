@@ -1,4 +1,4 @@
-import src.statmorph_cython.statmorph as statmorph
+import statmorph_cython.statmorph as statmorph
 
 import numpy as np
 
