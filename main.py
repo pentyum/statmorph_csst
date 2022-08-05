@@ -18,7 +18,7 @@ def main():
 	slc = segmap_image.slices[segmap_image.get_index(label)]
 
 	morph = statmorph.BaseInfo(
-		image, segmap, slc, label, calc_cas=True, calc_color_dispersion=True, image_compare=image)
+		image, segmap, slc, label, calc_cas=True, calc_g2=True)
 
 	print("_rpetro_circ_centroid", morph._rpetro_circ_centroid)
 	if morph.calc_cas:
@@ -37,9 +37,14 @@ def main():
 		print("i=", morph.mid.intensity)
 		print("d=", morph.mid.deviation)
 		print("mid_time=", morph.mid.runtime)
+		if morph.calc_multiply:
+			print("multiply=", morph.multiply)
 	if morph.calc_color_dispersion:
 		print("color_dispersion=", morph.compare_info.color_dispersion)
 		print("color_dispersion_time=", morph.compare_info.runtime)
+	if morph.calc_g2:
+		print("g2=", morph.g2.result_g2)
+		print("g2_time=", morph.g2.runtime)
 
 	print("total_time=", morph.runtime)
 

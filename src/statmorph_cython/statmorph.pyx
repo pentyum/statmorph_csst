@@ -22,6 +22,7 @@ cimport statmorph_cython.g_m20
 cimport statmorph_cython.mid
 cimport statmorph_cython.multiply
 cimport statmorph_cython.color_dispersion
+from .g2 cimport G2Calculator, _get_contour_count, get_G2
 
 cnp.import_array()
 
@@ -90,6 +91,10 @@ cdef class ConstantsSetting:
 		self.boxcar_size_mid = 3.0
 		self.sigma_mid = 1.0
 		self.niter_bh_mid = 5
+
+		self.g2_modular_tolerance = 0.01
+		self.g2_phase_tolerance = 0.01
+
 		self.verbose = False
 
 
@@ -97,7 +102,7 @@ cdef class BaseInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double,ndim=2] image, cnp.ndarray[int,ndim=2] segmap, tuple segmap_slice,
 				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
 				 double gain=-1, bint calc_cas=True, bint calc_g_m20=True, bint calc_mid=True, bint calc_multiply=False,
-				 bint calc_color_dispersion=False, cnp.ndarray[double,ndim=2] image_compare=None,
+				 bint calc_color_dispersion=False, cnp.ndarray[double,ndim=2] image_compare=None, bint calc_g2=False,
 				 str output_image_dir=None):
 		super().__init__()
 		self.calc_cas = calc_cas
@@ -105,6 +110,7 @@ cdef class BaseInfo(MorphInfo):
 		self.calc_mid = calc_mid
 		self.calc_multiply = calc_multiply
 		self.calc_color_dispersion = calc_color_dispersion
+		self.calc_g2 = calc_g2
 
 		self.constants = ConstantsSetting()
 
@@ -344,6 +350,11 @@ cdef class BaseInfo(MorphInfo):
 				self.compare_info.calc_runtime(start)
 			else:
 				warnings.warn("[Color dispersion] compare image not defined")
+
+		if calc_g2:
+			start = clock()
+			self.g2 = get_G2(self, center_used)
+			self.g2.calc_runtime(start)
 
 		# Save image
 		if self.output_image_dir is not None:
@@ -655,6 +666,7 @@ cdef class MIDInfo(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
+
 cdef class CompareInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double, ndim=2] image_compare, BaseInfo base_info):
 		super().__init__()
@@ -765,6 +777,87 @@ cdef class CompareInfo(MorphInfo):
 		color_dispersion = (dispersion_1 - sky_dispersion) / (dispersion_2 - sky_dispersion)
 
 		return color_dispersion
+
+
+cdef class G2Info(MorphInfo):
+	"""
+	G2(segmented_image, g2_modular_tolerance=0.01, g2_phase_tolerance=0.01)
+
+	Extracts entropy metric from the supplied image.
+
+	Parameters
+	----------
+	segmented_image : 2-d `~numpy.ndarray`
+		Segmented image data array.
+	g2_modular_tolerance : float, optional
+		Modular tolerance. How much differences in vector modules will be acepted. Ranges from 0.0 (vectors should be same to count the same)
+		to 1.0 (any vectors will be counted as same). Default is 0.01.
+	g2_phase_tolerance : float, optional
+		Phase tolerance. How much differences in vector phases will be acepted. Ranges from 0.0 (vectors should be same to count the same)
+		to 3.14 (any vectors will be counted as same, even completly opposite). Default is 0.01.
+	"""
+
+	def __init__(self, cnp.ndarray[double, ndim=2] segmented_image, ConstantsSetting constants):
+		super().__init__()
+		if segmented_image.shape[0] != segmented_image.shape[1]:
+			raise ValueError("array must be square")
+		if segmented_image.size == 0:
+			raise ValueError("the size array can not be 0")
+		if segmented_image.shape[0] % 2 == 0:
+			raise ValueError("the stamp shape should be odd")
+
+		self.segmented_image = segmented_image
+		self.g2_modular_tolerance = constants.g2_modular_tolerance
+		self.g2_phase_tolerance = constants.g2_phase_tolerance
+
+
+	cdef double calc_g2(self):
+		"""
+		Get a g2 metric.
+
+		Returns:
+			result_g2 : `double`
+		"""
+		g2c = G2Calculator(
+			# need to pass a copy, if not, it is overwritten inside (strange)
+			self.segmented_image.copy(),
+			_get_contour_count(self.segmented_image),
+			self.g2_modular_tolerance,
+			self.g2_phase_tolerance)
+
+		try:
+			self.result_g2, self.gradient_x, self.gradient_y, self.gradient_asymmetric_x, self.gradient_asymmetric_y, self.modules_normalized, self.phases = g2c.get_g2()
+		except ValueError:
+			raise ValueError('Not enough valid pixels in image for g2 extraction')
+
+		return self.result_g2
+
+	cdef get_gradient_plot(self):
+		"""(Debugging routine) Gradient plot showing the vector field
+		before removing symmetrical vector pairs"""
+		cdef int figSize = 7
+		fig, ax = plt.subplots(figsize=(figSize, figSize))
+
+		x, y = np.meshgrid(np.arange(0, self.gradient_x.shape[1], 1), np.arange(
+			0, self.gradient_y.shape[0], 1))
+		ax.quiver(x, y, self.gradient_y, self.gradient_x)
+		ax.tick_params(labelsize=16)
+
+		return ax
+
+	cdef get_asymmetry_gradient_plot(self):
+		"""(Debugging routine) Asymmetrical gradient plot showing the vector field
+		after removing symmetrical vector pairs."""
+		cdef int figSize = 7
+		fig, ax = plt.subplots(figsize=(figSize, figSize))
+
+		x, y = np.meshgrid(np.arange(0, self.gradient_asymmetric_x.shape[1], 1), np.arange(
+			0, self.gradient_asymmetric_y.shape[0], 1))
+		ax.quiver(x, y, self.gradient_asymmetric_y, self.gradient_asymmetric_x)
+		ax.tick_params(labelsize=16)
+
+		return ax
+
 
 cdef class MorphInfo:
 	def __init__(self):

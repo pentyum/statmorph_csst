@@ -19,6 +19,10 @@ cdef class ConstantsSetting:
 	cdef double boxcar_size_mid
 	cdef double sigma_mid
 	cdef int niter_bh_mid
+
+	cdef double g2_modular_tolerance
+	cdef double g2_phase_tolerance
+
 	cdef bint verbose
 
 cdef class MorphInfo:
@@ -76,6 +80,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly bint calc_mid
 	cdef readonly bint calc_multiply
 	cdef readonly bint calc_color_dispersion
+	cdef readonly bint calc_g2
 
 	cdef readonly CASInfo cas
 	cdef readonly GiniM20Info g_m20
@@ -83,6 +88,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly double multiply
 	cdef cnp.ndarray image_compare
 	cdef readonly CompareInfo compare_info
+	cdef readonly G2Info g2
 
 	cdef tuple get_slice_stamp(self)
 
@@ -142,6 +148,24 @@ cdef class GiniM20Info(MorphInfo):
 cdef class MIDInfo(MorphInfo):
 	cdef cnp.ndarray _cutout_mid
 	cdef readonly double multimode, intensity, deviation
+
+cdef class G2Info(MorphInfo):
+	cdef cnp.ndarray segmented_image
+	cdef double g2_modular_tolerance
+	cdef double g2_phase_tolerance
+
+	cdef public double result_g2
+
+	cdef double[:,:] gradient_x
+	cdef double[:,:] gradient_y
+	cdef double[:,:] gradient_asymmetric_x
+	cdef double[:,:] gradient_asymmetric_y
+	cdef double[:,:] modules_normalized
+	cdef double[:,:] phases
+
+	cdef double calc_g2(self)
+	cdef get_gradient_plot(self)
+	cdef get_asymmetry_gradient_plot(self)
 
 cdef class CompareInfo(MorphInfo):
 	cdef cnp.ndarray _image_compare

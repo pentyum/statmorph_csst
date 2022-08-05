@@ -15,6 +15,7 @@ extensions = [
 	Extension("statmorph_cython.mid", ["src/statmorph_cython/mid.pyx"]),
 	Extension("statmorph_cython.multiply", ["src/statmorph_cython/multiply.pyx"]),
 	Extension("statmorph_cython.color_dispersion", ["src/statmorph_cython/color_dispersion.pyx"]),
+	Extension("statmorph_cython.g2", ["src/statmorph_cython/g2.pyx"]),
 	Extension("statmorph_cython.statmorph", ["src/statmorph_cython/statmorph.pyx"]),
 ]
 
