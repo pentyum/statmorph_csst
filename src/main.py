@@ -254,7 +254,7 @@ def opts_to_dict(opts: List[Tuple[str, str]], arg_short_dict: Dict[str, Tuple[st
 def gen_opts(arg_short_dict: Dict[str, Tuple[str, bool]]):
 	shortopts: str = ""
 	longopts: List[str] = []
-	for shortopt, v in enumerate(arg_short_dict):
+	for shortopt, v in arg_short_dict.items():
 		shortopts = shortopts + shortopt
 		longopt = v[0]
 		if v[1]:
