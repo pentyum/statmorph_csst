@@ -7,4 +7,4 @@ cdef class Flags:
 
 	cdef bint set_flag_true(self, int bit)
 
-	cdef int value(self)
+	cpdef int value(self)
