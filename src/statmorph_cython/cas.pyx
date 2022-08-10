@@ -32,7 +32,7 @@ cdef void check_rp_beyond_edge(double xc_centroid, double yc_centroid, double _r
 
 	if rp_min_x < 0 or rp_min_y < 0 or rp_max_x > image_shape[1] or rp_max_y > image_shape[0]:
 		warnings.warn('[CAS] _petro_extent_cas*_rpetro_circ_centroid is out of the image', AstropyUserWarning)
-		flags.set_flag_true(14)
+		flags.set_flag_true(0)
 
 cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] _segmap, tuple _slice_stamp, int nx_stamp, int ny_stamp, _mask, Flags flags, ConstantsSetting constants):
 	"""
@@ -66,12 +66,12 @@ cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] _segmap, tuple _slice_stamp,
 		if cur_skybox_size <= 2:
 			# If we got here, a skybox of the given size was not found.
 			warnings.warn('[skybox] Skybox not found.', AstropyUserWarning)
-			flags.set_flag_true(3)
+			flags.set_flag_true(1)
 			return slice(0, 0), slice(0, 0)
 		if constants.verbose:
 			warnings.warn('[skybox] Reducing skybox size to %d.' % (
 				cur_skybox_size), AstropyUserWarning)
-		flags.set_flag_true(4)
+		flags.set_flag_true(2)
 
 cdef double get_sky_asymmetry(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 	"""
@@ -194,7 +194,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 	if xc < 0 or xc >= nx or yc < 0 or yc >= ny:
 		warnings.warn('[asym_center] Minimizer tried to exit bounds.',
 					  AstropyUserWarning)
-		flags.set_flag_true(5)
+		flags.set_flag_true(3)
 		# Return high value to keep minimizer within range:
 		return 100.0
 
@@ -233,7 +233,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 	if ap_abs_sum == 0.0:
 		warnings.warn('[asymmetry_function] Zero flux sum.',
 					  AstropyUserWarning)
-		flags.set_flag_true(3)
+		flags.set_flag_true(4) # unusual
 		return -99.0  # invalid
 
 	cdef double asym
@@ -274,7 +274,7 @@ cdef (double,double) get_asymmetry_center(cnp.ndarray[double,ndim=2] _cutout_sta
 	if _cutout_stamp_maskzeroed[ic, jc] == 0:
 		warnings.warn('[asym_center] Asymmetry center is masked.',
 					  AstropyUserWarning)
-		flags.set_flag_true(6)
+		flags.set_flag_true(5)
 
 	return center_asym
 
@@ -315,13 +315,13 @@ cdef double _radius_at_fraction_of_total_cas(double fraction, cnp.ndarray[double
 	cdef int flag
 	r, flag = _radius_at_fraction_of_total_circ(image, center, r_upper, fraction)
 	if flag:
-		flags.set_flag_true(4)
+		flags.set_flag_true(6) # unusual
 	#self.flag = max(self.flag, flag)
 
 	if isnan(r) or (r <= 0.0):
 		warnings.warn('[CAS] Invalid radius_at_fraction_of_total.',
 					  AstropyUserWarning)
-		flags.set_flag_true(5)
+		flags.set_flag_true(7) # unusual
 		r = -99.0  # invalid
 
 	return r
@@ -389,7 +389,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 	if ap_flux <= 0:
 		warnings.warn('[smoothness] Nonpositive total flux.',
 					  AstropyUserWarning)
-		flags.set_flag_true(6)
+		flags.set_flag_true(8) # unusual
 		return -99.0  # invalid
 
 	cdef double S, area
@@ -401,7 +401,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 
 	if not isfinite(S):
 		warnings.warn('Invalid smoothness.', AstropyUserWarning)
-		flags.set_flag_true(7)
+		flags.set_flag_true(9) # unusual
 		return -99.0  # invalid
 
 	return S
@@ -471,7 +471,7 @@ cdef CASInfo calc_cas(BaseInfo base_info):
 	# Check if image is background-subtracted; set flag=1 if not.
 	if fabs(cas_info.sky_mean) > cas_info.sky_sigma:
 		warnings.warn('Image is not background-subtracted.', AstropyUserWarning)
-		cas_info.flags.set_flag_true(13)
+		cas_info.flags.set_flag_true(10)
 
 	cas_info._sky_smoothness = get_sky_smoothness(cas_info._bkg, cas_info.rpetro_circ, cas_info.flags, base_info.constants)
 	"""
