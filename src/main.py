@@ -5,6 +5,7 @@ import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from configparser import ConfigParser
+import multiprocessing
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
 from typing import Dict, Optional, Tuple, List
@@ -19,7 +20,7 @@ from sextractor import SExtractor
 
 logging.basicConfig(level=logging.INFO,
 					format="[%(asctime)s][%(name)s/%(levelname)s]: %(message)s")
-logger = logging.getLogger("Statmorph")
+logger = logging.getLogger("Statmorph - " + multiprocessing.current_process().name)
 
 
 def read_properties(path) -> dict:
