@@ -19,8 +19,8 @@ from astropy.table import Table, Column, join
 from sextractor import SExtractor
 
 logging.basicConfig(level=logging.INFO,
-					format="[%(asctime)s][%(name)s/%(levelname)s]: %(message)s")
-logger = logging.getLogger("Statmorph - " + multiprocessing.current_process().name)
+					format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
+logger = logging.getLogger("Statmorph")
 
 
 def read_properties(path) -> dict:

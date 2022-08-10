@@ -139,7 +139,7 @@ NTHREADS         4              # 1 single thread
 	}
 
 	logging.basicConfig(level=logging.INFO,
-						format="[%(asctime)s][%(name)s/%(levelname)s]: %(message)s")
+						format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
 
 	OUTPUT_LIST_DEFAULT: List[str] = [
 		"NUMBER",
@@ -155,7 +155,7 @@ NTHREADS         4              # 1 single thread
 	default_sex_file = "default.sex"
 
 	TEMP_DIR = "/tmp/sextractor/"
-	LOGGER = logging.getLogger("SExtractor - " + multiprocessing.current_process().name)
+	LOGGER = logging.getLogger("SExtractor")
 	POOL: Optional[Pool] = None
 
 	@staticmethod
@@ -165,7 +165,7 @@ NTHREADS         4              # 1 single thread
 	def __init__(self, work_dir: str, config: Dict[str, Union[float, int]], output_list: List[str]):
 		self.return_value: int = -1
 		self.logger = logging.getLogger(
-			"SExtractor(%s) - %s" % (os.path.basename(work_dir), multiprocessing.current_process().name))
+			"SExtractor(%s)" % os.path.basename(work_dir))
 		self.work_dir: str = work_dir
 		self.config: Dict[str, Union[float, int]] = config
 		self.output_list: List[str] = output_list
