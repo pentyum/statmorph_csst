@@ -49,7 +49,7 @@ cdef double[:,:] _covariance_generic(cnp.ndarray[double,ndim=2] cutout_stamp_mas
 	# but we indicate that there's something wrong with the data.
 	if (covariance[0, 0] <= 0) or (covariance[1, 1] <= 0):
 		warnings.warn('Nonpositive second moment.', AstropyUserWarning)
-		flags.set_flag_true(0)
+		flags.set_flag_true(0) # unusual
 
 	# Modify covariance matrix in case of "infinitely thin" sources
 	# by iteratively increasing the diagonal elements (see SExtractor
@@ -87,7 +87,7 @@ cdef double[:] _eigvals_generic(double[:,:] covariance, Flags flags):
 	# the SExtractor-like regularization routine).
 	if np.any(eigvals.base < 0):
 		warnings.warn('Some negative eigenvalues.', AstropyUserWarning)
-		flags.set_flag_true(1)
+		flags.set_flag_true(1) # unusual
 
 	return eigvals
 
@@ -172,7 +172,7 @@ cdef cnp.ndarray[cnp.npy_bool,ndim=2] get_segmap_gini(cnp.ndarray[double,ndim=2]
 	if num_features == 0:
 		warnings.warn('[segmap_gini] Empty Gini segmap!',
 					  AstropyUserWarning)
-		flags.set_flag_unusual_true(11)
+		flags.set_flag_true(2) # unusual
 		return above_threshold
 
 	# In other cases (e.g., object 110 from CANDELS/GOODS-S WFC/F160W),
@@ -180,7 +180,7 @@ cdef cnp.ndarray[cnp.npy_bool,ndim=2] get_segmap_gini(cnp.ndarray[double,ndim=2]
 	if np.sum(above_threshold) == cnp.PyArray_SIZE(cutout_smooth):
 		warnings.warn('[segmap_gini] Full Gini segmap!',
 					  AstropyUserWarning)
-		flags.set_flag_true(10)
+		flags.set_flag_true(3)
 		return above_threshold
 
 	# If more than one region, activate the "bad measurement" flag
@@ -190,7 +190,7 @@ cdef cnp.ndarray[cnp.npy_bool,ndim=2] get_segmap_gini(cnp.ndarray[double,ndim=2]
 	if num_features > 1:
 		warnings.warn('[segmap_gini] Disjoint features in Gini segmap.',
 					  AstropyUserWarning)
-		flags.set_flag_true(11)
+		flags.set_flag_true(4) # unusual
 		ic, jc = np.argwhere(cutout_smooth == np.max(cutout_smooth))[0]
 		assert labeled_array[ic, jc] != 0
 		segmap = labeled_array == labeled_array[ic, jc]
@@ -212,7 +212,7 @@ cdef double get_gini(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, cnp.nda
 	if n <= 1 or sum_1d_d(sorted_pixelvals) == 0:
 		warnings.warn('[gini] Not enough data for Gini calculation.',
 					  AstropyUserWarning)
-		flags.set_flag_true(12)
+		flags.set_flag_true(5) # unusual
 		return -99.0  # invalid
 
 	cdef cnp.ndarray indices = cnp.PyArray_Arange(1, n+1, 1, cnp.NPY_INT)  # start at i=1
@@ -236,9 +236,9 @@ cdef double get_m20(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, cnp.ndar
 	# Calculate centroid
 	cdef double[:,:] M = skimage.measure.moments(image, order=1)
 	if M[0, 0] <= 0:
-		warnings.warn('[deviation] Nonpositive flux within Gini segmap.',
+		warnings.warn('[m20] Nonpositive flux within Gini segmap.',
 					  AstropyUserWarning)
-		flags.set_flag_true(13)
+		flags.set_flag_true(6) # unusual
 		return -99.0  # invalid
 	cdef double yc = M[1, 0] / M[0, 0]
 	cdef double xc = M[0, 1] / M[0, 0]
@@ -255,7 +255,7 @@ cdef double get_m20(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, cnp.ndar
 		# This can happen when there are very few pixels.
 		warnings.warn('[m20] Not enough data for M20 calculation.',
 					  AstropyUserWarning)
-		flags.set_flag_true(14)
+		flags.set_flag_true(7) # unusual
 		return -99.0  # invalid
 	cdef double threshold = sorted_pixelvals_20[0]
 
@@ -268,7 +268,7 @@ cdef double get_m20(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, cnp.ndar
 	if (second_moment_20 <= 0) | (second_moment_tot <= 0):
 		warnings.warn('[m20] Negative second moment(s).',
 					  AstropyUserWarning)
-		flags.set_flag_true(12)
+		flags.set_flag_true(8)
 		m20 = -99.0  # invalid
 	else:
 		m20 = log10(second_moment_20 / second_moment_tot)
