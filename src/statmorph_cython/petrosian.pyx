@@ -44,7 +44,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
 		ratio = float(circ_annulus_mean_flux != 0)
-		flags.set_flag_true(2)
+		flags.set_flag_true(0)
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
 
@@ -90,14 +90,14 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 			if r_min == -1:
 				warnings.warn('[rpetro_circ] r_min is not defined yet.',
 							  AstropyUserWarning)
-				flags.set_flag_true(1)
+				flags.set_flag_true(2)
 				if r >= r_outer:
 					# If r_min is still undefined at this point, then
 					# rpetro must be smaller than the annulus width.
 					warnings.warn('rpetro_circ < annulus_width! ' +
 								  'Setting rpetro_circ = annulus_width.',
 								  AstropyUserWarning)
-					flags.set_flag_true(2)
+					flags.set_flag_true(3) # unusual
 					return r_inner
 			else:
 				r_max = r
@@ -146,7 +146,7 @@ cpdef double _petrosian_function_ellip(double a, (double,double) center, cnp.nda
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
 		ratio = float(ellip_annulus_mean_flux != 0)
-		flags.set_flag_true(9)
+		flags.set_flag_true(4)
 	else:
 		ratio = ellip_annulus_mean_flux / ellip_aperture_mean_flux
 
@@ -183,7 +183,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 		if a >= a_outer:
 			warnings.warn('[rpetro_ellip] rpetro larger than cutout.',
 						  AstropyUserWarning)
-			flags.set_flag_true(7)
+			flags.set_flag_true(5)
 		curval = _petrosian_function_ellip(a, center, cutout_stamp_maskzeroed, elongation, theta, flags, constants)
 		if curval >= 0:
 			a_min = a
@@ -191,14 +191,14 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 			if a_min == -1:
 				warnings.warn('[rpetro_ellip] a_min is not defined yet.',
 							  AstropyUserWarning)
-				flags.set_flag_true(8)
+				flags.set_flag_true(6)
 				if a >= a_outer:
 					# If a_min is still undefined at this point, then
 					# rpetro must be smaller than the annulus width.
 					warnings.warn('rpetro_ellip < annulus_width! ' +
 								  'Setting rpetro_ellip = annulus_width.',
 								  AstropyUserWarning)
-					flags.set_flag_true(10)
+					flags.set_flag_true(7) # unusual
 					return a_inner
 			else:
 				a_max = a
