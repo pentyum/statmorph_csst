@@ -105,7 +105,7 @@ cpdef double _segmap_mid_function(double q, cnp.ndarray[double,ndim=1] _sorted_p
 	if mean_flux_main_clump == 0:
 		warnings.warn('[segmap_mid] Zero flux sum.', AstropyUserWarning)
 		ratio = 1.0
-		flags.set_flag_true(15)
+		flags.set_flag_true(0) # unusual
 	else:
 		ratio = mean_flux_new_pixels / mean_flux_main_clump
 
@@ -156,7 +156,7 @@ cdef cnp.ndarray get_segmap_mid(cnp.ndarray[double,ndim=1] _sorted_pixelvals_sta
 	if not segmap[ic, jc]:
 		warnings.warn('[segmap_mid] Adding brightest pixel to segmap.', AstropyUserWarning)
 		segmap[ic, jc] = True
-		flags.set_flag_true(15)
+		flags.set_flag_true(1) # unusual
 
 	# Grow regions with 8-connected neighbor "footprint"
 	cdef cnp.ndarray s = ndi.generate_binary_structure(2, 2)
@@ -408,7 +408,7 @@ cdef double get_deviation(cnp.ndarray[double,ndim=2] _cutout_mid, cnp.ndarray _s
 
 	if len(sorted_flux_sums) == 0:
 		warnings.warn('[deviation] There are no peaks.', AstropyUserWarning)
-		flags.set_flag_true(16)
+		flags.set_flag_true(2)
 		return -99.0  # invalid
 
 	cdef int xp = sorted_xpeak[0]
@@ -419,7 +419,7 @@ cdef double get_deviation(cnp.ndarray[double,ndim=2] _cutout_mid, cnp.ndarray _s
 	if M[0, 0] <= 0:
 		warnings.warn('[deviation] Nonpositive flux within MID segmap.',
 					  AstropyUserWarning)
-		flags.set_flag_true(16)
+		flags.set_flag_true(3) # unusual
 		return -99.0  # invalid
 	cdef double yc = M[1, 0] / M[0, 0]
 	cdef double xc = M[0, 1] / M[0, 0]
@@ -429,7 +429,7 @@ cdef double get_deviation(cnp.ndarray[double,ndim=2] _cutout_mid, cnp.ndarray _s
 
 	if not isfinite(D):
 		warnings.warn('Invalid D-statistic.', AstropyUserWarning)
-		flags.set_flag_true(17)
+		flags.set_flag_true(4) # unusual
 		return -99.0  # invalid
 
 	return D
