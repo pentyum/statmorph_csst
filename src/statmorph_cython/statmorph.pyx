@@ -550,14 +550,14 @@ cdef class BaseInfo(MorphInfo):
 						  'postage stamp (bad!).', AstropyUserWarning)
 			yc = ny / 2.0
 			xc = nx / 2.0
-			self.flags.set_flag_true(0)
+			self.flags.set_flag_true(0) # unusual
 
 		# Print warning if centroid is masked:
 		cdef int ic = int(round(self._yc_stamp))
 		cdef int jc = int(round(self._xc_stamp))
 		if self._cutout_stamp_maskzeroed[ic][jc] == 0.0:
 			warnings.warn('Centroid is masked.', AstropyUserWarning)
-			self.flags.set_flag_true(0)
+			self.flags.set_flag_true(1)
 
 		#return np.array([xc, yc])
 		return xc, yc
