@@ -3,6 +3,9 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
+from typing import Union
+
+import numpy as np
 
 cdef class Flags:
 	def __init__(self):
@@ -16,3 +19,7 @@ cdef class Flags:
 
 	cpdef int value(self):
 		return self.flags
+
+	@staticmethod
+	def get_flag_array(flag_value: Union[int, np.ndarray]) -> np.ndarray:
+		return np.array([(flag_value & 1 << i > 0) for i in range(32)])
