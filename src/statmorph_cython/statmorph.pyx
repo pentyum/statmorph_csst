@@ -22,8 +22,8 @@ cimport statmorph_cython.g_m20
 cimport statmorph_cython.mid
 cimport statmorph_cython.multiply
 cimport statmorph_cython.color_dispersion
-from .g2 cimport G2Calculator, _get_contour_count, get_G2
 from .constants_setting cimport ConstantsSetting
+from .g2 cimport G2Calculator, _get_contour_count, get_G2
 
 cnp.import_array()
 
