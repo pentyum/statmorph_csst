@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import getopt
 import logging
 import os
