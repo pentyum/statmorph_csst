@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger("Statmorph")
 
 
-def read_properties(path) -> dict:
+def read_properties(path) -> Dict[str, str]:
 	config = ConfigParser()
 	s_config = open(path, 'r').read()
 	s_config = "[properties]\n%s" % s_config
@@ -104,7 +104,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 				  run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
-				  image_compare_file: Optional[str] = None, calc_g2: bool = False, output_image_dir: Optional[str] = None):
+				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
+				  output_image_dir: Optional[str] = None):
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 
@@ -263,15 +264,25 @@ def gen_opts(arg_short_dict: Dict[str, Tuple[str, bool]]):
 		longopt = v[0]
 		if v[1]:
 			shortopts = shortopts + ":"
-			longopt = longopt+"="
+			longopt = longopt + "="
 		longopts.append(longopt)
 	return shortopts, longopts
 
 
+def check_not_false(value) -> bool:
+	return value not in ("false", "False", "FALSE", False)
+
+
+def check_not_null(value) -> bool:
+	return value not in ("null", "NULL", "None", "NONE", "", None)
+
+
 if __name__ == "__main__":
 	config: Dict = read_properties("./config.properties")
+	config["help"] = False
 
 	arg_short_dict = {
+		"h": ("help", False),
 		"j": ("threads", True),
 		"i": ("image_file", True),
 		"w": ("wht_file", True),
@@ -290,12 +301,42 @@ if __name__ == "__main__":
 		"d": ("calc_mid", False),
 		"u": ("calc_multiply", False),
 		"e": ("calc_color_dispersion", False),
+		"m": ("image_compare_file", True),
 		"b": ("calc_g2", False)
 	}
 
-	opts, _other_args = getopt.getopt(sys.argv[1:], *gen_opts(arg_short_dict))
+	try:
+		opts, _other_args = getopt.getopt(sys.argv[1:], *gen_opts(arg_short_dict))
+	except getopt.GetoptError as e:
+		print("-h 查看帮助信息")
+		exit(1)
 
 	opts_to_dict(opts, arg_short_dict, config)
+
+	if check_not_false(config["help"]):
+		print("SExtractor-Statmorph 简化合并版使用说明")
+		print("""
+	-j, --threads=并行进程数量
+	-i, --image_file=原始图像文件(未扣除背景)
+	-w, --wht_file=权重图像文件
+	-o, --save_file=输出文件名
+	-p, --run_percentage=运行全部源数量的百分比
+	-l, --run_specified_label=仅运行指定编号的源
+	-s, --sextractor_work_dir=SExtractor的文件存放文件夹
+	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
+	-a, --output_image_dir=输出示意图的文件夹
+	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
+	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
+	-c, --calc_cas 是否测量CAS
+	-g, --calc_g_m20 是否测量Gini,M20
+	-d, --calc_mid 是否测量MID
+	-u, --calc_multiply 是否测量multiply
+	-e, --calc_color_dispersion 是否测量color_dispersion
+	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)
+	-b, --calc_g2 是否测量G2
+	-h, --help 显示此帮助
+		""")
+		exit()
 
 	threads = int(config["threads"])
 	image_file: str = config["image_file"]
@@ -306,21 +347,21 @@ if __name__ == "__main__":
 	# simplified_rot_threshold = int(config["simplified_rot_threshold"])
 	# fmin_maxiter = int(config["fmin_maxiter"])
 	sextractor_work_dir: str = config["sextractor_work_dir"]
-	skip_sextractor: bool = config["skip_sextractor"] not in ("false", "False")
+	skip_sextractor: bool = check_not_false(config["skip_sextractor"])
 	output_image_dir: Optional[str] = config["output_image_dir"]
 	ignore_mag_fainter_than: float = float(config["ignore_mag_fainter_than"])
 	ignore_class_star_greater_than: float = float(config["ignore_class_star_greater_than"])
-	calc_cas: bool = config["calc_cas"] not in ("false", "False")
-	calc_g_m20: bool = config["calc_g_m20"] not in ("false", "False")
-	calc_mid: bool = config["calc_mid"] not in ("false", "False")
-	calc_multiply: bool = config["calc_multiply"] not in ("false", "False")
-	calc_color_dispersion: bool = config["calc_color_dispersion"] not in ("false", "False")
+	calc_cas: bool = check_not_false(config["calc_cas"])
+	calc_g_m20: bool = check_not_false(config["calc_g_m20"])
+	calc_mid: bool = check_not_false(config["calc_mid"])
+	calc_multiply: bool = check_not_false(config["calc_multiply"])
+	calc_color_dispersion: bool = check_not_false(config["calc_color_dispersion"])
 	image_compare_file: Optional[str] = config["image_compare_file"]
-	calc_g2: bool = config["calc_g2"] not in ("false", "False")
+	calc_g2: bool = check_not_false(config["calc_g2"])
 
-	if output_image_dir in ("null", "NULL", "None", ""):
+	if not check_not_null(output_image_dir):
 		output_image_dir = None
-	if image_compare_file in ("null", "NULL", "None", ""):
+	if not check_not_null(image_compare_file):
 		image_compare_file = None
 
 	sextractor = run_sextractor(sextractor_work_dir, image_file, wht_file, skip_sextractor)
