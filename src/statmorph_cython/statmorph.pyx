@@ -747,12 +747,12 @@ cdef class G2Info(MorphInfo):
 		Returns:
 			result_g2 : `double`
 		"""
-		g2c = G2Calculator(
-			# need to pass a copy, if not, it is overwritten inside (strange)
-			self.segmented_image.copy(),
-			_get_contour_count(self.segmented_image),
-			self.g2_modular_tolerance,
-			self.g2_phase_tolerance)
+		cdef G2Calculator g2c = G2Calculator(
+				# need to pass a copy, if not, it is overwritten inside (strange)
+				self.segmented_image.copy(),
+				_get_contour_count(self.segmented_image),
+				self.g2_modular_tolerance,
+				self.g2_phase_tolerance)
 
 		try:
 			self.result_g2, self.gradient_x, self.gradient_y, self.gradient_asymmetric_x, self.gradient_asymmetric_y, self.modules_normalized, self.phases = g2c.get_g2()
