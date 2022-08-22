@@ -831,6 +831,17 @@ cdef class G2Info(MorphInfo):
 
 		return ax
 
+	def get_values(self):
+		return [self.result_g2]
+
+	@staticmethod
+	def get_value_names():
+		return ["g2"]
+
+	@staticmethod
+	def get_value_formats():
+		return ["%f"]
+
 
 cdef class MorphInfo:
 	def __init__(self):
