@@ -5,6 +5,7 @@
 # cython: initializedcheck=False
 
 import warnings
+
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 from astropy.convolution import convolve
@@ -587,14 +588,46 @@ cdef class CASInfo(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
+	def get_values(self):
+		return [self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness]
+
+	@staticmethod
+	def get_value_names():
+		return ["rp_circ", "C", "A", "S"]
+
+	@staticmethod
+	def get_value_formats():
+		return ["%f", "%f", "%f", "%f"]
+
 cdef class GiniM20Info(MorphInfo):
 	def __init__(self):
 		super().__init__()
+
+	def get_values(self):
+		return [self.rpetro_ellip, self.gini, self.m20]
+
+	@staticmethod
+	def get_value_names():
+		return ["rp_ellip", "G", "M20"]
+
+	@staticmethod
+	def get_value_formats():
+		return ["%f", "%f", "%f"]
 
 cdef class MIDInfo(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
+	def get_values(self):
+		return [self.multimode, self.intensity, self.deviation]
+
+	@staticmethod
+	def get_value_names():
+		return ["M", "I", "D"]
+
+	@staticmethod
+	def get_value_formats():
+		return ["%f", "%f", "%f"]
 
 cdef class CompareInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double, ndim=2] image_compare, BaseInfo base_info):
@@ -707,6 +740,17 @@ cdef class CompareInfo(MorphInfo):
 
 		return color_dispersion
 
+	def get_values(self):
+		return [self.color_dispersion]
+
+	@staticmethod
+	def get_value_names():
+		return ["color_dispersion"]
+
+	@staticmethod
+	def get_value_formats():
+		return ["%f"]
+
 
 cdef class G2Info(MorphInfo):
 	"""
@@ -803,3 +847,14 @@ cdef class MorphInfo:
 
 	cdef void calc_runtime(self, long start):
 		self.runtime = MorphInfo.get_duration_sec(clock(), start)
+
+	def get_values(self):
+		pass
+
+	@staticmethod
+	def get_value_names():
+		pass
+
+	@staticmethod
+	def get_value_formats():
+		pass

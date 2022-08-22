@@ -13,6 +13,7 @@ from typing import Dict, Optional, Tuple, List
 import numpy as np
 import photutils
 import statmorph_cython.statmorph as statmorph
+from statmorph_cython.statmorph import CASInfo, GiniM20Info, MIDInfo, CompareInfo, G2Info
 from astropy.io import fits
 from astropy.table import Table, Column, join
 
@@ -75,17 +76,17 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 
 	return_list = [label, morph.size, morph.surface_brightness, morph._rpetro_circ_centroid]
 	if calc_cas:
-		return_list.extend([morph.cas.rpetro_circ, morph.cas.concentration, morph.cas.asymmetry, morph.cas.smoothness])
+		return_list.extend(morph.cas.get_values())
 	if calc_g_m20:
-		return_list.extend([morph.g_m20.rpetro_ellip, morph.g_m20.gini, morph.g_m20.m20])
+		return_list.extend(morph.g_m20.get_values())
 	if calc_mid:
-		return_list.extend([morph.mid.multimode, morph.mid.intensity, morph.mid.deviation])
+		return_list.extend(morph.mid.get_values())
 		if calc_multiply:
 			return_list.extend([morph.multiply])
 	if calc_color_dispersion:
-		return_list.extend([morph.compare_info.color_dispersion])
+		return_list.extend(morph.compare_info.get_values())
 	if calc_g2:
-		return_list.extend([morph.g2.result_g2])
+		return_list.extend(morph.g2.get_values())
 
 	return_list.extend([morph.runtime, morph.flags.value()])
 	return tuple(return_list)
@@ -150,26 +151,26 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 	result_format = ["%d %d %f %f"]
 
 	if calc_cas:
-		result_header.extend(["rp_circ", "C", "A", "S"])
-		result_format.extend(["%f", "%f", "%f", "%f"])
+		result_header.extend(CASInfo.get_value_names())
+		result_format.extend(CASInfo.get_value_formats())
 		logger.info("计算CAS")
 	if calc_g_m20:
-		result_header.extend(["rp_ellip", "G", "M20"])
-		result_format.extend(["%f", "%f", "%f"])
+		result_header.extend(GiniM20Info.get_value_names())
+		result_format.extend(GiniM20Info.get_value_formats())
 		logger.info("计算G,M20")
 	if calc_mid:
-		result_header.extend(["M", "I", "D"])
-		result_format.extend(["%f", "%f", "%f"])
+		result_header.extend(MIDInfo.get_value_names())
+		result_format.extend(MIDInfo.get_value_formats())
 		logger.info("计算MID")
 		if calc_multiply:
 			result_header.extend(["multiply"])
 			result_format.extend(["%f"])
 	if calc_color_dispersion:
-		result_header.extend(["color_dispersion"])
-		result_format.extend(["%f"])
+		result_header.extend(CompareInfo.get_value_names())
+		result_format.extend(CompareInfo.get_value_formats())
 	if calc_g2:
-		result_header.extend(["g2"])
-		result_format.extend(["%f"])
+		result_header.extend(G2Info.get_value_names())
+		result_format.extend(G2Info.get_value_formats())
 
 	result_header.extend(["runtime", "flag"])
 	result_format.extend(["%f", "%d"])
