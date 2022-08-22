@@ -17,7 +17,8 @@ from .petrosian cimport _rpetro_ellip_generic
 from .photutils_simplified cimport EllipticalAnnulus, _aperture_mean_nomask
 from .array_utils cimport create_22_mat, sum_1d_d, cumsum_1d_d
 from .flags cimport Flags
-from .statmorph cimport ConstantsSetting, BaseInfo, GiniM20Info
+from .statmorph cimport BaseInfo, GiniM20Info
+from .constants_setting cimport ConstantsSetting
 
 cnp.import_array()
 

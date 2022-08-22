@@ -13,7 +13,8 @@ import skimage.transform
 from libc.math cimport fabs, log10
 from numpy.math cimport isnan, isfinite
 
-from .statmorph cimport BaseInfo, CASInfo, ConstantsSetting
+from .statmorph cimport BaseInfo, CASInfo
+from .constants_setting cimport ConstantsSetting
 from .petrosian cimport _rpetro_circ_generic
 from .photutils_simplified cimport CircularAperture, CircularAnnulus, _aperture_area, do_photometry, _radius_at_fraction_of_total_circ
 from .flags cimport Flags

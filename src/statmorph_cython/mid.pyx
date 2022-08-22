@@ -16,7 +16,8 @@ import scipy.optimize as opt
 from numpy.math cimport INFINITY, isfinite
 from libc.math cimport sqrt, pi
 
-from .statmorph cimport ConstantsSetting, BaseInfo, MIDInfo
+from .statmorph cimport BaseInfo, MIDInfo
+from .constants_setting cimport ConstantsSetting
 from .flags cimport Flags
 
 cnp.import_array()

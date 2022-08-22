@@ -12,7 +12,7 @@ cimport numpy as cnp
 from libc.math cimport fabs
 from .flags cimport Flags
 from .photutils_simplified cimport CircularAnnulus, CircularAperture, EllipticalAnnulus, EllipticalAperture,  _aperture_mean_nomask
-from .statmorph cimport ConstantsSetting
+from .constants_setting cimport ConstantsSetting
 
 cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, Flags flags,
 									  ConstantsSetting constants):

@@ -9,6 +9,7 @@ extensions = [
 	Extension("statmorph_cython.array_utils", ["src/statmorph_cython/array_utils.pyx"]),
 	Extension("statmorph_cython.flags", ["src/statmorph_cython/flags.pyx"]),
 	Extension("statmorph_cython.photutils_simplified", ["src/statmorph_cython/photutils_simplified.pyx"]),
+	Extension("statmorph_cython.constants_setting", ["src/statmorph_cython/constants_setting.pyx"]),
 	Extension("statmorph_cython.petrosian", ["src/statmorph_cython/petrosian.pyx"]),
 	Extension("statmorph_cython.cas", ["src/statmorph_cython/cas.pyx"]),
 	Extension("statmorph_cython.g_m20", ["src/statmorph_cython/g_m20.pyx"]),
