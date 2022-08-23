@@ -15,6 +15,7 @@ cdef class Flags:
 		self.flags = self.flags | 1 << bit
 
 	cdef bint set_flag_true(self, int bit):
+		print(bit, self.flags)
 		return self.flags & 1 << bit > 0
 
 	cpdef int value(self):
