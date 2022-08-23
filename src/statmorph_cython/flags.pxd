@@ -5,6 +5,6 @@ cdef class Flags:
 
 	cdef bint get_flag(self, int bit)
 
-	cdef bint set_flag_true(self, int bit)
+	cdef void set_flag_true(self, int bit)
 
 	cpdef int value(self)
