@@ -589,45 +589,45 @@ cdef class CASInfo(MorphInfo):
 		super().__init__()
 
 	def get_values(self):
-		return [self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness]
+		return [self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["rp_circ", "C", "A", "S"]
+		return ["rp_circ", "C", "A", "S", "cas_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f", "%f"]
+		return ["%f", "%f", "%f", "%f", "%d"]
 
 cdef class GiniM20Info(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
 	def get_values(self):
-		return [self.rpetro_ellip, self.gini, self.m20]
+		return [self.rpetro_ellip, self.gini, self.m20, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["rp_ellip", "G", "M20"]
+		return ["rp_ellip", "G", "M20", "g_m20_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f"]
+		return ["%f", "%f", "%f", "%d"]
 
 cdef class MIDInfo(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
 	def get_values(self):
-		return [self.multimode, self.intensity, self.deviation]
+		return [self.multimode, self.intensity, self.deviation, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["M", "I", "D"]
+		return ["M", "I", "D", "mid_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f"]
+		return ["%f", "%f", "%f", "%d"]
 
 cdef class CompareInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double, ndim=2] image_compare, BaseInfo base_info):

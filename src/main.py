@@ -175,7 +175,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 		result_header.extend(G2Info.get_value_names())
 		result_format.extend(G2Info.get_value_formats())
 
-	result_header.extend(["runtime", "flag"])
+	result_header.extend(["runtime", "base_flag"])
 	result_format.extend(["%f", "%d"])
 
 	result_all = [" ".join(result_header) + "\n"]
