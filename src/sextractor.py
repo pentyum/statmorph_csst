@@ -260,7 +260,7 @@ NTHREADS         4              # 1 single thread
 
 		return result
 
-	def run(self, detect_file: str, wht_file: str, measure_file: str = None, output_catalog_file: str = "catalog.txt",
+	def run(self, detect_file: str, wht_file: str, measure_file: Optional[str] = None, output_catalog_file: str = "catalog.txt",
 			output_subback_file: str = "subback.fits", output_segmap_file: str = "segmap.fits",
 			clean_temp: bool = True, use_existed: bool = False):
 		self.output_catalog_file = self.work_dir + "/" + output_catalog_file

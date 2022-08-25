@@ -94,14 +94,14 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 	return tuple(return_list)
 
 
-def run_sextractor(work_dir: str, image_file: str, wht_file: str, use_existed: bool):
+def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: bool, measure_file: Optional[str] = None):
 	sextractor = SExtractor(work_dir, SExtractor.BRIGHT_VALUES, SExtractor.OUTPUT_LIST_DEFAULT)
-	sextractor.run(image_file, wht_file, use_existed=use_existed)
+	sextractor.run(detect_file, wht_file, measure_file, use_existed=use_existed)
 	return sextractor
 
 
-def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_file: str, run_percentage: int,
-				  run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
+def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_file: str, threads: int,
+				  run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
@@ -277,7 +277,7 @@ def check_not_null(value) -> bool:
 	return value not in ("null", "NULL", "None", "NONE", "", None)
 
 
-if __name__ == "__main__":
+def main(argv) -> int:
 	config: Dict = read_properties("./config.properties")
 	config["help"] = False
 
@@ -285,6 +285,7 @@ if __name__ == "__main__":
 		"h": ("help", False),
 		"j": ("threads", True),
 		"i": ("image_file", True),
+		"y": ("measure_file", True),
 		"w": ("wht_file", True),
 		"o": ("save_file", True),
 		"p": ("run_percentage", True),
@@ -306,40 +307,42 @@ if __name__ == "__main__":
 	}
 
 	try:
-		opts, _other_args = getopt.getopt(sys.argv[1:], *gen_opts(arg_short_dict))
+		opts, _other_args = getopt.getopt(argv[1:], *gen_opts(arg_short_dict))
 	except getopt.GetoptError as e:
 		print("-h 查看帮助信息")
-		exit(1)
+		return 1
 
 	opts_to_dict(opts, arg_short_dict, config)
 
 	if check_not_false(config["help"]):
 		print("SExtractor-Statmorph 简化合并版使用说明")
 		print("""
-	-j, --threads=并行进程数量
-	-i, --image_file=原始图像文件(未扣除背景)
-	-w, --wht_file=权重图像文件
-	-o, --save_file=输出文件名
-	-p, --run_percentage=运行全部源数量的百分比
-	-l, --run_specified_label=仅运行指定编号的源
-	-s, --sextractor_work_dir=SExtractor的文件存放文件夹
-	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
-	-a, --output_image_dir=输出示意图的文件夹
-	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
-	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
-	-c, --calc_cas 是否测量CAS
-	-g, --calc_g_m20 是否测量Gini,M20
-	-d, --calc_mid 是否测量MID
-	-u, --calc_multiply 是否测量multiply
-	-e, --calc_color_dispersion 是否测量color_dispersion
-	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)
-	-b, --calc_g2 是否测量G2
-	-h, --help 显示此帮助
-		""")
-		exit()
+		-j, --threads=并行进程数量
+		-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件
+		-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定则为单图像模式
+		-w, --wht_file=权重图像文件
+		-o, --save_file=输出文件名
+		-p, --run_percentage=运行全部源数量的百分比
+		-l, --run_specified_label=仅运行指定编号的源
+		-s, --sextractor_work_dir=SExtractor的文件存放文件夹
+		-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
+		-a, --output_image_dir=输出示意图的文件夹
+		-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
+		-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
+		-c, --calc_cas 是否测量CAS
+		-g, --calc_g_m20 是否测量Gini,M20
+		-d, --calc_mid 是否测量MID
+		-u, --calc_multiply 是否测量multiply
+		-e, --calc_color_dispersion 是否测量color_dispersion
+		-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)
+		-b, --calc_g2 是否测量G2
+		-h, --help 显示此帮助
+			""")
+		return 0
 
 	threads = int(config["threads"])
-	image_file: str = config["image_file"]
+	detect_file: str = config["image_file"]
+	measure_file: Optional[str] = config["measure_file"]
 	wht_file: str = config["wht_file"]
 	save_file: str = config["save_file"]
 	run_percentage: int = int(config["run_percentage"])
@@ -359,13 +362,20 @@ if __name__ == "__main__":
 	image_compare_file: Optional[str] = config["image_compare_file"]
 	calc_g2: bool = check_not_false(config["calc_g2"])
 
+	if not check_not_null(measure_file):
+		measure_file = None
 	if not check_not_null(output_image_dir):
 		output_image_dir = None
 	if not check_not_null(image_compare_file):
 		image_compare_file = None
 
-	sextractor = run_sextractor(sextractor_work_dir, image_file, wht_file, skip_sextractor)
+	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file)
 	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
-				  save_file, run_percentage, run_specified_label, ignore_mag_fainter_than,
+				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
 				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir)
+	return 0
+
+
+if __name__ == "__main__":
+	exit(main(sys.argv))
