@@ -173,7 +173,7 @@ NTHREADS         4              # 1 single thread
 		self.output_subback_file: str = ""
 		self.output_segmap_file: str = ""
 
-	def unzip_fits_gz(self, file_name: str):
+	def unzip_fits_gz(self, file_name: str) -> str:
 		if file_name.endswith(".gz"):
 			if not os.path.exists(SExtractor.TEMP_DIR):
 				os.mkdir(SExtractor.TEMP_DIR)
@@ -249,7 +249,18 @@ NTHREADS         4              # 1 single thread
 	def is_main_process():
 		return not bool(re.match(r'ForkPoolWorker-\d+', multiprocessing.current_process().name))
 
-	def run(self, sci_file: str, wht_file: str, output_catalog_file: str = "catalog.txt",
+	def handle_unzip_fits_gz_list(self, unzip_file_list: List[str]) -> List[str]:
+		threads = len(unzip_file_list)
+		if SExtractor.is_main_process():
+			self.logger.info("启动%d线程同时解压" % threads)
+			pool = multiprocessing.Pool(threads)
+			result = pool.map(self.unzip_fits_gz, unzip_file_list)
+		else:
+			result = [self.unzip_fits_gz(file) for file in unzip_file_list]
+
+		return result
+
+	def run(self, detect_file: str, wht_file: str, measure_file: str = None, output_catalog_file: str = "catalog.txt",
 			output_subback_file: str = "subback.fits", output_segmap_file: str = "segmap.fits",
 			clean_temp: bool = True, use_existed: bool = False):
 		self.output_catalog_file = self.work_dir + "/" + output_catalog_file
@@ -274,28 +285,30 @@ NTHREADS         4              # 1 single thread
 		if not os.path.exists(self.work_dir + "/" + SExtractor.default_param_file):
 			self.make_default_param()
 
-		self.logger.info("sci图像文件: " + sci_file)
+		if measure_file is None:
+			self.logger.info("sci图像文件: " + detect_file)
+		else:
+			self.logger.info("detect图像文件: " + detect_file)
+			self.logger.info("measure图像文件: " + measure_file)
+
 		self.logger.info("weight图像文件: " + wht_file)
 
-		if SExtractor.is_main_process():
-			self.logger.info("启动双线程同时解压")
-			pool = multiprocessing.Pool(2)
-			p_sci = pool.apply_async(self.unzip_fits_gz, (sci_file,))
-			p_wht = pool.apply_async(self.unzip_fits_gz, (wht_file,))
-			pool.close()
-			pool.join()
-
-			sci_file_unzipped = p_sci.get()
-			wht_file_unzipped = p_wht.get()
+		if measure_file is None:
+			sci_file_unzipped, wht_file_unzipped = self.handle_unzip_fits_gz_list([detect_file, wht_file])
+			measure_file_unzipped = None
 		else:
-			sci_file_unzipped = self.unzip_fits_gz(sci_file)
-			wht_file_unzipped = self.unzip_fits_gz(wht_file)
+			sci_file_unzipped, wht_file_unzipped, measure_file_unzipped = self.handle_unzip_fits_gz_list([detect_file, wht_file, measure_file])
 
 		sex_file_path: str = self.make_default_sex(wht_file_unzipped, output_catalog_file, output_subback_file,
 												   output_segmap_file)
 
-		self.logger.info("开始运行source-extractor")
-		self.return_value = os.system("source-extractor " + sci_file_unzipped + " -c " + sex_file_path)
+		if measure_file_unzipped is None:
+			self.logger.info("开始运行source-extractor单图像模式")
+			self.return_value = os.system("source-extractor " + sci_file_unzipped + " -c " + sex_file_path)
+		else:
+			self.logger.info("开始运行source-extractor双图像模式")
+			self.return_value = os.system(
+				"source-extractor " + sci_file_unzipped + "," + measure_file_unzipped + " -c " + sex_file_path)
 
 		if self.return_value == 0:
 			self.logger.info("SExtractor运行成功")
@@ -307,7 +320,7 @@ NTHREADS         4              # 1 single thread
 			self.logger.critical(err_msg)
 			raise RuntimeError(err_msg)
 
-		if sci_file_unzipped != sci_file:
+		if sci_file_unzipped != detect_file:
 			self.handle_unzipped_file_end(sci_file_unzipped, clean_temp)
 		if wht_file_unzipped != wht_file:
 			self.handle_unzipped_file_end(wht_file_unzipped, clean_temp)
@@ -315,10 +328,10 @@ NTHREADS         4              # 1 single thread
 		self.logger.info(f'用时: {time.time() - start_time:.2f}s')
 
 	@classmethod
-	def run_individual(cls, work_dir: str, image_file: str, wht_file: str):
+	def run_individual(cls, work_dir: str, image_file: str, wht_file: str, measure_file: str = None):
 		sextractor = SExtractor(work_dir, cls.BRIGHT_VALUES, cls.OUTPUT_LIST_DEFAULT)
 		try:
-			sextractor.run(image_file, wht_file)
+			sextractor.run(image_file, wht_file, measure_file)
 		except:
 			pass
 		return sextractor.return_value
