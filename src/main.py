@@ -280,16 +280,16 @@ def check_not_null(value) -> bool:
 
 help_str = """SExtractor-Statmorph 简化合并版使用说明
 
-	-j, --threads=并行进程数量
-	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件
-	-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定则为单图像模式
-	-w, --wht_file=权重图像文件
-	-o, --save_file=输出文件名
-	-p, --run_percentage=运行全部源数量的百分比
-	-l, --run_specified_label=仅运行指定编号的源
-	-s, --sextractor_work_dir=SExtractor的文件存放文件夹
+	-j, --threads=并行进程数量，若为0则为CPU核心数量-1(若为单核则为1)
+	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件，若跳过SExtractor可以不需要
+	-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定(为null)则为单图像模式，若跳过SExtractor可以不需要
+	-w, --wht_file=权重图像文件，若跳过SExtractor可以不需要
+	-o, --save_file=形态学参数输出文件名
+	-p, --run_percentage=运行全部源数量的百分比，100表示全部运行
+	-l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
+	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹
 	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
-	-a, --output_image_dir=输出示意图的文件夹
+	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
 	-c, --calc_cas 是否测量CAS
@@ -297,7 +297,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-d, --calc_mid 是否测量MID
 	-u, --calc_multiply 是否测量multiply
 	-e, --calc_color_dispersion 是否测量color_dispersion
-	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)
+	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)，若不测量则为null
 	-b, --calc_g2 是否测量G2
 	-h, --help 显示此帮助
 """
@@ -372,6 +372,9 @@ def main(argv) -> int:
 		output_image_dir = None
 	if not check_not_null(image_compare_file):
 		image_compare_file = None
+
+	if threads <= 0:
+		threads = min(multiprocessing.cpu_count() - 1, 1)
 
 	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file)
 	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
