@@ -94,7 +94,8 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 	return tuple(return_list)
 
 
-def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: bool, measure_file: Optional[str] = None):
+def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: bool,
+				   measure_file: Optional[str] = None):
 	sextractor = SExtractor(work_dir, SExtractor.BRIGHT_VALUES, SExtractor.OUTPUT_LIST_DEFAULT)
 	sextractor.run(detect_file, wht_file, measure_file, use_existed=use_existed)
 	return sextractor
@@ -277,6 +278,31 @@ def check_not_null(value) -> bool:
 	return value not in ("null", "NULL", "None", "NONE", "", None)
 
 
+help_str = """SExtractor-Statmorph 简化合并版使用说明
+
+	-j, --threads=并行进程数量
+	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件
+	-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定则为单图像模式
+	-w, --wht_file=权重图像文件
+	-o, --save_file=输出文件名
+	-p, --run_percentage=运行全部源数量的百分比
+	-l, --run_specified_label=仅运行指定编号的源
+	-s, --sextractor_work_dir=SExtractor的文件存放文件夹
+	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
+	-a, --output_image_dir=输出示意图的文件夹
+	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
+	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
+	-c, --calc_cas 是否测量CAS
+	-g, --calc_g_m20 是否测量Gini,M20
+	-d, --calc_mid 是否测量MID
+	-u, --calc_multiply 是否测量multiply
+	-e, --calc_color_dispersion 是否测量color_dispersion
+	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)
+	-b, --calc_g2 是否测量G2
+	-h, --help 显示此帮助
+"""
+
+
 def main(argv) -> int:
 	config: Dict = read_properties("./config.properties")
 	config["help"] = False
@@ -315,29 +341,7 @@ def main(argv) -> int:
 	opts_to_dict(opts, arg_short_dict, config)
 
 	if check_not_false(config["help"]):
-		print("SExtractor-Statmorph 简化合并版使用说明")
-		print("""
-		-j, --threads=并行进程数量
-		-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件
-		-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定则为单图像模式
-		-w, --wht_file=权重图像文件
-		-o, --save_file=输出文件名
-		-p, --run_percentage=运行全部源数量的百分比
-		-l, --run_specified_label=仅运行指定编号的源
-		-s, --sextractor_work_dir=SExtractor的文件存放文件夹
-		-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
-		-a, --output_image_dir=输出示意图的文件夹
-		-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
-		-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
-		-c, --calc_cas 是否测量CAS
-		-g, --calc_g_m20 是否测量Gini,M20
-		-d, --calc_mid 是否测量MID
-		-u, --calc_multiply 是否测量multiply
-		-e, --calc_color_dispersion 是否测量color_dispersion
-		-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)
-		-b, --calc_g2 是否测量G2
-		-h, --help 显示此帮助
-			""")
+		print(help_str)
 		return 0
 
 	threads = int(config["threads"])
