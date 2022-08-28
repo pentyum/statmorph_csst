@@ -282,7 +282,7 @@ def get_basename_without_end(path) -> str:
 	bn = os.path.basename(path)
 	if bn.endswith(".fits.gz"):
 		bn = bn[0:-8]
-	elif bn.endswith(".gz"):
+	elif bn.endswith(".fits"):
 		bn = bn[0:-5]
 	return bn
 
