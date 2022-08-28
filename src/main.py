@@ -278,6 +278,15 @@ def check_not_null(value) -> bool:
 	return value not in ("null", "NULL", "None", "NONE", "", None)
 
 
+def get_basename_without_end(path) -> str:
+	bn = os.path.basename(path)
+	if bn.endswith(".fits.gz"):
+		bn = bn[0:-8]
+	elif bn.endswith(".gz"):
+		bn = bn[0:-5]
+	return bn
+
+
 help_str = """SExtractor-Statmorph 简化合并版使用说明
 
 	-j, --threads=并行进程数量，若为0则为CPU核心数量-1(若为单核则为1)
@@ -287,7 +296,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-o, --save_file=形态学参数输出文件名
 	-p, --run_percentage=运行全部源数量的百分比，100表示全部运行
 	-l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
-	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹
+	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式则还包括measure_file
 	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
@@ -372,6 +381,11 @@ def main(argv) -> int:
 		output_image_dir = None
 	if not check_not_null(image_compare_file):
 		image_compare_file = None
+	if not check_not_null(sextractor_work_dir):
+		detect_base_name = get_basename_without_end(detect_file)
+		sextractor_work_dir = "sextractor_"+detect_base_name
+		if measure_file is not None:
+			sextractor_work_dir = sextractor_work_dir + "_" + get_basename_without_end(measure_file)
 
 	if threads <= 0:
 		threads = min(multiprocessing.cpu_count() - 1, 1)
