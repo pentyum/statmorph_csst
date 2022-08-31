@@ -290,7 +290,7 @@ def get_basename_without_end(path) -> str:
 help_str = """SExtractor-Statmorph 简化合并版使用说明
 
 	-j, --threads=并行进程数量，若为0则为CPU核心数量-1(若为单核则为1)
-	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件，若跳过SExtractor可以不需要
+	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件(深度越深，PSF越大越好)，若跳过SExtractor可以不需要
 	-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定(为null)则为单图像模式，若跳过SExtractor可以不需要
 	-w, --wht_file=权重图像文件，若跳过SExtractor可以不需要
 	-o, --save_file=形态学参数输出文件名，若不指定则默认为image_file的文件名(不包括后缀).txt，双图像模式则还包括measure_file
