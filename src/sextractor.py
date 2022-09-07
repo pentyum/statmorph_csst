@@ -7,6 +7,8 @@ import time
 from multiprocessing.pool import Pool
 from typing import List, Dict, Union, Optional
 
+import numpy as np
+
 
 class SExtractor:
 	default_sex_str_model = """# Default configuration file for SExtractor 2.8.6
@@ -120,11 +122,15 @@ NTHREADS         4              # 1 single thread
 
 	"""
 
-	DEFAULT_VALUES: Dict[str, Union[float, int, str]] = {
+	DEFAULT_CONFIG: Dict[str, Union[float, int, str]] = {
+		# -------------------------------- Catalog ------------------------------------
+
 		"CATALOG_NAME": "test.cat",  # name of the output catalog
 		"CATALOG_TYPE": "ASCII_HEAD",  # NONE,ASCII,ASCII_HEAD, ASCII_SKYCAT,
 		# ASCII_VOTABLE, FITS_1.0 or FITS_LDAC
 		"PARAMETERS_NAME": "default.param",  # name of the file containing catalog contents
+
+		# ------------------------------- Extraction ----------------------------------
 
 		"DETECT_TYPE": "CCD",  # CCD (linear) or PHOTO (with gamma correction)
 		"DETECT_MINAREA": 3,  # min. # of pixels above threshold
@@ -141,16 +147,21 @@ NTHREADS         4              # 1 single thread
 		"CLEAN": "Y",  # Clean spurious detections? (Y or N)?
 		"CLEAN_PARAM": 1.0,  # Cleaning efficiency
 
-		"WEIGHT_TYPE": "NONE", # type of WEIGHTing: NONE, BACKGROUND,
+		# -------------------------------- WEIGHTing ----------------------------------
+
+		"WEIGHT_TYPE": "NONE",  # type of WEIGHTing: NONE, BACKGROUND,
 		# MAP_RMS, MAP_VAR or MAP_WEIGHT
 		"WEIGHT_IMAGE": "weight.fits",  # weight-map filename
 
+		# -------------------------------- FLAGging -----------------------------------
 
 		"FLAG_IMAGE": "flag.fits",  # filename for an input FLAG-image
 		"FLAG_TYPE": "OR",  # flag pixel combination: OR, AND, MIN, MAX
 		# or MOST
 
-		"PHOT_APERTURES": 5, # MAG_APER aperture diameter(s) in pixels
+		# ------------------------------ Photometry -----------------------------------
+
+		"PHOT_APERTURES": 5,  # MAG_APER aperture diameter(s) in pixels
 		"PHOT_AUTOPARAMS": "2.5, 3.5",  # MAG_AUTO parameters: <Kron_fact>,<min_radius>
 		"PHOT_PETROPARAMS": "2.0, 3.5",  # MAG_PETRO parameters: <Petrosian_fact>,
 		# <min_radius>
@@ -167,14 +178,19 @@ NTHREADS         4              # 1 single thread
 		"GAIN_KEY": "GAIN",  # keyword for detector gain in e-/ADU
 		"PIXEL_SCALE": 1.0,  # size of pixel in arcsec (0=use FITS WCS info)
 
+		# ------------------------- Star/Galaxy Separation ----------------------------
+
 		"SEEING_FWHM": 1.2,  # stellar FWHM in arcsec
 		"STARNNW_NAME": "default.nnw",  # Neural-Network_Weight table filename
+
+		# ------------------------------ Background -----------------------------------
 
 		"BACK_TYPE": "AUTO",  # AUTO or MANUAL
 		"BACK_VALUE": 0.0,  # Default background value in MANUAL mode
 		"BACK_SIZE": 64,  # Background mesh: <size> or <width>,<height>
 		"BACK_FILTERSIZE": 3,  # Background filter: <size> or <width>,<height>
 
+		# ------------------------------ Check Image ----------------------------------
 
 		"CHECKIMAGE_TYPE": "NONE",  # can be NONE, BACKGROUND, BACKGROUND_RMS,
 		# MINIBACKGROUND, MINIBACK_RMS, -BACKGROUND,
@@ -182,10 +198,13 @@ NTHREADS         4              # 1 single thread
 		# or APERTURES
 		"CHECKIMAGE_NAME": "check.fits",  # Filename for the check-image
 
+		# --------------------- Memory (change with caution!) -------------------------
 
 		"MEMORY_OBJSTACK": 3000,  # number of objects in stack
 		"MEMORY_PIXSTACK": 300000,  # number of pixels in stack
 		"MEMORY_BUFSIZE": 1024,  # number of lines in buffer
+
+		# ------------------------------- ASSOCiation ---------------------------------
 
 		"ASSOC_NAME": "sky.list",  # name of the ASCII file to ASSOCiate
 		"ASSOC_DATA": "2, 3, 4",  # columns of the data to replicate (0=all)
@@ -195,11 +214,55 @@ NTHREADS         4              # 1 single thread
 		# MAG_MEAN, SUM, MAG_SUM, MIN or MAX
 		"ASSOCSELEC_TYPE": "MATCHED",  # ASSOC selection type: ALL, MATCHED or -MATCHED
 
+		# ----------------------------- Miscellaneous ---------------------------------
+
 		"VERBOSE_TYPE": "NORMAL",  # can be QUIET, NORMAL or FULL
 		"HEADER_SUFFIX": ".head",  # Filename extension for additional headers
 		"WRITE_XML": "N",  # Write XML file (Y/N)?
 		"XML_NAME": "sex.xml",  # Filename for XML output
 		"XSL_URL": "file:///usr/local/share/sextractor/sextractor.xsl"  # Filename for XSL style-sheet
+	}
+
+	WEIGHT_CONFIG = {
+		"WEIGHT_TYPE": "MAP_WEIGHT",
+		"WEIGHT_GAIN": "N"
+	}
+
+	CANDELS_UKIDSS_USF_CONFIG = {
+		"MASK_TYPE": "CORRECT",
+		"PHOT_FLUXFRAC": "0.2, 0.5, 0.8",
+		"PHOT_APERTURES": "1.47, 2.08, 2.94, 4.17, 5.88, 8.34, 11.79, 16.66, 23.57, 33.34, 47.13",
+		"PIXEL_SCALE": 0.060,
+		"SEEING_FWHM": 0.18,
+		"STARNNW_NAME": "/usr/share/source-extractor/default.nnw",
+		"BACKPHOTO_TYPE": "LOCAL",
+		"WEIGHT_THRESH": "10000.0, 10000.0"
+	}  # Galametz et al. (2013)
+
+	CANDELS_UKIDSS_USF_COLD_CONFIG = {
+		"DETECT_MINAREA": 5.0,
+		"DETECT_THRESH": 0.75,
+		"ANALYSIS_THRESH": 5.0,
+		"FILTER_NAME": "/usr/share/source-extractor/tophat_9.0_9x9.conv",
+		"DEBLEND_NTHRESH": 16,
+		"DEBLEND_MINCONT": 0.0001,
+		"SATUR_LEVEL": 120.0,
+		"BACK_SIZE": 256,
+		"BACK_FILTERSIZE": 9,
+		"BACKPHOTO_THICK": 100
+	}
+
+	CANDELS_UKIDSS_USF_HOT_CONFIG = {
+		"DETECT_MINAREA": 10.0,
+		"DETECT_THRESH": 0.7,
+		"ANALYSIS_THRESH": 0.7,
+		"FILTER_NAME": "/usr/share/source-extractor/gauss_4.0_7x7.conv",
+		"DEBLEND_NTHRESH": 64,
+		"DEBLEND_MINCONT": 0.001,
+		"SATUR_LEVEL": 3900.0,
+		"BACK_SIZE": 128,
+		"BACK_FILTERSIZE": 5,
+		"BACKPHOTO_THICK": 48
 	}
 
 	BRIGHT_VALUES: Dict[str, Union[float, int]] = {
@@ -220,7 +283,7 @@ NTHREADS         4              # 1 single thread
 		"BACK_FILTERSIZE": 3
 	}
 
-	GLASS_JWST_VALUES: Dict[str, Union[float, int]] = {
+	GLASS_JWST_VALUES: Dict[str, Union[float, int, str]] = {
 		"DETECT_MINAREA": 8,
 		"DETECT_THRESH": 0.7071,
 		"ANALYSIS_THRESH": 0.7071,
@@ -228,8 +291,9 @@ NTHREADS         4              # 1 single thread
 		"DEBLEND_MINCONT": 0.0003,
 		"BACK_SIZE": 64,
 		"BACK_FILTERSIZE": 3,
+		"BACKPHOTO_TYPE": "LOCAL",
 		"BACKPHOTO_THICK": 48.0
-	}
+	}  # Merlin et al. (2022)
 
 	logging.basicConfig(level=logging.INFO,
 						format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
@@ -252,6 +316,10 @@ NTHREADS         4              # 1 single thread
 	POOL: Optional[Pool] = None
 
 	@staticmethod
+	def get_ab_zero_point(photflam: float, photplam: float) -> float:
+		return -2.5 * np.log10(photflam) - 5 * np.log10(photplam) - 2.408
+
+	@staticmethod
 	def unzip(gz_file_name: str, target_file_name: str) -> int:
 		return os.system("gunzip -c %s > %s" % (gz_file_name, target_file_name))
 
@@ -260,7 +328,8 @@ NTHREADS         4              # 1 single thread
 		self.logger = logging.getLogger(
 			"SExtractor(%s)" % os.path.basename(work_dir))
 		self.work_dir: str = work_dir
-		self.config: Dict[str, Union[float, int]] = config
+		self.config: Dict[str, Union[float, int, str]] = SExtractor.merge_sex_dict(SExtractor.DEFAULT_CONFIG,
+																				   SExtractor.STATMORPH_CONFIG, config)
 		self.output_list: List[str] = output_list
 		self.output_catalog_file: str = ""
 		self.output_subback_file: str = ""
@@ -308,8 +377,24 @@ NTHREADS         4              # 1 single thread
 		os.remove(self.work_dir + "/" + SExtractor.default_param_bak_file)
 		self.logger.info("已取消" + ", ".join(self.output_list) + "的注释")
 
+	@staticmethod
+	def merge_sex_dict(old_dict: Dict[str, Union[float, int, str]], *mod_dicts: Dict[str, Union[float, int, str]]) -> \
+			Dict[str, Union[float, int, str]]:
+		new_dict = old_dict.copy()
+		for mod_dict in mod_dicts:
+			for k, v in mod_dict.items():
+				new_dict[k] = v
+		return new_dict
+
 	def make_default_sex(self, wht_file_unzipped: str, output_catalog_file: str, output_subback_file: str,
 						 output_segmap_file: str) -> str:
+		self.config["CATALOG_NAME"] = self.work_dir + "/" + output_catalog_file
+		self.config["PARAMETERS_NAME"] = self.work_dir + "/" + SExtractor.default_param_file
+		self.config["WEIGHT_IMAGE"] = wht_file_unzipped
+		subback_save_path = self.work_dir + "/" + output_subback_file
+		segmap_save_path = self.work_dir + "/" + output_segmap_file
+		self.config["CHECKIMAGE_NAME"] = "%s,%s" % (subback_save_path, segmap_save_path)
+
 		default_sex_str = SExtractor.default_sex_str_model % (
 			self.work_dir + "/" + output_catalog_file,
 			self.work_dir + "/" + SExtractor.default_param_file,
