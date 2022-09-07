@@ -8,6 +8,7 @@ from multiprocessing.pool import Pool
 from typing import List, Dict, Union, Optional
 
 import numpy as np
+from astropy.io import fits
 
 
 class SExtractor:
@@ -394,12 +395,13 @@ NTHREADS         4              # 1 single thread
 		return s
 
 	def make_default_sex(self, wht_file_unzipped: str, output_catalog_file: str, output_subback_file: str,
-						 output_segmap_file: str) -> str:
+						 output_segmap_file: str, zeropoint: float) -> str:
 		self.config["CATALOG_NAME"] = self.work_dir + "/" + output_catalog_file
 		self.config["PARAMETERS_NAME"] = self.work_dir + "/" + SExtractor.default_param_file
 		self.config["WEIGHT_IMAGE"] = wht_file_unzipped
 		subback_save_path = self.work_dir + "/" + output_subback_file
 		segmap_save_path = self.work_dir + "/" + output_segmap_file
+		self.config["MAG_ZEROPOINT"] = zeropoint
 		self.config["CHECKIMAGE_TYPE"] = "-BACKGROUND,SEGMENTATION"
 		self.config["CHECKIMAGE_NAME"] = "%s,%s" % (subback_save_path, segmap_save_path)
 
@@ -429,6 +431,9 @@ NTHREADS         4              # 1 single thread
 		return sex_file_path
 
 	def handle_unzipped_file_end(self, temp_file_name: str, clean_temp: bool):
+		"""
+		处理解压后的文件，如果clean_tamp则删除，否则不删除
+		"""
 		if clean_temp:
 			os.remove(temp_file_name)
 			self.logger.info("清理" + temp_file_name)
@@ -437,6 +442,9 @@ NTHREADS         4              # 1 single thread
 
 	@staticmethod
 	def is_main_process():
+		"""
+		是否是主进程
+		"""
 		return not bool(re.match(r'ForkPoolWorker-\d+', multiprocessing.current_process().name))
 
 	def handle_unzip_fits_gz_list(self, unzip_file_list: List[str]) -> List[str]:
@@ -449,6 +457,20 @@ NTHREADS         4              # 1 single thread
 			result = [self.unzip_fits_gz(file) for file in unzip_file_list]
 
 		return result
+
+	@classmethod
+	def read_zeropoint(cls, file) -> float:
+		file_fits: fits.HDUList = fits.open(file)
+		header: fits.Header = file_fits[0].header
+		zeropoint = 0
+		if "ZP" in header:
+			zeropoint = header["ZP"]
+		elif "PHOTFLAM" in header and "PHOTPLAM" in header:
+			zeropoint = SExtractor.get_ab_zero_point(header["PHOTFLAM"], header["PHOTPLAM"])
+		else:
+			cls.LOGGER.error("header没有ZP或者PHOTFLAM和PHOTPLAM字段，无法获取测光零点")
+		file_fits.close()
+		return zeropoint
 
 	def run(self, detect_file: str, wht_file: str, measure_file: Optional[str] = None,
 			output_catalog_file: str = "catalog.txt",
@@ -485,22 +507,26 @@ NTHREADS         4              # 1 single thread
 		self.logger.info("weight图像文件: " + wht_file)
 
 		if measure_file is None:
-			sci_file_unzipped, wht_file_unzipped = self.handle_unzip_fits_gz_list([detect_file, wht_file])
+			detect_file_unzipped, wht_file_unzipped = self.handle_unzip_fits_gz_list([detect_file, wht_file])
+			zeropoint = SExtractor.read_zeropoint(detect_file_unzipped)
 			measure_file_unzipped = None
 		else:
-			sci_file_unzipped, wht_file_unzipped, measure_file_unzipped = self.handle_unzip_fits_gz_list(
+			detect_file_unzipped, wht_file_unzipped, measure_file_unzipped = self.handle_unzip_fits_gz_list(
 				[detect_file, wht_file, measure_file])
+			zeropoint = SExtractor.read_zeropoint(measure_file_unzipped)
+
+		self.logger.info("Zeropoint=%.2f" % zeropoint)
 
 		sex_file_path: str = self.make_default_sex(wht_file_unzipped, output_catalog_file, output_subback_file,
-												   output_segmap_file)
+												   output_segmap_file, zeropoint)
 
 		if measure_file_unzipped is None:
 			self.logger.info("开始运行source-extractor单图像模式")
-			self.return_value = os.system("source-extractor " + sci_file_unzipped + " -c " + sex_file_path)
+			self.return_value = os.system("source-extractor " + detect_file_unzipped + " -c " + sex_file_path)
 		else:
 			self.logger.info("开始运行source-extractor双图像模式")
 			self.return_value = os.system(
-				"source-extractor " + sci_file_unzipped + "," + measure_file_unzipped + " -c " + sex_file_path)
+				"source-extractor " + detect_file_unzipped + "," + measure_file_unzipped + " -c " + sex_file_path)
 
 		if self.return_value == 0:
 			self.logger.info("SExtractor运行成功")
@@ -512,10 +538,12 @@ NTHREADS         4              # 1 single thread
 			self.logger.critical(err_msg)
 			raise RuntimeError(err_msg)
 
-		if sci_file_unzipped != detect_file:
-			self.handle_unzipped_file_end(sci_file_unzipped, clean_temp)
+		if detect_file_unzipped != detect_file:
+			self.handle_unzipped_file_end(detect_file_unzipped, clean_temp)
 		if wht_file_unzipped != wht_file:
 			self.handle_unzipped_file_end(wht_file_unzipped, clean_temp)
+		if measure_file_unzipped != measure_file:
+			self.handle_unzipped_file_end(measure_file_unzipped, clean_temp)
 
 		self.logger.info(f'用时: {time.time() - start_time:.2f}s')
 
