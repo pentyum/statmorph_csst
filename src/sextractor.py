@@ -236,7 +236,7 @@ NTHREADS         4              # 1 single thread
 		"SEEING_FWHM": 0.18,
 		"STARNNW_NAME": "/usr/share/source-extractor/default.nnw",
 		"BACKPHOTO_TYPE": "LOCAL",
-		"WEIGHT_THRESH": "10000.0, 10000.0"
+		# "WEIGHT_THRESH": "10000.0, 10000.0"
 	}  # Galametz et al. (2013)
 
 	CANDELS_UKIDSS_USF_COLD_CONFIG = {
@@ -265,6 +265,18 @@ NTHREADS         4              # 1 single thread
 		"BACKPHOTO_THICK": 48
 	}
 
+	GLASS_JWST_VALUES: Dict[str, Union[float, int, str]] = {
+		"DETECT_MINAREA": 8,
+		"DETECT_THRESH": 0.7071,
+		"ANALYSIS_THRESH": 0.7071,
+		"DEBLEND_NTHRESH": 32,
+		"DEBLEND_MINCONT": 0.0003,
+		"BACK_SIZE": 64,
+		"BACK_FILTERSIZE": 3,
+		"BACKPHOTO_TYPE": "LOCAL",
+		"BACKPHOTO_THICK": 48.0
+	}  # Merlin et al. (2022)
+
 	BRIGHT_VALUES: Dict[str, Union[float, int]] = {
 		"DETECT_MINAREA": 140,
 		"DETECT_THRESH": 2.2,
@@ -282,18 +294,6 @@ NTHREADS         4              # 1 single thread
 		"BACK_SIZE": 100,
 		"BACK_FILTERSIZE": 3
 	}
-
-	GLASS_JWST_VALUES: Dict[str, Union[float, int, str]] = {
-		"DETECT_MINAREA": 8,
-		"DETECT_THRESH": 0.7071,
-		"ANALYSIS_THRESH": 0.7071,
-		"DEBLEND_NTHRESH": 32,
-		"DEBLEND_MINCONT": 0.0003,
-		"BACK_SIZE": 64,
-		"BACK_FILTERSIZE": 3,
-		"BACKPHOTO_TYPE": "LOCAL",
-		"BACKPHOTO_THICK": 48.0
-	}  # Merlin et al. (2022)
 
 	logging.basicConfig(level=logging.INFO,
 						format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
@@ -329,7 +329,7 @@ NTHREADS         4              # 1 single thread
 			"SExtractor(%s)" % os.path.basename(work_dir))
 		self.work_dir: str = work_dir
 		self.config: Dict[str, Union[float, int, str]] = SExtractor.merge_sex_dict(SExtractor.DEFAULT_CONFIG,
-																				   SExtractor.STATMORPH_CONFIG, config)
+																				   SExtractor.WEIGHT_CONFIG, config)
 		self.output_list: List[str] = output_list
 		self.output_catalog_file: str = ""
 		self.output_subback_file: str = ""
@@ -386,6 +386,13 @@ NTHREADS         4              # 1 single thread
 				new_dict[k] = v
 		return new_dict
 
+	@staticmethod
+	def sex_dict_to_str(sex_config_dict: Dict[str, Union[float, int, str]]):
+		s = "# Default configuration file for Source Extractor 2.25.0\n"
+		for k, v in sex_config_dict.items():
+			s = s + k + "\t" + str(v) + "\n"
+		return s
+
 	def make_default_sex(self, wht_file_unzipped: str, output_catalog_file: str, output_subback_file: str,
 						 output_segmap_file: str) -> str:
 		self.config["CATALOG_NAME"] = self.work_dir + "/" + output_catalog_file
@@ -393,8 +400,12 @@ NTHREADS         4              # 1 single thread
 		self.config["WEIGHT_IMAGE"] = wht_file_unzipped
 		subback_save_path = self.work_dir + "/" + output_subback_file
 		segmap_save_path = self.work_dir + "/" + output_segmap_file
+		self.config["CHECKIMAGE_TYPE"] = "-BACKGROUND,SEGMENTATION"
 		self.config["CHECKIMAGE_NAME"] = "%s,%s" % (subback_save_path, segmap_save_path)
 
+		default_sex_str = SExtractor.sex_dict_to_str(self.config)
+
+		"""
 		default_sex_str = SExtractor.default_sex_str_model % (
 			self.work_dir + "/" + output_catalog_file,
 			self.work_dir + "/" + SExtractor.default_param_file,
@@ -408,6 +419,7 @@ NTHREADS         4              # 1 single thread
 			self.work_dir + "/" + output_subback_file,
 			self.work_dir + "/" + output_segmap_file
 		)
+		"""
 
 		sex_file_path: str = self.work_dir + "/" + SExtractor.default_sex_file
 		with open(sex_file_path, "w") as default_sex:

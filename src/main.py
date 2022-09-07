@@ -96,7 +96,10 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 
 def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: bool,
 				   measure_file: Optional[str] = None):
-	sextractor = SExtractor(work_dir, SExtractor.BRIGHT_VALUES, SExtractor.OUTPUT_LIST_DEFAULT)
+	sextractor = SExtractor(work_dir, SExtractor.merge_sex_dict(SExtractor.CANDELS_UKIDSS_USF_CONFIG,
+																SExtractor.CANDELS_UKIDSS_USF_HOT_CONFIG,
+																SExtractor.GLASS_JWST_VALUES),
+							SExtractor.OUTPUT_LIST_DEFAULT)
 	sextractor.run(detect_file, wht_file, measure_file, use_existed=use_existed)
 	return sextractor
 
