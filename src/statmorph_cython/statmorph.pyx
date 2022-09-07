@@ -157,6 +157,10 @@ cdef class BaseInfo(MorphInfo):
 		图像切片的高度
 		"""
 
+		if self.nx_stamp * self.ny_stamp > 1000000 :
+			warnings.warn('Cutout size too big (>1000000), skip.', AstropyUserWarning)
+			self._abort_calculations()
+
 		self._mask_stamp_nan = self.get_mask_stamp_nan()
 		"""
 		图像切片中有哪些点是nan或者inf
@@ -205,10 +209,6 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		用于计算的星系本体的全部像素的数量
 		"""
-
-		if self.size > 1000000 :
-			warnings.warn('Size too big, skip.', AstropyUserWarning)
-			self._abort_calculations()
 
 		self.surface_brightness = np.mean(self._cutout_stamp[~self._mask_stamp_no_bg])
 		"""
