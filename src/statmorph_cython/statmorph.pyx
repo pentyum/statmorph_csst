@@ -206,6 +206,10 @@ cdef class BaseInfo(MorphInfo):
 		用于计算的星系本体的全部像素的数量
 		"""
 
+		if size > 1000000 :
+			warnings.warn('Size too big, skip.', AstropyUserWarning)
+			self._abort_calculations()
+
 		self.surface_brightness = np.mean(self._cutout_stamp[~self._mask_stamp_no_bg])
 		"""
 		用于计算的星系本体的大小每个像素流量的平均值
