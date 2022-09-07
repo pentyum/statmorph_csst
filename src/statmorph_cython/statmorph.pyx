@@ -206,7 +206,7 @@ cdef class BaseInfo(MorphInfo):
 		用于计算的星系本体的全部像素的数量
 		"""
 
-		if size > 1000000 :
+		if self.size > 1000000 :
 			warnings.warn('Size too big, skip.', AstropyUserWarning)
 			self._abort_calculations()
 
