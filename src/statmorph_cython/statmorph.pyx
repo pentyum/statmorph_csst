@@ -608,45 +608,45 @@ cdef class CASInfo(MorphInfo):
 		super().__init__()
 
 	def get_values(self):
-		return [self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self.flags.value()]
+		return [self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self.runtime, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["rp_circ", "C", "A", "S", "cas_flag"]
+		return ["rp_circ", "C", "A", "S", "cas_time", "cas_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f", "%f", "%d"]
+		return ["%f", "%f", "%f", "%f", "%f", "%d"]
 
 cdef class GiniM20Info(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
 	def get_values(self):
-		return [self.rpetro_ellip, self.gini, self.m20, self.flags.value()]
+		return [self.rpetro_ellip, self.gini, self.m20, self.runtime, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["rp_ellip", "G", "M20", "g_m20_flag"]
+		return ["rp_ellip", "G", "M20", "g_m20_runtime", "g_m20_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f", "%d"]
+		return ["%f", "%f", "%f", "%f", "%d"]
 
 cdef class MIDInfo(MorphInfo):
 	def __init__(self):
 		super().__init__()
 
 	def get_values(self):
-		return [self.multimode, self.intensity, self.deviation, self.flags.value()]
+		return [self.multimode, self.intensity, self.deviation, self.runtime, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["M", "I", "D", "mid_flag"]
+		return ["M", "I", "D", "mid_time", "mid_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f", "%d"]
+		return ["%f", "%f", "%f", "%f", "%d"]
 
 cdef class CompareInfo(MorphInfo):
 	def __init__(self):
@@ -713,15 +713,15 @@ cdef class CompareInfo(MorphInfo):
 								 self._image_compare[self.base_info._slice_stamp], 0.0)
 
 	def get_values(self):
-		return [self.color_dispersion]
+		return [self.color_dispersion, self.runtime]
 
 	@staticmethod
 	def get_value_names():
-		return ["color_dispersion"]
+		return ["color_dispersion", "color_dispersion_time"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f"]
+		return ["%f", "%f"]
 
 
 cdef class G2Info(MorphInfo):
@@ -804,15 +804,15 @@ cdef class G2Info(MorphInfo):
 		return ax
 
 	def get_values(self):
-		return [self.result_g2]
+		return [self.result_g2, self.runtime]
 
 	@staticmethod
 	def get_value_names():
-		return ["g2"]
+		return ["g2", "g2_time"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f"]
+		return ["%f", "%f"]
 
 
 cdef class MorphInfo:
