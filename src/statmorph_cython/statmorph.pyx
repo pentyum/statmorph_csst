@@ -157,8 +157,8 @@ cdef class BaseInfo(MorphInfo):
 		图像切片的高度
 		"""
 
-		if self.nx_stamp * self.ny_stamp > 1000000 :
-			warnings.warn('Cutout size too big (%d*%d>1000000), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
+		if self.nx_stamp * self.ny_stamp > 4000000 :
+			warnings.warn('Cutout size too big (%d*%d>4000000), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
 			self._abort_calculations()
 			return
 
@@ -281,7 +281,7 @@ cdef class BaseInfo(MorphInfo):
 			if image_compare is not None:
 				start = clock()
 				self.image_compare = image_compare
-				self.compare_info = CompareInfo(self.image_compare, self)
+				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, image_compare)
 				self.compare_info.calc_runtime(start)
 			else:
 				warnings.warn("[Color dispersion] compare image not defined")
@@ -535,8 +535,22 @@ cdef class BaseInfo(MorphInfo):
 		self.nx_stamp = -99
 		self.ny_stamp = -99
 		self.flag_catastrophic = True
-		# 图像切片总和不是正数，直接终止全部计算
+		# 图像切片总和不是正数，或者图片过大，直接终止全部计算
 		self.runtime = -99.0
+
+		if self.calc_cas:
+			self.cas = CASInfo()
+		if self.calc_g_m20:
+			self.g_m20 = GiniM20Info()
+		if self.calc_mid:
+			self.mid = MIDInfo()
+			if self.calc_multiply:
+				self.multiply = -99
+		if self.calc_color_dispersion:
+			self.compare_info = CompareInfo()
+		if self.calc_g2:
+			self.g2 = G2Info()
+
 
 	cdef void save_image(self):
 		"""
@@ -635,26 +649,8 @@ cdef class MIDInfo(MorphInfo):
 		return ["%f", "%f", "%f", "%d"]
 
 cdef class CompareInfo(MorphInfo):
-	def __init__(self, cnp.ndarray[double, ndim=2] image_compare, BaseInfo base_info):
+	def __init__(self):
 		super().__init__()
-		self._image_compare = image_compare
-		self.base_info = base_info
-		self.num_badpixels = -1
-
-		self._mask_stamp_nan_compare = self.get_mask_stamp_nan_compare()
-		self._mask_stamp_badpixels_compare = self.get_mask_stamp_badpixels_compare()
-		self._mask_stamp_compare = self.get_mask_stamp_compare()
-		self._mask_stamp_no_bg_compare = self.get_mask_stamp_no_bg_compare()
-
-		self._cutout_stamp_maskzeroed_compare = self.get_cutout_stamp_maskzeroed_compare()
-		self._cutout_stamp_maskzeroed_no_bg_compare = self.get_cutout_stamp_maskzeroed_no_bg_compare()
-
-		'''
-		In this part we get the sky area for the following calculation
-		'''
-		self._bkg_compare = self._cutout_stamp_maskzeroed_compare[self.base_info.cas._slice_skybox]
-
-		self.color_dispersion = self.get_color_dispersion()
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_nan_compare(self):
 		"""
@@ -715,35 +711,6 @@ cdef class CompareInfo(MorphInfo):
 		"""
 		return cnp.PyArray_Where(~self._mask_stamp_no_bg_compare,
 								 self._image_compare[self.base_info._slice_stamp], 0.0)
-
-	cdef double get_color_dispersion(self):
-		cdef double alpha, beta, dispersion_1, dispersion_2, sky_dispersion, color_dispersion
-		cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_dispersion
-		cdef cnp.ndarray[double,ndim=1] image, image_compare
-
-		assert cnp.PyArray_SAMESHAPE(self._image_compare, self.base_info._image)
-		assert self.base_info.cas is not None
-
-		alpha, beta = statmorph_cython.color_dispersion.find_alpha_beta(self.base_info._cutout_stamp_maskzeroed,
-									  self._cutout_stamp_maskzeroed_compare)
-		print(alpha, beta)
-		segmap_dispersion = statmorph_cython.color_dispersion.segmap_color_dispersion(self.base_info.cas.rpetro_circ,
-													self.base_info.cas._asymmetry_center,
-													self.base_info.nx_stamp,
-													self.base_info.ny_stamp)
-
-		image = self.base_info._cutout_stamp_maskzeroed_no_bg[segmap_dispersion]
-		image_compare = self._cutout_stamp_maskzeroed_no_bg_compare[segmap_dispersion]
-
-		dispersion_1 = np.sum((image - image_compare * alpha - beta) ** 2)
-		dispersion_2 = np.sum((image_compare - beta) ** 2)
-		sky_dispersion = statmorph_cython.color_dispersion._sky_dispersion(self.base_info._cutout_stamp_maskzeroed,
-										 self._cutout_stamp_maskzeroed_compare,
-										 self.base_info.cas._bkg, self._bkg_compare)
-
-		color_dispersion = (dispersion_1 - sky_dispersion) / (dispersion_2 - sky_dispersion)
-
-		return color_dispersion
 
 	def get_values(self):
 		return [self.color_dispersion]
