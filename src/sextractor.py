@@ -226,7 +226,8 @@ NTHREADS         4              # 1 single thread
 
 	WEIGHT_CONFIG = {
 		"WEIGHT_TYPE": "MAP_WEIGHT",
-		"WEIGHT_GAIN": "N"
+		"WEIGHT_GAIN": "N",
+		"GAIN": 1
 	}
 
 	CANDELS_UKIDSS_USF_CONFIG = {
@@ -237,8 +238,10 @@ NTHREADS         4              # 1 single thread
 		"SEEING_FWHM": 0.18,
 		"STARNNW_NAME": "/usr/share/source-extractor/default.nnw",
 		"BACKPHOTO_TYPE": "LOCAL",
-		# "WEIGHT_THRESH": "10000.0, 10000.0"
-		"MEMORY_PIXSTACK": 3000000
+		# "WEIGHT_THRESH": "10000.0, 10000.0",
+		"MEMORY_OBJSTACK": 4000,
+		"MEMORY_PIXSTACK": 3000000,
+		"MEMORY_BUFSIZE": 5000
 	}  # Galametz et al. (2013)
 
 	CANDELS_UKIDSS_USF_COLD_CONFIG = {
@@ -276,7 +279,8 @@ NTHREADS         4              # 1 single thread
 		"BACK_SIZE": 64,
 		"BACK_FILTERSIZE": 3,
 		"BACKPHOTO_TYPE": "LOCAL",
-		"BACKPHOTO_THICK": 48.0
+		"BACKPHOTO_THICK": 48.0,
+		"PIXEL_SCALE": 0
 	}  # Merlin et al. (2022)
 
 	BRIGHT_VALUES: Dict[str, Union[float, int]] = {
