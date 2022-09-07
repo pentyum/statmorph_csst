@@ -238,6 +238,7 @@ NTHREADS         4              # 1 single thread
 		"STARNNW_NAME": "/usr/share/source-extractor/default.nnw",
 		"BACKPHOTO_TYPE": "LOCAL",
 		# "WEIGHT_THRESH": "10000.0, 10000.0"
+		"MEMORY_PIXSTACK": 3000000
 	}  # Galametz et al. (2013)
 
 	CANDELS_UKIDSS_USF_COLD_CONFIG = {
