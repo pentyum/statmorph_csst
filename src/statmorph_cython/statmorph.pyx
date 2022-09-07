@@ -157,8 +157,8 @@ cdef class BaseInfo(MorphInfo):
 		图像切片的高度
 		"""
 
-		if self.nx_stamp * self.ny_stamp > 10000000 :
-			warnings.warn('Cutout size too big (%d*%d>10M), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
+		if self.nx_stamp * self.ny_stamp > 9000000 :
+			warnings.warn('Cutout size too big (%d*%d>9M), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
 			self._abort_calculations()
 			return
 
