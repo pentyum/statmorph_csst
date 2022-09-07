@@ -158,7 +158,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 
 		if self.nx_stamp * self.ny_stamp > 5760000 :
-			warnings.warn('Cutout size too big (%d*%d>5000000), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
+			warnings.warn('Cutout size too big (%d*%d>5760000), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
 			self._abort_calculations()
 			return
 
