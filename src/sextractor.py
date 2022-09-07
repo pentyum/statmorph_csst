@@ -464,8 +464,10 @@ NTHREADS         4              # 1 single thread
 		header: fits.Header = file_fits[0].header
 		zeropoint = 0
 		if "ZP" in header:
+			cls.LOGGER.info("zeropoint直接读取header的ZP字段")
 			zeropoint = header["ZP"]
 		elif "PHOTFLAM" in header and "PHOTPLAM" in header:
+			cls.LOGGER.info("zeropoint由header的PHOTFLAM和PHOTPLAM字段计算得到")
 			zeropoint = SExtractor.get_ab_zero_point(header["PHOTFLAM"], header["PHOTPLAM"])
 		else:
 			cls.LOGGER.error("header没有ZP或者PHOTFLAM和PHOTPLAM字段，无法获取测光零点")
@@ -515,7 +517,7 @@ NTHREADS         4              # 1 single thread
 				[detect_file, wht_file, measure_file])
 			zeropoint = SExtractor.read_zeropoint(measure_file_unzipped)
 
-		self.logger.info("Zeropoint=%.2f" % zeropoint)
+		self.logger.info("zeropoint=%.2f" % zeropoint)
 
 		sex_file_path: str = self.make_default_sex(wht_file_unzipped, output_catalog_file, output_subback_file,
 												   output_segmap_file, zeropoint)
