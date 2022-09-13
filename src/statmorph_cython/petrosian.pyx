@@ -187,6 +187,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 						  AstropyUserWarning)
 			flags.set_flag_true(10)
 		curval = _petrosian_function_ellip(a, center, cutout_stamp_maskzeroed, elongation, theta, flags, constants)
+		print("a_min=%.2f, a_max=%.2f, curval=%.3f"%(a_min, a_max, curval))
 		if curval >= 0:
 			a_min = a
 		elif curval < 0:
