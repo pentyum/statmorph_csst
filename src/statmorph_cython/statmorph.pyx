@@ -562,8 +562,13 @@ cdef class BaseInfo(MorphInfo):
 		cdef int stamp_x = self._slice_stamp[1].start
 		cdef int stamp_y = self._slice_stamp[0].start
 		cdef int rec_x, rec_y, rec_x_length, rec_y_length
+		if self.nx_stamp < 1000 and self.ny_stamp < 1000:
+			plt.figure(figsize=(5, 5))
+		elif self.nx_stamp < 2500 and self.ny_stamp < 2500:
+			plt.figure(figsize=(10, 10))
+		else:
+			plt.figure(figsize=(20, 20))
 
-		plt.figure(figsize=(5, 5))
 		extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
 		plt.imshow(np.log10(self._cutout_stamp), cmap="gray_r", origin="lower", extent=extent, interpolation="none")
 
