@@ -451,10 +451,13 @@ cdef CASInfo calc_cas(BaseInfo base_info):
 	以不对称中心计算得到的不对称度
 	"""
 
-	cas_info.rpetro_circ = _rpetro_circ_generic(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center, base_info._diagonal_distance, cas_info.flags, base_info.constants)
-	"""
-	以不对称中心为中心的Petrosian圆形孔径半径
-	"""
+	if base_info._use_centroid:
+		cas_info.rpetro_circ = _rpetro_circ_generic(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center, base_info._diagonal_distance, cas_info.flags, base_info.constants)
+		"""
+		以不对称中心为中心的Petrosian圆形孔径半径
+		"""
+	else:
+		cas_info.rpetro_circ = base_info._rpetro_circ_centroid
 
 	cas_info.r20 = get_r20(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center, cas_info.rpetro_circ, cas_info.flags, base_info.constants)
 	"""
