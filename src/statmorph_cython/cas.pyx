@@ -10,7 +10,7 @@ import numpy as np
 import scipy.ndimage as ndi
 cimport numpy as cnp
 import skimage.transform
-from libc.math cimport fabs, log10
+from libc.math cimport fabs, log10, sqrt
 from numpy.math cimport isnan, isfinite
 
 from .statmorph cimport BaseInfo, CASInfo
@@ -431,6 +431,15 @@ cdef CASInfo calc_cas(BaseInfo base_info):
 	"""
 	获得不对称中心，依次为x和y，坐标是相对于切片的
 	"""
+
+	cdef double dx_c, dy_c
+
+	if sqrt(dx_c ** 2 + dy_c ** 2) >= base_info.constants.petro_extent_cas * base_info._rpetro_circ_centroid:
+		base_info._use_centroid = True
+		cas_info._asymmetry_center = base_info._centroid
+		warnings.warn('[CAS] Asymmetry center is too far, using centroid center', AstropyUserWarning)
+		cas_info.flags.set_flag_true(10)
+
 	cas_info.xc_asymmetry = base_info.xmin_stamp + cas_info._asymmetry_center[0]
 	cas_info.yc_asymmetry = base_info.ymin_stamp + cas_info._asymmetry_center[1]
 
@@ -472,7 +481,7 @@ cdef CASInfo calc_cas(BaseInfo base_info):
 	# Check if image is background-subtracted; set flag=1 if not.
 	if fabs(cas_info.sky_mean) > cas_info.sky_sigma:
 		warnings.warn('Image is not background-subtracted.', AstropyUserWarning)
-		cas_info.flags.set_flag_true(10)
+		cas_info.flags.set_flag_true(11)
 
 	cas_info._sky_smoothness = get_sky_smoothness(cas_info._bkg, cas_info.rpetro_circ, cas_info.flags, base_info.constants)
 	"""
