@@ -570,7 +570,7 @@ cdef class BaseInfo(MorphInfo):
 			plt.figure(figsize=(20, 20))
 
 		extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
-		plt.imshow(np.log10(self._cutout_stamp), cmap="gray_r", origin="lower", extent=extent, interpolation="none")
+		plt.imshow(np.log10(self._cutout_stamp_maskzeroed), cmap="gray_r", origin="lower", extent=extent, interpolation="none")
 
 		if self.cas is not None:
 			rec_x = stamp_x + self.cas._slice_skybox[1].start
