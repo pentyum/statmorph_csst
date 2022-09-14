@@ -259,8 +259,6 @@ cdef class BaseInfo(MorphInfo):
 			start = clock()
 			self.cas = statmorph_cython.cas.calc_cas(self)
 			self.cas.calc_runtime(start)
-			dx_c = self.cas.xc_asymmetry - self.xc_centroid
-			dy_c = self.cas.yc_asymmetry - self.yc_centroid
 			center_used = self.cas._asymmetry_center
 		else:
 			self._use_centroid = True

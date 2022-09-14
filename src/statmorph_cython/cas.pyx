@@ -434,6 +434,9 @@ cdef CASInfo calc_cas(BaseInfo base_info):
 
 	cdef double dx_c, dy_c
 
+	dx_c = cas_info._asymmetry_center[0] - base_info._centroid[0]
+	dy_c = cas_info._asymmetry_center[1] - base_info._centroid[1]
+
 	if sqrt(dx_c ** 2 + dy_c ** 2) >= base_info.constants.petro_extent_cas * base_info._rpetro_circ_centroid:
 		base_info._use_centroid = True
 		cas_info._asymmetry_center = base_info._centroid
