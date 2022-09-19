@@ -9,6 +9,9 @@ from typing import List, Dict, Union, Optional
 
 import numpy as np
 from astropy.io import fits
+import astropy.units as u
+from astropy.nddata import CCDData
+from astropy.wcs import WCS
 
 
 class SExtractor:
@@ -326,6 +329,10 @@ NTHREADS         4              # 1 single thread
 		return -2.5 * np.log10(photflam) - 5 * np.log10(photplam) - 2.408
 
 	@staticmethod
+	def get_ab_zero_point_from_unit(unit: u.Unit) -> float:
+		return u.Magnitude((1 * unit).to(u.AB)).value
+
+	@staticmethod
 	def unzip(gz_file_name: str, target_file_name: str) -> int:
 		return os.system("gunzip -c %s > %s" % (gz_file_name, target_file_name))
 
@@ -463,19 +470,49 @@ NTHREADS         4              # 1 single thread
 
 		return result
 
+	@staticmethod
+	def read_bunit(fits_unit_string: str) -> u.Unit:
+		# Convert the BUNIT header keyword to a unit and if that's not
+		# possible raise a meaningful error message.
+		try:
+			kifus = CCDData.known_invalid_fits_unit_strings
+			if fits_unit_string in kifus:
+				return kifus[fits_unit_string]
+			else:
+				return u.Unit(fits_unit_string)
+		except ValueError:
+			raise ValueError(
+				'The Header value for the key BUNIT ({}) cannot be '
+				'interpreted as valid unit. To successfully read the '
+				'file as CCDData you can pass in a valid `unit` '
+				'argument explicitly or change the header of the FITS '
+				'file before reading it.'
+				.format(fits_unit_string))
+
 	@classmethod
-	def read_zeropoint(cls, file) -> float:
+	def read_zeropoint(cls, file: str, index: int = 0) -> float:
 		file_fits: fits.HDUList = fits.open(file)
-		header: fits.Header = file_fits[0].header
-		zeropoint = 0
+		header: fits.Header = file_fits[index].header
+		zeropoint: float = 0
+		unit_str: str = header["BUNIT"]
+		unit = SExtractor.read_bunit(unit_str)
 		if "ZP" in header:
 			cls.LOGGER.info("zeropoint直接读取header的ZP字段")
 			zeropoint = header["ZP"]
-		elif "PHOTFLAM" in header and "PHOTPLAM" in header:
+		elif unit.physical_type == u.AB.physical_type:  # 流量单位Jy或者erg/s/Hz/cm2
+			cls.LOGGER.info("zeropoint由单位(%s)计算得到" % unit)
+			zeropoint = SExtractor.get_ab_zero_point_from_unit(unit)
+		elif unit.physical_type == (u.AB / u.sr).physical_type:  # 流量/立体角单位Jy/sr或者erg/s/Hz/cm2/sr
+			cls.LOGGER.info("zeropoint由单位(%s)和像素面积计算得到" % unit)
+			w = WCS(header)
+			area = w.proj_plane_pixel_area()
+			unit_in_pixel = unit * area
+			zeropoint = SExtractor.get_ab_zero_point_from_unit(unit_in_pixel)
+		elif "PHOTFLAM" in header and "PHOTPLAM" in header and unit == u.electron / u.s:  # 电子数/秒单位
 			cls.LOGGER.info("zeropoint由header的PHOTFLAM和PHOTPLAM字段计算得到")
 			zeropoint = SExtractor.get_ab_zero_point(header["PHOTFLAM"], header["PHOTPLAM"])
-		else:
-			cls.LOGGER.error("header没有ZP或者PHOTFLAM和PHOTPLAM字段，无法获取测光零点")
+		else:  # 未知单位
+			cls.LOGGER.error("header没有ZP或者正确的单位或者PHOTFLAM和PHOTPLAM字段，无法获取测光零点")
 		file_fits.close()
 		return zeropoint
 
