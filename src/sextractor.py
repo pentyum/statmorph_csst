@@ -508,6 +508,8 @@ NTHREADS         4              # 1 single thread
 			area = w.proj_plane_pixel_area()
 			unit_in_pixel = unit * area
 			zeropoint = SExtractor.get_ab_zero_point_from_unit(unit_in_pixel)
+		elif unit.physical_type == u.K.physical_type:  # 亮温度
+			raise NotImplementedError
 		elif "PHOTFLAM" in header and "PHOTPLAM" in header and unit == u.electron / u.s:  # 电子数/秒单位
 			cls.LOGGER.info("zeropoint由header的PHOTFLAM和PHOTPLAM字段计算得到")
 			zeropoint = SExtractor.get_ab_zero_point(header["PHOTFLAM"], header["PHOTPLAM"])
