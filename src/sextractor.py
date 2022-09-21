@@ -350,8 +350,6 @@ NTHREADS         4              # 1 single thread
 
 	def unzip_fits_gz(self, file_name: str) -> str:
 		if file_name.endswith(".gz"):
-			if not os.path.exists(SExtractor.TEMP_DIR):
-				os.mkdir(SExtractor.TEMP_DIR)
 			base_file_name = os.path.basename(file_name)[0:-3]
 			new_file_name = SExtractor.TEMP_DIR + base_file_name
 			self.logger.info("检测到" + base_file_name + "为压缩文件，解压至" + new_file_name)
@@ -460,6 +458,8 @@ NTHREADS         4              # 1 single thread
 		return not bool(re.match(r'ForkPoolWorker-\d+', multiprocessing.current_process().name))
 
 	def handle_unzip_fits_gz_list(self, unzip_file_list: List[str]) -> List[str]:
+		if not os.path.exists(SExtractor.TEMP_DIR):
+			os.mkdir(SExtractor.TEMP_DIR)
 		threads = len(unzip_file_list)
 		if SExtractor.is_main_process():
 			self.logger.info("启动%d线程同时解压" % threads)
