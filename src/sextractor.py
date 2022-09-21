@@ -555,13 +555,17 @@ NTHREADS         4              # 1 single thread
 
 		self.logger.info("weight图像文件: " + wht_file)
 
-		if measure_file is None:
+		if measure_file is None:  # 单图像模式
 			detect_file_unzipped, wht_file_unzipped = self.handle_unzip_fits_gz_list([detect_file, wht_file])
 			zeropoint = SExtractor.read_zeropoint(detect_file_unzipped)
 			measure_file_unzipped = None
 		else:
-			detect_file_unzipped, wht_file_unzipped, measure_file_unzipped = self.handle_unzip_fits_gz_list(
-				[detect_file, wht_file, measure_file])
+			if measure_file != detect_file:  # 不是同一文件
+				detect_file_unzipped, wht_file_unzipped, measure_file_unzipped = self.handle_unzip_fits_gz_list(
+					[detect_file, wht_file, measure_file])
+			else:  # 是同一文件
+				detect_file_unzipped, wht_file_unzipped = self.handle_unzip_fits_gz_list([detect_file, wht_file])
+				measure_file_unzipped = detect_file_unzipped
 			zeropoint = SExtractor.read_zeropoint(measure_file_unzipped)
 
 		self.logger.info("zeropoint=%.2f" % zeropoint)
@@ -591,7 +595,7 @@ NTHREADS         4              # 1 single thread
 			self.handle_unzipped_file_end(detect_file_unzipped, clean_temp)
 		if wht_file_unzipped != wht_file:
 			self.handle_unzipped_file_end(wht_file_unzipped, clean_temp)
-		if measure_file_unzipped != measure_file:
+		if measure_file_unzipped != measure_file and detect_file != measure_file:
 			self.handle_unzipped_file_end(measure_file_unzipped, clean_temp)
 
 		self.logger.info(f'用时: {time.time() - start_time:.2f}s')
