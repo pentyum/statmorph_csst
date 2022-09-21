@@ -494,25 +494,28 @@ NTHREADS         4              # 1 single thread
 		zeropoint: float = 0
 		with fits.open(file) as file_fits:
 			header: fits.Header = file_fits[index].header
-			unit_str: str = header["BUNIT"]
-			unit = SExtractor.read_bunit(unit_str)
 			if "ZP" in header:
 				cls.LOGGER.info("zeropoint直接读取header的ZP字段")
 				zeropoint = header["ZP"]
-			elif unit.physical_type == u.AB.physical_type:  # 流量单位Jy或者erg/s/Hz/cm2
-				cls.LOGGER.info("zeropoint由单位(%s)计算得到" % unit)
-				zeropoint = SExtractor.get_ab_zero_point_from_unit(unit)
-			elif unit.physical_type == (u.AB / u.sr).physical_type:  # 流量/立体角单位Jy/sr或者erg/s/Hz/cm2/sr
-				cls.LOGGER.info("zeropoint由单位(%s)和像素面积计算得到" % unit)
-				w = WCS(header)
-				area = w.proj_plane_pixel_area()
-				unit_in_pixel = unit * area
-				zeropoint = SExtractor.get_ab_zero_point_from_unit(unit_in_pixel)
-			elif unit.physical_type == u.K.physical_type:  # 亮温度
-				raise NotImplementedError
-			elif "PHOTFLAM" in header and "PHOTPLAM" in header and unit == u.electron / u.s:  # 电子数/秒单位
-				cls.LOGGER.info("zeropoint由header的PHOTFLAM和PHOTPLAM字段计算得到")
-				zeropoint = SExtractor.get_ab_zero_point(header["PHOTFLAM"], header["PHOTPLAM"])
+			elif "BUNIT" in header:
+				unit_str: str = header["BUNIT"]
+				unit = SExtractor.read_bunit(unit_str)
+				if unit.physical_type == u.AB.physical_type:  # 流量单位Jy或者erg/s/Hz/cm2
+					cls.LOGGER.info("zeropoint由单位(%s)计算得到" % unit)
+					zeropoint = SExtractor.get_ab_zero_point_from_unit(unit)
+				elif unit.physical_type == (u.AB / u.sr).physical_type:  # 流量/立体角单位Jy/sr或者erg/s/Hz/cm2/sr
+					cls.LOGGER.info("zeropoint由单位(%s)和像素面积计算得到" % unit)
+					w = WCS(header)
+					area = w.proj_plane_pixel_area()
+					unit_in_pixel = unit * area
+					zeropoint = SExtractor.get_ab_zero_point_from_unit(unit_in_pixel)
+				elif unit.physical_type == u.K.physical_type:  # 亮温度
+					raise NotImplementedError
+				elif "PHOTFLAM" in header and "PHOTPLAM" in header and unit == u.electron / u.s:  # 电子数/秒单位
+					cls.LOGGER.info("zeropoint由header的PHOTFLAM和PHOTPLAM字段计算得到")
+					zeropoint = SExtractor.get_ab_zero_point(header["PHOTFLAM"], header["PHOTPLAM"])
+				else:
+					cls.LOGGER.error("未知单位类型(%s)" % unit)
 			else:  # 未知单位
 				cls.LOGGER.error("header没有ZP或者正确的单位或者PHOTFLAM和PHOTPLAM字段，无法获取测光零点")
 		cls.LOGGER.info("zeropoint=%.2f" % zeropoint)
