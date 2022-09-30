@@ -390,7 +390,7 @@ def main(argv) -> int:
 	my_sextractor_config["detect_thresh"] = float(config["sextractor_detect_thresh"])
 	my_sextractor_config["analysis_thresh"] = float(config["sextractor_analysis_thresh"])
 	my_sextractor_config["deblend_nthresh"] = int(config["sextractor_deblend_nthresh"])
-	my_sextractor_config["deblend_mincont"] = int(config["sextractor_deblend_mincont"])
+	my_sextractor_config["deblend_mincont"] = float(config["sextractor_deblend_mincont"])
 	my_sextractor_config["back_size"] = int(config["sextractor_back_size"])
 	my_sextractor_config["back_filtersize"] = int(config["sextractor_back_filtersize"])
 	my_sextractor_config["backphoto_thick"] = int(config["sextractor_backphoto_thick"])
