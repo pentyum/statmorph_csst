@@ -10,7 +10,7 @@ from configparser import ConfigParser
 import multiprocessing
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Union
 
 import numpy as np
 import photutils
@@ -95,10 +95,11 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 
 
 def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: bool,
-				   measure_file: Optional[str] = None):
+				   measure_file: Optional[str] = None,
+				   config_values: Optional[Dict[str, Union[float, int, str]]] = None):
 	sextractor = SExtractor(work_dir, SExtractor.merge_sex_dict(SExtractor.CANDELS_UKIDSS_USF_CONFIG,
 																SExtractor.CANDELS_UKIDSS_USF_HOT_CONFIG,
-																SExtractor.GLASS_JWST_VALUES),
+																SExtractor.GLASS_JWST_VALUES, config_values),
 							SExtractor.OUTPUT_LIST_DEFAULT)
 	sextractor.run(detect_file, wht_file, measure_file, use_existed=use_existed)
 	return sextractor
@@ -301,6 +302,14 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
 	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式则还包括measure_file
 	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
+	-D, --sextractor_detect_minarea
+	-T, --sextractor_detect_thresh
+	-A, --sextractor_analysis_thresh
+	-B, --sextractor_deblend_nthresh
+	-M, --sextractor_deblend_mincont
+	-S, --sextractor_back_size
+	-F, --sextractor_back_filtersize
+	-P, --sextractor_backphoto_thick
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
@@ -332,6 +341,14 @@ def main(argv) -> int:
 		# "m": ("fmin_maxiter", True),
 		"s": ("sextractor_work_dir", True),
 		"k": ("skip_sextractor", False),
+		"D": ("sextractor_detect_minarea", True),
+		"T": ("sextractor_detect_thresh", True),
+		"A": ("sextractor_analysis_thresh", True),
+		"B": ("sextractor_deblend_nthresh", True),
+		"M": ("sextractor_deblend_mincont", True),
+		"S": ("sextractor_back_size", True),
+		"F": ("sextractor_back_filtersize", True),
+		"P": ("sextractor_backphoto_thick", True),
 		"a": ("output_image_dir", True),
 		"f": ("ignore_mag_fainter_than", True),
 		"t": ("ignore_class_star_greater_than", True),
@@ -367,6 +384,17 @@ def main(argv) -> int:
 	# fmin_maxiter = int(config["fmin_maxiter"])
 	sextractor_work_dir: str = config["sextractor_work_dir"]
 	skip_sextractor: bool = check_not_false(config["skip_sextractor"])
+
+	my_sextractor_config: Dict[str, Union[float, int, str]] = dict()
+	my_sextractor_config["detect_minarea"] = int(config["sextractor_detect_minarea"])
+	my_sextractor_config["detect_thresh"] = float(config["sextractor_detect_thresh"])
+	my_sextractor_config["analysis_thresh"] = float(config["sextractor_analysis_thresh"])
+	my_sextractor_config["deblend_nthresh"] = int(config["sextractor_deblend_nthresh"])
+	my_sextractor_config["deblend_mincont"] = int(config["sextractor_deblend_mincont"])
+	my_sextractor_config["back_size"] = int(config["sextractor_back_size"])
+	my_sextractor_config["back_filtersize"] = int(config["sextractor_back_filtersize"])
+	my_sextractor_config["backphoto_thick"] = int(config["sextractor_backphoto_thick"])
+
 	output_image_dir: Optional[str] = config["output_image_dir"]
 	ignore_mag_fainter_than: float = float(config["ignore_mag_fainter_than"])
 	ignore_class_star_greater_than: float = float(config["ignore_class_star_greater_than"])
@@ -397,7 +425,7 @@ def main(argv) -> int:
 	if threads <= 0:
 		threads = min(multiprocessing.cpu_count() - 1, 1)
 
-	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file)
+	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file, my_sextractor_config)
 	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,

@@ -393,15 +393,16 @@ NTHREADS         4              # 1 single thread
 			Dict[str, Union[float, int, str]]:
 		new_dict = old_dict.copy()
 		for mod_dict in mod_dicts:
-			for k, v in mod_dict.items():
-				new_dict[k] = v
+			if mod_dict is not None:
+				for k, v in mod_dict.items():
+					new_dict[k] = v
 		return new_dict
 
 	@staticmethod
 	def sex_dict_to_str(sex_config_dict: Dict[str, Union[float, int, str]]):
 		s = "# Default configuration file for Source Extractor 2.25.0\n"
 		for k, v in sex_config_dict.items():
-			s = s + k + "\t" + str(v) + "\n"
+			s = s + k.upper() + "\t" + str(v) + "\n"
 		return s
 
 	def make_default_sex(self, wht_file_unzipped: str, output_catalog_file: str, output_subback_file: str,
@@ -437,7 +438,8 @@ NTHREADS         4              # 1 single thread
 		with open(sex_file_path, "w") as default_sex:
 			default_sex.write(default_sex_str)
 		self.logger.info("已生成default.sex")
-		self.logger.info("配置信息: " + str(self.config))
+		diff = dict(self.config.items() - SExtractor.DEFAULT_CONFIG.items())
+		self.logger.info("配置信息(仅和默认配置不同): " + str(diff))
 		return sex_file_path
 
 	def handle_unzipped_file_end(self, temp_file_name: str, clean_temp: bool):
