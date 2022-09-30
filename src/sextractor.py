@@ -395,7 +395,7 @@ NTHREADS         4              # 1 single thread
 		for mod_dict in mod_dicts:
 			if mod_dict is not None:
 				for k, v in mod_dict.items():
-					new_dict[k] = v
+					new_dict[k.upper()] = v
 		return new_dict
 
 	@staticmethod
