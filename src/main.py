@@ -223,11 +223,17 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 
 		# Spawn some processes to do some work
 		with ProcessPoolExecutor(threads) as exe:
-			fs = [exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name,
-							 segm_image.slices[segm_image.get_index(label)], label, shape,
-							 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion, shm_img_cmp_name,
-							 calc_g2, output_image_dir, img_dtype, segm_dtype)
-				  for label in run_labels]
+			fs = []
+			for label in run_labels:
+				try:
+					label_index = segm_image.get_index(label)
+				except ValueError as e:
+					logger.warning(e)
+					continue
+				segm_slice = segm_image.slices[label_index]
+				fs.append(exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, segm_slice, label, shape,
+									 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
+									 shm_img_cmp_name, calc_g2, output_image_dir, img_dtype, segm_dtype))
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)
@@ -425,7 +431,8 @@ def main(argv) -> int:
 	if threads <= 0:
 		threads = min(multiprocessing.cpu_count() - 1, 1)
 
-	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file, my_sextractor_config)
+	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
+								my_sextractor_config)
 	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
