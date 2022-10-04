@@ -118,6 +118,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
 	if center_file is not None:
+		logger.info("使用预定义的中心位置文件" + center_file)
 		center_table = Table.read(center_file, format="ascii")
 
 	if output_image_dir is not None:
@@ -244,7 +245,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 				if center_table is not None:
 					center_info = center_table[center_table["label"] == label][0]
 					set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
-					set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
+					if calc_cas:
+						set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
 
 				fs.append(exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, segm_slice, label, shape,
 									 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
@@ -335,6 +337,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
+	-n, --center_file=预定义的中心文件
 	-c, --calc_cas 是否测量CAS
 	-g, --calc_g_m20 是否测量Gini,M20
 	-d, --calc_mid 是否测量MID
@@ -374,6 +377,7 @@ def main(argv) -> int:
 		"a": ("output_image_dir", True),
 		"f": ("ignore_mag_fainter_than", True),
 		"t": ("ignore_class_star_greater_than", True),
+		"n": ("center_file", True),
 		"c": ("calc_cas", False),
 		"g": ("calc_g_m20", False),
 		"d": ("calc_mid", False),
@@ -426,6 +430,7 @@ def main(argv) -> int:
 	calc_multiply: bool = check_not_false(config["calc_multiply"])
 	calc_color_dispersion: bool = check_not_false(config["calc_color_dispersion"])
 	image_compare_file: Optional[str] = config["image_compare_file"]
+	center_file: Optional[str] = config["center_file"]
 	calc_g2: bool = check_not_false(config["calc_g2"])
 
 	if not check_not_null(measure_file):
@@ -434,6 +439,8 @@ def main(argv) -> int:
 		output_image_dir = None
 	if not check_not_null(image_compare_file):
 		image_compare_file = None
+	if not check_not_null(center_file):
+		center_file = None
 
 	run_name = get_basename_without_end(detect_file)
 	if measure_file is not None:
@@ -452,7 +459,7 @@ def main(argv) -> int:
 	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
-				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir)
+				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file)
 	return 0
 
 
