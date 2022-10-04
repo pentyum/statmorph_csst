@@ -41,7 +41,9 @@ def read_properties(path) -> Dict[str, str]:
 def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int, shape,
 							calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
 							calc_color_dispersion: bool, shm_img_cmp_name, calc_g2: bool,
-							output_image_dir: str, img_dtype, segm_dtype):
+							output_image_dir: str, set_centroid: Tuple[float, float],
+							set_asym_center: Tuple[float, float],
+							img_dtype, segm_dtype):
 	"""
 		label: int
 		rpetro_circ_centroid: double
@@ -74,9 +76,10 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 	morph = statmorph.BaseInfo(
 		image, segmap, segm_slice, label, calc_cas=calc_cas, calc_g_m20=calc_g_m20, calc_mid=calc_mid,
 		calc_multiply=calc_multiply, calc_color_dispersion=calc_color_dispersion, image_compare=image_compare,
-		calc_g2=calc_g2, output_image_dir=output_image_dir)
+		calc_g2=calc_g2, output_image_dir=output_image_dir, set_centroid=set_centroid, set_asym_center=set_asym_center)
 
-	return_list = [label, morph.size, morph.surface_brightness, morph._rpetro_circ_centroid]
+	return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
+				   morph._rpetro_circ_centroid]
 	if calc_cas:
 		return_list.extend(morph.cas.get_values())
 	if calc_g_m20:
@@ -110,9 +113,12 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
-				  output_image_dir: Optional[str] = None):
+				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None):
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
+	center_table: Optional[Table] = None
+	if center_file is not None:
+		center_table = Table.read(center_file, format="ascii")
 
 	if output_image_dir is not None:
 		if not os.path.exists(output_image_dir):
@@ -155,8 +161,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 		run_labels = [run_specified_label]
 		logger.info("只运行label=%d" % run_specified_label)
 
-	result_header = ["label", "size", "surface_brightness", "rp_circ_centroid"]
-	result_format = ["%d %d %f %f"]
+	result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid"]
+	result_format = ["%d %d %f %f %f %f"]
 
 	if calc_cas:
 		result_header.extend(CASInfo.get_value_names())
@@ -221,6 +227,9 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 			logger.info("image_compare复制完成")
 		logger.info("复制完成")
 
+		set_centroid: Tuple[float, float] = (-1, -1)
+		set_asym_center: Tuple[float, float] = (-1, -1)
+
 		# Spawn some processes to do some work
 		with ProcessPoolExecutor(threads) as exe:
 			fs = []
@@ -231,9 +240,16 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 					logger.warning(e)
 					continue
 				segm_slice = segm_image.slices[label_index]
+
+				if center_table is not None:
+					center_info = center_table[center_table["label"] == label][0]
+					set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
+					set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
+
 				fs.append(exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, segm_slice, label, shape,
 									 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
-									 shm_img_cmp_name, calc_g2, output_image_dir, img_dtype, segm_dtype))
+									 shm_img_cmp_name, calc_g2, output_image_dir, set_centroid, set_asym_center,
+									 img_dtype, segm_dtype))
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)

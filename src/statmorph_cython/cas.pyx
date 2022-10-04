@@ -407,7 +407,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 
 	return S
 
-cdef CASInfo calc_cas(BaseInfo base_info):
+cdef CASInfo calc_cas(BaseInfo base_info, (double, double) set_asym_center):
 	cdef CASInfo cas_info = CASInfo()
 
 	check_rp_beyond_edge(base_info.xc_centroid, base_info.yc_centroid, base_info._rpetro_circ_centroid, base_info._image.shape, cas_info.flags, base_info.constants)
@@ -427,21 +427,23 @@ cdef CASInfo calc_cas(BaseInfo base_info):
 	获得背景区域不对称度
 	"""
 
-	cas_info._asymmetry_center = get_asymmetry_center(base_info._cutout_stamp_maskzeroed, base_info._centroid, base_info._mask_stamp, base_info._rpetro_circ_centroid, cas_info._sky_asymmetry, cas_info.flags, base_info.constants)
+	cdef double dx_c, dy_c
+
+	if set_asym_center == (-1, -1):
+		cas_info._asymmetry_center = get_asymmetry_center(base_info._cutout_stamp_maskzeroed, base_info._centroid, base_info._mask_stamp, base_info._rpetro_circ_centroid, cas_info._sky_asymmetry, cas_info.flags, base_info.constants)
+		dx_c = cas_info._asymmetry_center[0] - base_info._centroid[0]
+		dy_c = cas_info._asymmetry_center[1] - base_info._centroid[1]
+
+		if sqrt(dx_c ** 2 + dy_c ** 2) >= base_info.constants.petro_extent_cas * base_info._rpetro_circ_centroid:
+			base_info._use_centroid = True
+			cas_info._asymmetry_center = base_info._centroid
+			warnings.warn('[CAS] Asymmetry center is too far, using centroid center', AstropyUserWarning)
+			cas_info.flags.set_flag_true(10)
+	else:
+		cas_info._asymmetry_center = set_asym_center
 	"""
 	获得不对称中心，依次为x和y，坐标是相对于切片的
 	"""
-
-	cdef double dx_c, dy_c
-
-	dx_c = cas_info._asymmetry_center[0] - base_info._centroid[0]
-	dy_c = cas_info._asymmetry_center[1] - base_info._centroid[1]
-
-	if sqrt(dx_c ** 2 + dy_c ** 2) >= base_info.constants.petro_extent_cas * base_info._rpetro_circ_centroid:
-		base_info._use_centroid = True
-		cas_info._asymmetry_center = base_info._centroid
-		warnings.warn('[CAS] Asymmetry center is too far, using centroid center', AstropyUserWarning)
-		cas_info.flags.set_flag_true(10)
 
 	cas_info.xc_asymmetry = base_info.xmin_stamp + cas_info._asymmetry_center[0]
 	cas_info.yc_asymmetry = base_info.ymin_stamp + cas_info._asymmetry_center[1]

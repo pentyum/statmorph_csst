@@ -33,7 +33,7 @@ cdef class BaseInfo(MorphInfo):
 				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
 				 double gain=-1, bint calc_cas=True, bint calc_g_m20=True, bint calc_mid=True, bint calc_multiply=False,
 				 bint calc_color_dispersion=False, cnp.ndarray[double,ndim=2] image_compare=None, bint calc_g2=False,
-				 str output_image_dir=None):
+				 str output_image_dir=None, tuple set_centroid=(-1, -1), tuple set_asym_center=(-1, -1)):
 		super().__init__()
 		self.calc_cas = calc_cas
 		self.calc_g_m20 = calc_g_m20
@@ -216,7 +216,10 @@ cdef class BaseInfo(MorphInfo):
 		用于计算的星系本体的大小每个像素流量的平均值
 		"""
 
-		self._centroid = self.get_centroid()
+		if set_centroid == (-1, -1):
+			self._centroid = self.get_centroid()
+		else:
+			self._centroid = set_centroid
 		"""
 		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
 		"""
@@ -257,7 +260,7 @@ cdef class BaseInfo(MorphInfo):
 
 		if calc_cas:
 			start = clock()
-			self.cas = statmorph_cython.cas.calc_cas(self)
+			self.cas = statmorph_cython.cas.calc_cas(self, set_asym_center)
 			self.cas.calc_runtime(start)
 			center_used = self.cas._asymmetry_center
 		else:
@@ -613,15 +616,15 @@ cdef class CASInfo(MorphInfo):
 		super().__init__()
 
 	def get_values(self):
-		return [self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self.runtime, self.flags.value()]
+		return [self._asymmetry_center[0], self._asymmetry_center[1], self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self.runtime, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["rp_circ", "C", "A", "S", "cas_time", "cas_flag"]
+		return ["asymmetry_center_x", "asymmetry_center_y", "rp_circ", "C", "A", "S", "cas_time", "cas_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f", "%f", "%f", "%d"]
+		return ["%f", "%f", "%f", "%f", "%f", "%f", "%f", "%d"]
 
 cdef class GiniM20Info(MorphInfo):
 	def __init__(self):
