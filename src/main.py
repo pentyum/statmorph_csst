@@ -243,10 +243,14 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 				segm_slice = segm_image.slices[label_index]
 
 				if center_table is not None:
-					center_info = center_table[center_table["label"] == label][0]
-					set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
-					if calc_cas:
-						set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
+					center_info = center_table[center_table["label"] == label]
+					if len(center_info) > 0:
+						center_info = center_info[0]
+						set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
+						if calc_cas:
+							set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
+					else:
+						logger.warning("label %d not existed in center_file")
 
 				fs.append(exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, segm_slice, label, shape,
 									 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
