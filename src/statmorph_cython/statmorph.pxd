@@ -45,7 +45,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef cnp.ndarray _cutout_stamp_maskzeroed_no_bg
 	cdef readonly int size
 	cdef readonly double surface_brightness
-	cdef (double, double) _centroid
+	cdef readonly (double, double) _centroid
 	cdef double xc_centroid
 	cdef double yc_centroid
 	cdef double _xc_stamp
@@ -117,7 +117,7 @@ cdef class CASInfo(MorphInfo):
 	cdef double _sky_asymmetry
 	cdef double xc_asymmetry, yc_asymmetry
 	cdef readonly double concentration, asymmetry, smoothness, rpetro_circ, r20, r80
-	cdef (double,double) _asymmetry_center
+	cdef readonly (double,double) _asymmetry_center
 	cdef double sky_mean, sky_sigma, _sky_smoothness
 
 cdef class GiniM20Info(MorphInfo):
