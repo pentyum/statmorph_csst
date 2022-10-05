@@ -228,13 +228,12 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 			logger.info("image_compare复制完成")
 		logger.info("复制完成")
 
-		set_centroid: Tuple[float, float] = (-1, -1)
-		set_asym_center: Tuple[float, float] = (-1, -1)
-
 		# Spawn some processes to do some work
 		with ProcessPoolExecutor(threads) as exe:
 			fs = []
 			for label in run_labels:
+				set_centroid: Tuple[float, float] = (-1, -1)
+				set_asym_center: Tuple[float, float] = (-1, -1)
 				try:
 					label_index = segm_image.get_index(label)
 				except ValueError as e:
@@ -252,10 +251,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 								set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
 						else:
 							logger.warning("size of label %d in center_file is zero" % label)
-							continue
 					else:
 						logger.warning("label %d not existed in center_file" % label)
-						continue
 
 				fs.append(exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, segm_slice, label, shape,
 									 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
