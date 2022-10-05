@@ -83,7 +83,7 @@ cdef double get_sky_asymmetry(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 	# cdef cnp.ndarray bkg = _cutout_stamp_maskzeroed[_slice_skybox]
 	cdef cnp.ndarray bkg_180 = bkg[::-1, ::-1]
 	if cnp.PyArray_SIZE(bkg) == 0:
-		assert flags.get_flag(7)
+		assert flags.get_flag(1)
 		return -99.0
 
 	return np.sum(np.abs(bkg_180 - bkg)) / float(cnp.PyArray_SIZE(bkg))
@@ -94,7 +94,7 @@ cdef double get_sky_mean(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 	"""
 	# cdef cnp.ndarray bkg = _cutout_stamp_maskzeroed[_slice_skybox]
 	if cnp.PyArray_SIZE(bkg) == 0:
-		assert flags.get_flag(7)
+		assert flags.get_flag(1)
 		return -99.0
 
 	return np.mean(bkg)
@@ -105,7 +105,7 @@ cdef double get_sky_median(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 	"""
 	# cdef cnp.ndarray bkg = _cutout_stamp_maskzeroed[_slice_skybox]
 	if cnp.PyArray_SIZE(bkg) == 0:
-		assert flags.get_flag(7)
+		assert flags.get_flag(1)
 		return -99.0
 
 	return np.median(bkg)
@@ -117,7 +117,7 @@ cdef double get_sky_sigma(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 	"""
 	# cdef cnp.ndarray bkg = _cutout_stamp_maskzeroed[_slice_skybox]
 	if cnp.PyArray_SIZE(bkg) == 0:
-		assert flags.get_flag(7)
+		assert flags.get_flag(1)
 		return -99.0
 
 	return np.std(bkg)
@@ -129,7 +129,7 @@ cdef double get_sky_smoothness(cnp.ndarray[double,ndim=2] bkg, double rpetro_cir
 	"""
 	# cdef cnp.ndarray bkg = _cutout_stamp_maskzeroed[_slice_skybox]
 	if cnp.PyArray_SIZE(bkg) == 0:
-		assert flags.get_flag(7)
+		assert flags.get_flag(1)
 		return -99.0
 
 	# If the smoothing "boxcar" is larger than the skybox itself,
