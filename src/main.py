@@ -217,7 +217,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 			shm_segm.buf, dtype=segm_dtype).reshape(shape)
 
 		if noisemap is not None:
-			shm_noise = smm.SharedMemory(image_compare.nbytes)
+			shm_noise = smm.SharedMemory(noisemap.nbytes)
 			shm_noise_array = np.frombuffer(
 				shm_noise.buf, dtype=img_dtype).reshape(shape)
 			shm_noise_name = shm_noise.name
