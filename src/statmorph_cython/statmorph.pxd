@@ -30,6 +30,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef tuple _slice_stamp
 	cdef cnp.ndarray _cutout_stamp
 	cdef cnp.ndarray _segmap_stamp
+	cdef cnp.ndarray _weightmap_stamp
 	cdef cnp.ndarray _mask_stamp_nan
 	cdef int xmin_stamp
 	cdef int ymin_stamp
@@ -52,6 +53,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef double _yc_stamp
 	cdef double _diagonal_distance
 	cdef readonly double _rpetro_circ_centroid
+	cdef readonly double sn_per_pixel
 
 	cdef str output_image_dir
 	cdef readonly bint calc_cas
@@ -106,6 +108,10 @@ cdef class BaseInfo(MorphInfo):
 	cdef double get_diagonal_distance(self)
 
 	cdef double get_rpetro_circ_centroid(self)
+
+	cdef cnp.ndarray get_weightmap_stamp(self)
+
+	cdef double get_sn_per_pixel(self)
 
 	cdef void _abort_calculations(self)
 

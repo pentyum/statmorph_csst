@@ -167,6 +167,11 @@ cdef class BaseInfo(MorphInfo):
 		图像切片中有哪些点是nan或者inf
 		"""
 
+		self._weightmap_stamp = self.get_weightmap_stamp()
+		"""
+		weightmap在该星系处的切片
+		"""
+
 		self.num_badpixels = -1
 		"""
 		图像切片中的坏点数量，也就是不满足abs(原始图像而切片-周围平均后的图像切片)<=n_sigma_outlier*std像素的数量
@@ -293,6 +298,8 @@ cdef class BaseInfo(MorphInfo):
 			start = clock()
 			self.g2 = get_G2(self, center_used)
 			self.g2.calc_runtime(start)
+
+		self.sn_per_pixel = self.get_sn_per_pixel()
 
 		# Save image
 		if self.output_image_dir is not None:
@@ -527,6 +534,58 @@ cdef class BaseInfo(MorphInfo):
 		可能产生警告3,4,5,6
 		"""
 		return _rpetro_circ_generic(self._cutout_stamp_maskzeroed, self._centroid, self._diagonal_distance, self.flags, self.constants)
+
+	cdef cnp.ndarray get_weightmap_stamp(self):
+		"""
+		Return a cutout of the weight map over the "postage stamp" region.
+		If a weightmap is not provided as input, it is created using the
+		``gain`` argument.
+		"""
+		if self._weightmap is None:
+			# Already checked that gain is not None:
+			"""
+			assert self._gain > 0
+			weightmap_stamp = np.sqrt(
+				np.abs(self._image[self._slice_stamp])/self._gain + self.sky_sigma**2)
+			"""
+			return None
+		else:
+			weightmap_stamp = self._weightmap[self._slice_stamp]
+
+		weightmap_stamp[self._mask_stamp_nan] = 0.0
+		return weightmap_stamp
+
+	cdef double get_sn_per_pixel(self):
+		"""
+		Calculate the signal-to-noise per pixel using the Petrosian segmap.
+		"""
+		cdef cnp.ndarray noisemap = self._weightmap_stamp
+		if noisemap is None:
+			return -99.0
+
+		if np.any(noisemap < 0):
+			warnings.warn('[sn_per_pixel] Some negative weightmap values.',
+						  AstropyUserWarning)
+			noisemap = np.abs(noisemap)
+
+		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed >= 0) & (noisemap > 0))
+		if self.calc_g_m20:
+			locs = locs & self.g_m20._segmap_gini
+		else:
+			locs = locs & self._segmap_stamp
+
+		cdef double snp
+
+		if np.sum(locs) == 0:
+			warnings.warn('Invalid sn_per_pixel.', AstropyUserWarning)
+			self.flags.set_flag_true(10)
+			snp = -99.0  # invalid
+		else:
+			pixelvals = self._cutout_stamp_maskzeroed[locs]
+			# The sky background noise is already included in the weightmap:
+			snp = np.mean(pixelvals / noisemap[locs])
+
+		return snp
 
 	cdef void _abort_calculations(self):
 		"""

@@ -347,6 +347,7 @@ NTHREADS         4              # 1 single thread
 		self.output_catalog_file: str = ""
 		self.output_subback_file: str = ""
 		self.output_segmap_file: str = ""
+		self.noise_file: str = ""
 
 	def unzip_fits_gz(self, file_name: str) -> str:
 		if file_name.endswith(".gz"):
@@ -526,18 +527,20 @@ NTHREADS         4              # 1 single thread
 	def run(self, detect_file: str, wht_file: str, measure_file: Optional[str] = None,
 			output_catalog_file: str = "catalog.txt",
 			output_subback_file: str = "subback.fits", output_segmap_file: str = "segmap.fits",
-			clean_temp: bool = True, use_existed: bool = False):
+			noise_file: str = "noise.fits", clean_temp: bool = True, use_existed: bool = False):
 		self.output_catalog_file = self.work_dir + "/" + output_catalog_file
 		self.output_subback_file = self.work_dir + "/" + output_subback_file
 		self.output_segmap_file = self.work_dir + "/" + output_segmap_file
+		self.noise_file = self.work_dir + "/" + noise_file
 
 		if use_existed and os.path.exists(self.work_dir):
 			self.logger.info("使用已经生成的SExtractor文件")
 			if os.path.exists(self.output_catalog_file) and os.path.exists(self.output_subback_file) and os.path.exists(
-					self.output_segmap_file):
+					self.output_segmap_file and os.path.exists(self.noise_file)):
 				self.logger.info("catalog使用" + self.output_catalog_file)
 				self.logger.info("subback使用" + self.output_subback_file)
 				self.logger.info("segmap使用" + self.output_segmap_file)
+				self.logger.info("noise使用" + self.noise_file)
 				return
 			else:
 				self.logger.warning("文件不全，继续运行SExtractor")
@@ -592,6 +595,19 @@ NTHREADS         4              # 1 single thread
 			err_msg = "SExtractor(%s)运行错误！返回值%d" % (self.work_dir, self.return_value)
 			self.logger.critical(err_msg)
 			raise RuntimeError(err_msg)
+
+		with fits.open(wht_file_unzipped) as wht_fits:
+			wht = wht_fits[0].data
+			wht_header = wht_fits[0].header
+			if self.config["WEIGHT_TYPE"] == "MAP_WEIGHT":
+				noise = 1 / np.sqrt(wht)
+			if self.config["WEIGHT_TYPE"] == "MAP_VAR":
+				noise = np.sqrt(wht)
+			else:
+				raise TypeError("未知WEIGHT_TYPE: " + self.config["WEIGHT_TYPE"])
+			hdu = fits.PrimaryHDU(noise, wht_header)
+			hdu.writeto(self.noise_file)
+			self.logger.info("将wht文件转化为noise文件" + self.noise_file)
 
 		if detect_file_unzipped != detect_file:
 			self.handle_unzipped_file_end(detect_file_unzipped, clean_temp)

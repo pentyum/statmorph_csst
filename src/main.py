@@ -38,12 +38,11 @@ def read_properties(path) -> Dict[str, str]:
 	return itemDict
 
 
-def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int, shape,
-							calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
-							calc_color_dispersion: bool, shm_img_cmp_name, calc_g2: bool,
+def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_name: Optional[str], segm_slice,
+							label: int, shape, calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
+							calc_color_dispersion: bool, shm_img_cmp_name: Optional[str], calc_g2: bool,
 							output_image_dir: str, set_centroid: Tuple[float, float],
-							set_asym_center: Tuple[float, float],
-							img_dtype, segm_dtype):
+							set_asym_center: Tuple[float, float], img_dtype, segm_dtype):
 	"""
 		label: int
 		rpetro_circ_centroid: double
@@ -64,22 +63,27 @@ def work_with_shared_memory(shm_img_name, shm_segm_name, segm_slice, label: int,
 	shm_img = SharedMemory(shm_img_name)
 	shm_segm = SharedMemory(shm_segm_name)
 	# Create the np.recarray from the buffer of the shared memory
-	image = np.frombuffer(shm_img.buf, dtype=img_dtype).reshape(shape)
-	segmap = np.frombuffer(shm_segm.buf, dtype=segm_dtype).reshape(shape)
+	image: np.ndarray = np.frombuffer(shm_img.buf, dtype=img_dtype).reshape(shape)
+	segmap: np.ndarray = np.frombuffer(shm_segm.buf, dtype=segm_dtype).reshape(shape)
+	noisemap: Optional[np.ndarray] = None
+	image_compare: Optional[np.ndarray] = None
+
+	if shm_noise_name is not None:
+		shm_noise = SharedMemory(shm_noise_name)
+		noisemap = np.frombuffer(shm_noise.buf, dtype=img_dtype).reshape(shape)
 
 	if shm_img_cmp_name is not None:
 		shm_img_cmp = SharedMemory(shm_img_cmp_name)
 		image_compare = np.frombuffer(shm_img_cmp.buf, dtype=img_dtype).reshape(shape)
-	else:
-		image_compare = None
 
 	morph = statmorph.BaseInfo(
-		image, segmap, segm_slice, label, calc_cas=calc_cas, calc_g_m20=calc_g_m20, calc_mid=calc_mid,
-		calc_multiply=calc_multiply, calc_color_dispersion=calc_color_dispersion, image_compare=image_compare,
+		image, segmap, segm_slice, label, weightmap=noisemap, calc_cas=calc_cas, calc_g_m20=calc_g_m20,
+		calc_mid=calc_mid, calc_multiply=calc_multiply, calc_color_dispersion=calc_color_dispersion,
+		image_compare=image_compare,
 		calc_g2=calc_g2, output_image_dir=output_image_dir, set_centroid=set_centroid, set_asym_center=set_asym_center)
 
 	return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
-				   morph._rpetro_circ_centroid]
+				   morph._rpetro_circ_centroid, morph.sn_per_pixel]
 	if calc_cas:
 		return_list.extend(morph.cas.get_values())
 	if calc_g_m20:
@@ -108,8 +112,8 @@ def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: 
 	return sextractor
 
 
-def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_file: str, threads: int,
-				  run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
+def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_file: Optional[str], save_file: str,
+				  threads: int, run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
@@ -131,6 +135,12 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 
 	image = image_fits[0].data.astype(np.float64)
 	segmap = segmap_fits[0].data.astype(np.int32)
+
+	if noise_file is not None:
+		noise_fits = fits.open(noise_file)
+		noisemap = noise_fits[0].data.astype(np.float64)
+	else:
+		noisemap = None
 
 	if image_compare_file is not None:
 		image_compare_fits = fits.open(image_compare_file)
@@ -162,8 +172,9 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 		run_labels = [run_specified_label]
 		logger.info("只运行label=%d" % run_specified_label)
 
-	result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid"]
-	result_format = ["%d %d %f %f %f %f"]
+	result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid",
+					 "sn_per_pixel"]
+	result_format = ["%d %d %f %f %f %f %f"]
 
 	if calc_cas:
 		result_header.extend(CASInfo.get_value_names())
@@ -193,8 +204,6 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 	result_all = [" ".join(result_header) + "\n"]
 	result_format = " ".join(result_format) + "\n"
 
-	# result_all = ["label rp_circ_centroid rp_circ rp_ellip C A S G M20 size surface_brightness runtime flag\n"]
-
 	start_time = time.time()
 	with SharedMemoryManager() as smm:
 		# Create a shared memory of size np_arry.nbytes
@@ -206,6 +215,15 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 			shm_img.buf, dtype=img_dtype).reshape(shape)
 		shm_segm_array = np.frombuffer(
 			shm_segm.buf, dtype=segm_dtype).reshape(shape)
+
+		if noisemap is not None:
+			shm_noise = smm.SharedMemory(image_compare.nbytes)
+			shm_noise_array = np.frombuffer(
+				shm_noise.buf, dtype=img_dtype).reshape(shape)
+			shm_noise_name = shm_noise.name
+		else:
+			shm_noise_name = None
+
 		if image_compare is not None:
 			shm_img_cmp = smm.SharedMemory(image_compare.nbytes)
 			shm_img_cmp_array = np.frombuffer(
@@ -222,11 +240,17 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 		np.copyto(shm_segm_array, segmap)
 		del segmap
 		logger.info("segmap复制完成")
+
+		if noisemap is not None:
+			np.copyto(shm_noise_array, noisemap)
+			del noisemap
+			logger.info("noisemap复制完成")
 		if image_compare is not None:
 			np.copyto(shm_img_cmp_array, image_compare)
 			del image_compare
 			logger.info("image_compare复制完成")
-		logger.info("复制完成")
+
+		logger.info("全部复制完成")
 
 		# Spawn some processes to do some work
 		with ProcessPoolExecutor(threads) as exe:
@@ -254,10 +278,11 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, save_fil
 					else:
 						logger.warning("label %d not existed in center_file" % label)
 
-				fs.append(exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, segm_slice, label, shape,
-									 calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
-									 shm_img_cmp_name, calc_g2, output_image_dir, set_centroid, set_asym_center,
-									 img_dtype, segm_dtype))
+				fs.append(
+					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
+							   shape, calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
+							   shm_img_cmp_name, calc_g2, output_image_dir, set_centroid, set_asym_center,
+							   img_dtype, segm_dtype))
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)
@@ -462,7 +487,7 @@ def main(argv) -> int:
 
 	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
 								my_sextractor_config)
-	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
+	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file, sextractor.noise_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
 				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file)
