@@ -216,8 +216,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 	if 0 <= constants.simplified_rot_threshold < image_size:
 		mask_180 = simplified_rot180(mask, center)
 	else:
-		mask_180 = skimage.transform.rotate(mask, 180.0, center=center)
-		mask_180 = mask_180 >= 0.5
+		mask_180 = skimage.transform.rotate(mask, 180.0, center=center) >= 0.5
 
 	cdef cnp.ndarray[cnp.npy_bool,ndim=2] mask_symmetric = mask | mask_180
 	image = cnp.PyArray_Where(~mask_symmetric, image, 0.0)
