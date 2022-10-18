@@ -475,7 +475,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		The (yc, xc) centroid of the input segment, relative to
 		``_slice_stamp``.
-		可能产生警告1,2
+		可能产生Base警告0,1
 		"""
 		cdef int ny, nx
 		cdef cnp.ndarray image = self._cutout_stamp_maskzeroed_no_bg
@@ -531,7 +531,7 @@ cdef class BaseInfo(MorphInfo):
 		Calculate the Petrosian radius with respect to the centroid.
 		This is only used as a preliminary value for the asymmetry
 		calculation.
-		可能产生警告3,4,5,6
+		可能产生Base警告7,8,9,10
 		"""
 		return _rpetro_circ_generic(self._cutout_stamp_maskzeroed, self._centroid, self._diagonal_distance, self.flags, self.constants)
 
@@ -558,6 +558,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef double get_sn_per_pixel(self):
 		"""
 		Calculate the signal-to-noise per pixel using the Petrosian segmap.
+		可能产生Base警告2
 		"""
 		cdef cnp.ndarray noisemap = self._weightmap_stamp
 		if noisemap is None:
@@ -578,7 +579,7 @@ cdef class BaseInfo(MorphInfo):
 
 		if np.sum(locs) == 0:
 			warnings.warn('Invalid sn_per_pixel.', AstropyUserWarning)
-			self.flags.set_flag_true(10)
+			self.flags.set_flag_true(2)
 			snp = -99.0  # invalid
 		else:
 			pixelvals = self._cutout_stamp_maskzeroed[locs]

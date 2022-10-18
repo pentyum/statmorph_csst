@@ -24,7 +24,7 @@ cnp.import_array()
 
 cdef void check_rp_beyond_edge(double xc_centroid, double yc_centroid, double _rpetro_circ_centroid, cnp.npy_intp* image_shape, Flags flags, ConstantsSetting constants):
 	"""
-	可能产生警告14
+	可能产生警告CAS警告0
 	"""
 	cdef double rp_min_x = xc_centroid - constants.petro_extent_cas * _rpetro_circ_centroid
 	cdef double rp_min_y = yc_centroid - constants.petro_extent_cas * _rpetro_circ_centroid
@@ -41,7 +41,7 @@ cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] _segmap, tuple _slice_stamp,
 
 	In principle, a more accurate approach is possible
 	(e.g. Shi et al. 2009, ApJ, 697, 1764).
-	可能产生警告7,8
+	可能产生CAS警告1,2
 	"""
 	cdef cnp.ndarray segmap = _segmap[_slice_stamp]
 	cdef int ny = ny_stamp
@@ -171,7 +171,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 	"""
 	Helper function to determine the asymmetry and center of asymmetry.
 	The idea is to minimize the output of this function.
-	可能产生警告9,10
+	可能产生CAS警告3,4
 
 	Parameters
 	----------
@@ -253,7 +253,7 @@ cdef (double,double) get_asymmetry_center(cnp.ndarray[double,ndim=2] _cutout_sta
 	"""
 	Find the position of the central pixel (relative to the
 	"postage stamp" cutout) that minimizes the (CAS) asymmetry.
-	可能产生警告9,10,11
+	可能产生CAS警告3,4,5
 	"""
 	# cdef cnp.ndarray center_0 = np.array([self._xc_stamp, self._yc_stamp])  # initial guess
 
@@ -283,7 +283,7 @@ cdef double get_asymmetry(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (
 						  cnp.ndarray[cnp.npy_bool,ndim=2] _mask_stamp, double _rpetro_circ_centroid, double _sky_asymmetry, Flags flags, ConstantsSetting constants):
 	"""
 	Calculate asymmetry as described in Lotz et al. (2004).
-	可能产生警告9,10
+	可能产生CAS警告3,4
 	"""
 	cdef cnp.ndarray image = _cutout_stamp_maskzeroed
 	cdef double asym = _asymmetry_function(_asymmetry_center, image, _mask_stamp, _rpetro_circ_centroid, _sky_asymmetry, flags, constants)
@@ -307,7 +307,7 @@ cdef double _radius_at_fraction_of_total_cas(double fraction, cnp.ndarray[double
 	"""
 	Specialization of ``_radius_at_fraction_of_total_circ`` for
 	the CAS calculations.
-	可能产生警告12,13
+	可能产生CAS警告11,12
 	"""
 	cdef cnp.ndarray image = _cutout_stamp_maskzeroed
 	cdef (double, double) center = _asymmetry_center
@@ -316,13 +316,13 @@ cdef double _radius_at_fraction_of_total_cas(double fraction, cnp.ndarray[double
 	cdef int flag
 	r, flag = _radius_at_fraction_of_total_circ(image, center, r_upper, fraction)
 	if flag:
-		flags.set_flag_true(6) # unusual
+		flags.set_flag_true(11) # unusual
 	#self.flag = max(self.flag, flag)
 
 	if isnan(r) or (r <= 0.0):
 		warnings.warn('[CAS] Invalid radius_at_fraction_of_total.',
 					  AstropyUserWarning)
-		flags.set_flag_true(7) # unusual
+		flags.set_flag_true(12) # unusual
 		r = -99.0  # invalid
 
 	return r
@@ -331,7 +331,7 @@ cdef double get_r20(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double
 	"""
 	The radius that contains 20% of the light within
 	'petro_extent_cas' (usually 1.5) times 'rpetro_circ'.
-	可能产生警告12,13
+	可能产生CAS警告11,12
 	"""
 	return _radius_at_fraction_of_total_cas(0.2, _cutout_stamp_maskzeroed, _asymmetry_center, rpetro_circ, flags, constants)
 
@@ -339,7 +339,7 @@ cdef double get_r50(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double
 	"""
 	The radius that contains 50% of the light within
 	'petro_extent_cas' (usually 1.5) times 'rpetro_circ'.
-	可能产生警告12,13
+	可能产生CAS警告11,12
 	"""
 	return _radius_at_fraction_of_total_cas(0.5, _cutout_stamp_maskzeroed, _asymmetry_center, rpetro_circ, flags, constants)
 
@@ -347,7 +347,7 @@ cdef double get_r80(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double
 	"""
 	The radius that contains 80% of the light within
 	'petro_extent_cas' (usually 1.5) times 'rpetro_circ'.
-	可能产生警告12,13
+	可能产生CAS警告11,12
 	"""
 	return _radius_at_fraction_of_total_cas(0.8, _cutout_stamp_maskzeroed, _asymmetry_center, rpetro_circ, flags, constants)
 
@@ -369,7 +369,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 	Calculate smoothness (a.k.a. clumpiness) as defined in eq. (11)
 	from Lotz et al. (2004). Note that the original definition by
 	Conselice (2003) includes an additional factor of 10.
-	可能产生不常见警告6,7
+	可能产生CAS警告14,15
 	"""
 	cdef cnp.ndarray image = _cutout_stamp_maskzeroed
 
@@ -390,7 +390,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 	if ap_flux <= 0:
 		warnings.warn('[smoothness] Nonpositive total flux.',
 					  AstropyUserWarning)
-		flags.set_flag_true(8) # unusual
+		flags.set_flag_true(14) # unusual
 		return -99.0  # invalid
 
 	cdef double S, area
@@ -402,7 +402,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 
 	if not isfinite(S):
 		warnings.warn('Invalid smoothness.', AstropyUserWarning)
-		flags.set_flag_true(9) # unusual
+		flags.set_flag_true(15) # unusual
 		return -99.0  # invalid
 
 	return S
@@ -438,7 +438,7 @@ cdef CASInfo calc_cas(BaseInfo base_info, (double, double) set_asym_center):
 			base_info._use_centroid = True
 			cas_info._asymmetry_center = base_info._centroid
 			warnings.warn('[CAS] Asymmetry center is too far, using centroid center', AstropyUserWarning)
-			cas_info.flags.set_flag_true(10)
+			cas_info.flags.set_flag_true(6)
 	else:
 		cas_info._asymmetry_center = set_asym_center
 	"""
@@ -489,7 +489,7 @@ cdef CASInfo calc_cas(BaseInfo base_info, (double, double) set_asym_center):
 	# Check if image is background-subtracted; set flag=1 if not.
 	if fabs(cas_info.sky_mean) > cas_info.sky_sigma:
 		warnings.warn('Image is not background-subtracted.', AstropyUserWarning)
-		cas_info.flags.set_flag_true(11)
+		cas_info.flags.set_flag_true(13)
 
 	cas_info._sky_smoothness = get_sky_smoothness(cas_info._bkg, cas_info.rpetro_circ, cas_info.flags, base_info.constants)
 	"""

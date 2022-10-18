@@ -18,7 +18,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 									  ConstantsSetting constants):
 	"""
 	Helper function to calculate the circular Petrosian radius.
-	可能产生警告2
+	可能产生警告7
 
 	For a given radius ``r``, return the ratio of the mean flux
 	over a circular annulus divided by the mean flux within the
@@ -44,7 +44,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
 		ratio = float(circ_annulus_mean_flux != 0)
-		flags.set_flag_true(2)
+		flags.set_flag_true(7)
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
 
@@ -54,7 +54,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 								 double _diagonal_distance, Flags flags, ConstantsSetting constants):
 	"""
 	Compute the Petrosian radius for concentric circular apertures.
-	可能产生警告2,3,4,5
+	可能产生警告7,8,9,10
 
 	Notes
 	-----
@@ -82,7 +82,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 		if r >= r_outer:
 			warnings.warn('[rpetro_circ] rpetro larger than cutout.',
 						  AstropyUserWarning)
-			flags.set_flag_true(3)
+			flags.set_flag_true(8)
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
 		if curval >= 0:
 			r_min = r
@@ -90,14 +90,14 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 			if r_min == -1:
 				warnings.warn('[rpetro_circ] r_min is not defined yet.',
 							  AstropyUserWarning)
-				flags.set_flag_true(4)
+				flags.set_flag_true(9)
 				if r >= r_outer:
 					# If r_min is still undefined at this point, then
 					# rpetro must be smaller than the annulus width.
 					warnings.warn('rpetro_circ < annulus_width! ' +
 								  'Setting rpetro_circ = annulus_width.',
 								  AstropyUserWarning)
-					flags.set_flag_true(5) # unusual
+					flags.set_flag_true(10) # unusual
 					return r_inner
 			else:
 				r_max = r
@@ -146,7 +146,7 @@ cpdef double _petrosian_function_ellip(double a, (double,double) center, cnp.nda
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
 		ratio = float(ellip_annulus_mean_flux != 0)
-		flags.set_flag_true(6)
+		flags.set_flag_true(9)
 	else:
 		ratio = ellip_annulus_mean_flux / ellip_aperture_mean_flux
 
@@ -185,7 +185,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 		if a >= a_outer:
 			warnings.warn('[rpetro_ellip] rpetro larger than cutout.',
 						  AstropyUserWarning)
-			flags.set_flag_true(7)
+			flags.set_flag_true(10)
 		curval = _petrosian_function_ellip(a, center, cutout_stamp_maskzeroed, elongation, theta, flags, constants)
 		# print("a_min=%.2f, a_max=%.2f, curval=%.3f"%(a_min, a_max, curval))
 		if curval >= 0:
@@ -194,14 +194,14 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 			if a_min == -1:
 				warnings.warn('[rpetro_ellip] a_min is not defined yet.',
 							  AstropyUserWarning)
-				flags.set_flag_true(8)
+				flags.set_flag_true(11)
 				if a >= a_outer:
 					# If a_min is still undefined at this point, then
 					# rpetro must be smaller than the annulus width.
 					warnings.warn('rpetro_ellip < annulus_width! ' +
 								  'Setting rpetro_ellip = annulus_width.',
 								  AstropyUserWarning)
-					flags.set_flag_true(9) # unusual
+					flags.set_flag_true(12) # unusual
 					return a_inner
 			else:
 				a_max = a
