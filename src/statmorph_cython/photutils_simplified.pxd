@@ -4,7 +4,7 @@ cimport numpy as cnp
 
 cdef double do_photometry(PixelAperture ap, cnp.ndarray[double,ndim=2] image)
 
-cdef double _aperture_area(PixelAperture ap, cnp.ndarray mask)
+cdef double _aperture_area(PixelAperture ap, cnp.ndarray[cnp.npy_bool,ndim=2] mask)
 
 cdef double _aperture_mean_nomask(PixelAperture ap, cnp.ndarray[double,ndim=2] image)
 
