@@ -50,7 +50,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
 
-	print(ratio)
+	print("ratio=%f"%ratio)
 	return ratio - constants.eta
 
 cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double, double) center,
