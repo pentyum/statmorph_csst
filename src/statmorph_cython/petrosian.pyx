@@ -13,6 +13,7 @@ from libc.math cimport fabs
 from .flags cimport Flags
 from .photutils_simplified cimport CircularAnnulus, CircularAperture, EllipticalAnnulus, EllipticalAperture,  _aperture_mean_nomask
 from .constants_setting cimport ConstantsSetting
+from numpy.math cimport isnan
 
 cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, Flags flags,
 									  ConstantsSetting constants):
@@ -41,11 +42,11 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 
 	print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
 
-	if circ_aperture_mean_flux - 0 < 1e-6:
+	if circ_aperture_mean_flux - 0 < 1e-7:
 		warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
-		ratio = float(circ_annulus_mean_flux != 0)
+		ratio = float(circ_annulus_mean_flux != 0 and not isnan(circ_annulus_mean_flux))
 		flags.set_flag_true(7)
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
