@@ -39,7 +39,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 		circ_aperture, image))
 	cdef double ratio
 
-	print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%f"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
+	print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
 
 	if circ_aperture_mean_flux - 0 < 1e-6:
 		warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
@@ -50,6 +50,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
 
+	print(ratio)
 	return ratio - constants.eta
 
 cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double, double) center,
