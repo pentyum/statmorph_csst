@@ -40,7 +40,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 		circ_aperture, image))
 	cdef double ratio
 
-	print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
+	# print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
 
 	if circ_aperture_mean_flux - 0 < 1e-7:
 		warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
@@ -51,7 +51,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
 
-	print("ratio=%f"%ratio)
+	# print("ratio=%f"%ratio)
 	return ratio - constants.eta
 
 cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double, double) center,
@@ -89,7 +89,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 			flags.set_flag_true(8)
 
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
-		print("label=%d, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
+		# print("label=%d, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
 		if curval >= 0:
 			r_min = r
 		elif curval < 0:
@@ -147,11 +147,11 @@ cpdef double _petrosian_function_ellip(double a, (double,double) center, cnp.nda
 		ellip_aperture, image))
 	cdef double ratio
 
-	if ellip_aperture_mean_flux == 0:
+	if ellip_aperture_mean_flux - 0 < 1e-7:
 		warnings.warn('[rpetro_ellip] Mean flux is zero.', AstropyUserWarning)
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
-		ratio = float(ellip_annulus_mean_flux != 0)
+		ratio = float(ellip_annulus_mean_flux != 0 and not isnan(ellip_annulus_mean_flux))
 		flags.set_flag_true(9)
 	else:
 		ratio = ellip_annulus_mean_flux / ellip_aperture_mean_flux
