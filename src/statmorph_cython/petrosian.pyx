@@ -41,7 +41,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 
 	print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%f"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
 
-	if circ_aperture_mean_flux == 0:
+	if circ_aperture_mean_flux - 0 < 1e-6:
 		warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
