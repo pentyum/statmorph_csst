@@ -86,8 +86,9 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 			warnings.warn('[rpetro_circ] rpetro larger than cutout.',
 						  AstropyUserWarning)
 			flags.set_flag_true(8)
+
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
-		print("r=%f, curval=%f, r_outer=%f"%(r,curval,r_outer))
+		print("label=%f, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
 		if curval >= 0:
 			r_min = r
 		elif curval < 0:
