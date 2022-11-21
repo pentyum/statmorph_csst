@@ -63,18 +63,18 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 	shm_img = SharedMemory(shm_img_name)
 	shm_segm = SharedMemory(shm_segm_name)
 	# Create the np.recarray from the buffer of the shared memory
-	image: np.ndarray = np.frombuffer(shm_img.buf, dtype=img_dtype).reshape(shape)
-	segmap: np.ndarray = np.frombuffer(shm_segm.buf, dtype=segm_dtype).reshape(shape)
+	image: np.ndarray = np.ndarray(shape, buffer=shm_img.buf, dtype=img_dtype)
+	segmap: np.ndarray = np.ndarray(shape, buffer=shm_segm.buf, dtype=segm_dtype)
 	noisemap: Optional[np.ndarray] = None
 	image_compare: Optional[np.ndarray] = None
 
 	if shm_noise_name is not None:
 		shm_noise = SharedMemory(shm_noise_name)
-		noisemap = np.frombuffer(shm_noise.buf, dtype=img_dtype).reshape(shape)
+		noisemap = np.ndarray(shape, buffer=shm_noise.buf, dtype=img_dtype)
 
 	if shm_img_cmp_name is not None:
 		shm_img_cmp = SharedMemory(shm_img_cmp_name)
-		image_compare = np.frombuffer(shm_img_cmp.buf, dtype=img_dtype).reshape(shape)
+		image_compare = np.ndarray(shape, buffer=shm_img_cmp.buf, dtype=img_dtype)
 
 	morph = statmorph.BaseInfo(
 		image, segmap, segm_slice, label, weightmap=noisemap, calc_cas=calc_cas, calc_g_m20=calc_g_m20,
@@ -211,23 +211,19 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		shm_segm = smm.SharedMemory(segmap.nbytes)
 
 		# Create a np.recarray using the buffer of shm
-		shm_img_array = np.frombuffer(
-			shm_img.buf, dtype=img_dtype).reshape(shape)
-		shm_segm_array = np.frombuffer(
-			shm_segm.buf, dtype=segm_dtype).reshape(shape)
+		shm_img_array = np.ndarray(shape, buffer=shm_img.buf, dtype=img_dtype)
+		shm_segm_array = np.ndarray(shape, buffer=shm_segm.buf, dtype=segm_dtype)
 
 		if noisemap is not None:
 			shm_noise = smm.SharedMemory(noisemap.nbytes)
-			shm_noise_array = np.frombuffer(
-				shm_noise.buf, dtype=img_dtype).reshape(shape)
+			shm_noise_array = np.ndarray(shape, buffer=shm_noise.buf, dtype=img_dtype)
 			shm_noise_name = shm_noise.name
 		else:
 			shm_noise_name = None
 
 		if image_compare is not None:
 			shm_img_cmp = smm.SharedMemory(image_compare.nbytes)
-			shm_img_cmp_array = np.frombuffer(
-				shm_img_cmp.buf, dtype=img_dtype).reshape(shape)
+			shm_img_cmp_array = np.ndarray(shape, buffer=shm_img_cmp.buf, dtype=img_dtype)
 			shm_img_cmp_name = shm_img_cmp.name
 		else:
 			shm_img_cmp_name = None
