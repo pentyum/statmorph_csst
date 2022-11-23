@@ -3,7 +3,7 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
-
+import traceback
 import warnings
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
@@ -188,7 +188,10 @@ cdef class Aperture:
 
 cdef class PixelAperture(Aperture):
 	cdef void set_bbox_and_centered_edges(self):
-		self.bbox = self.get_bbox()
+		try:
+			self.bbox = self.get_bbox()
+		except:
+			print(traceback.format_exc())
 		self._centered_edges = self.get_centered_edges()
 
 	cdef (double, double) _xy_extents(self):
