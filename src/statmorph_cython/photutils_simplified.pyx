@@ -184,7 +184,9 @@ cdef class ApertureMask:
 		return (cutout * apermask)[pixel_mask]
 
 cdef class Aperture:
-	pass
+	def __init__(self):
+		self.position = (0.0, 0.0)
+		self.theta = 0.0
 
 cdef class PixelAperture(Aperture):
 	cdef void set_bbox_and_centered_edges(self):
@@ -193,6 +195,7 @@ cdef class PixelAperture(Aperture):
 		except:
 			print("============ERROR============")
 			print(traceback.format_exc())
+			print(self.position)
 		self._centered_edges = self.get_centered_edges()
 
 	cdef (double, double) _xy_extents(self):
