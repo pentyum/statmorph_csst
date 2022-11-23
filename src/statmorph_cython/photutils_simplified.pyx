@@ -196,7 +196,7 @@ cdef class PixelAperture(Aperture):
 			print("============ERROR============")
 			traceback.print_stack()
 			print(self.__class__.__name__)
-			print(self.position)
+			print(vars(self))
 		self._centered_edges = self.get_centered_edges()
 
 	cdef (double, double) _xy_extents(self):
