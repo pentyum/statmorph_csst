@@ -209,7 +209,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 
 	# Apply symmetric mask
 	#cdef cnp.ndarray mask = self._mask_stamp.copy()
-	cdef cnp.ndarray[cnp.npy_bool,ndim=2] mask = cnp.PyArray_NewCopy(_mask_stamp, cnp.NPY_ANYORDER)
+	cdef cnp.ndarray[cnp.npy_bool,ndim=2] mask = _mask_stamp
 	# cdef cnp.ndarray mask_180 = skimage.transform.rotate(mask, 180.0, center=center)
 	# mask_180 = mask_180 >= 0.5  # convert back to bool
 	cdef cnp.ndarray[cnp.npy_bool,ndim=2] mask_180
