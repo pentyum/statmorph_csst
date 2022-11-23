@@ -91,7 +91,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 			if r >= 1.5 * r_outer:
 				break
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
-		# print("label=%d, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
+		print("label=%d, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
 		if curval >= 0:
 			r_min = r
 		elif curval < 0:
@@ -112,6 +112,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 				break
 		r += dr
 
+	print("opt: r_min=%d, r_max=%d"%(r_min,r_max))
 	cdef double rpetro_circ = opt.brentq(_petrosian_function_circ, r_min, r_max,
 										 args=(center, _cutout_stamp_maskzeroed, flags, constants), xtol=1e-6)
 
