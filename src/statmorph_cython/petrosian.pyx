@@ -85,10 +85,10 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 
 	while True:
 		if r >= r_outer:
-			warnings.warn('[rpetro_circ] rpetro larger than cutout.',
-						  AstropyUserWarning)
+			warnings.warn('[rpetro_circ] rpetro larger than cutout.', AstropyUserWarning)
 			flags.set_flag_true(8)
 			if r >= 1.5 * r_outer:
+				warnings.warn('[rpetro_circ] rpetro reaches limit (1.5*diagonal_distance).',AstropyUserWarning)
 				break
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
 		print("label=%d, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
@@ -196,6 +196,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 						  AstropyUserWarning)
 			flags.set_flag_true(10)
 			if a >= 1.5 * a_outer:
+				warnings.warn('[rpetro_ellip] rpetro reaches limit (1.5*diagonal_distance).', AstropyUserWarning)
 				break
 		curval = _petrosian_function_ellip(a, center, cutout_stamp_maskzeroed, elongation, theta, flags, constants)
 		# print("label=%d, a_min=%.2f, a_max=%.2f, curval=%.3f"%(constants.label, a_min, a_max, curval))
