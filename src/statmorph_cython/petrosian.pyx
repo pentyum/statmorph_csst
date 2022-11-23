@@ -31,6 +31,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 	cdef double r_out = r + 0.5 * constants.annulus_width
 
 	cdef CircularAnnulus circ_annulus = CircularAnnulus(center, r_in, r_out)
+	print(constants.label, r)
 	cdef CircularAperture circ_aperture = CircularAperture(center, r)
 
 	# Force mean fluxes to be positive:

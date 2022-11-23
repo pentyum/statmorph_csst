@@ -3,7 +3,7 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
-import traceback
+
 import warnings
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
@@ -194,7 +194,6 @@ cdef class PixelAperture(Aperture):
 			self.bbox = self.get_bbox()
 		except:
 			print("============ERROR============")
-			traceback.print_stack()
 			print(self.__class__.__name__)
 			print(self.position)
 			print((<CircularAperture>self).r)
