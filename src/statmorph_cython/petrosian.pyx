@@ -11,11 +11,12 @@ import scipy.optimize as opt
 cimport numpy as cnp
 from libc.math cimport fabs
 from .flags cimport Flags
-from .photutils_simplified cimport CircularAnnulus, CircularAperture, EllipticalAnnulus, EllipticalAperture,  _aperture_mean_nomask
+from .photutils_simplified cimport CircularAnnulus, CircularAperture, EllipticalAnnulus, EllipticalAperture, _aperture_mean_nomask
 from .constants_setting cimport ConstantsSetting
 from numpy.math cimport isnan
 
-cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, Flags flags,
+cpdef double _petrosian_function_circ(double r, (double, double) center,
+									  cnp.ndarray[double, ndim=2] _cutout_stamp_maskzeroed, Flags flags,
 									  ConstantsSetting constants):
 	"""
 	Helper function to calculate the circular Petrosian radius.
@@ -26,12 +27,12 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 	circle, minus "eta" (eq. 4 from Lotz et al. 2004). The root
 	of this function is the Petrosian radius.
 	"""
-	cdef cnp.ndarray[double,ndim=2] image = _cutout_stamp_maskzeroed
+	cdef cnp.ndarray[double, ndim=2] image = _cutout_stamp_maskzeroed
 	cdef double r_in = r - 0.5 * constants.annulus_width
 	cdef double r_out = r + 0.5 * constants.annulus_width
 
 	cdef CircularAnnulus circ_annulus = CircularAnnulus(center, r_in, r_out)
-	print(constants.label, r)
+	# print(constants.label, r)
 	cdef CircularAperture circ_aperture = CircularAperture(center, r)
 
 	# Force mean fluxes to be positive:
@@ -41,7 +42,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 		circ_aperture, image))
 	cdef double ratio
 
-	print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e"%(circ_annulus_mean_flux,circ_aperture_mean_flux))
+	# print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e" % (circ_annulus_mean_flux, circ_aperture_mean_flux))
 
 	if circ_aperture_mean_flux - 0 < 1e-7:
 		warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
@@ -55,7 +56,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center, cnp.nda
 	# print("ratio=%f"%ratio)
 	return ratio - constants.eta
 
-cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, (double, double) center,
+cdef double _rpetro_circ_generic(cnp.ndarray[double, ndim=2] _cutout_stamp_maskzeroed, (double, double) center,
 								 double _diagonal_distance, Flags flags, ConstantsSetting constants):
 	"""
 	Compute the Petrosian radius for concentric circular apertures.
@@ -88,10 +89,11 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 			warnings.warn('[rpetro_circ] rpetro larger than cutout.', AstropyUserWarning)
 			flags.set_flag_true(8)
 			if r >= 1.5 * r_outer:
-				warnings.warn('[rpetro_circ] rpetro reaches limit (1.5*diagonal_distance).',AstropyUserWarning)
+				warnings.warn('[rpetro_circ] rpetro reaches limit (1.5*diagonal_distance).', AstropyUserWarning)
+				r_max = 1.51 * r_outer
 				break
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
-		print("label=%d, r=%f, curval=%f, r_outer=%f"%(constants.label, r,curval,r_outer))
+		# print("label=%d, r=%f, curval=%f, r_outer=%f" % (constants.label, r, curval, r_outer))
 		if curval >= 0:
 			r_min = r
 		elif curval < 0:
@@ -105,20 +107,21 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double,ndim=2] _cutout_stamp_maskze
 					warnings.warn('rpetro_circ < annulus_width! ' +
 								  'Setting rpetro_circ = annulus_width.',
 								  AstropyUserWarning)
-					flags.set_flag_true(10) # unusual
+					flags.set_flag_true(10)  # unusual
 					return r_inner
 			else:
 				r_max = r
 				break
 		r += dr
 
-	print("opt: r_min=%d, r_max=%d"%(r_min,r_max))
+	# print("opt: r_min=%d, r_max=%d" % (r_min, r_max))
 	cdef double rpetro_circ = opt.brentq(_petrosian_function_circ, r_min, r_max,
 										 args=(center, _cutout_stamp_maskzeroed, flags, constants), xtol=1e-6)
 
 	return rpetro_circ
 
-cpdef double _petrosian_function_ellip(double a, (double,double) center, cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed,
+cpdef double _petrosian_function_ellip(double a, (double, double) center,
+									   cnp.ndarray[double, ndim=2] cutout_stamp_maskzeroed,
 									   double elongation, double theta, Flags flags, ConstantsSetting constants):
 	"""
 	Helper function to calculate the Petrosian "radius".
@@ -161,7 +164,8 @@ cpdef double _petrosian_function_ellip(double a, (double,double) center, cnp.nda
 
 	return ratio - constants.eta
 
-cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, (double,double) center, double elongation, double theta,
+cdef double _rpetro_ellip_generic(cnp.ndarray[double, ndim=2] cutout_stamp_maskzeroed, (double, double) center,
+								  double elongation, double theta,
 								  double _diagonal_distance, Flags flags, ConstantsSetting constants):
 	"""
 	Compute the Petrosian "radius" (actually the semi-major axis)
@@ -197,6 +201,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 			flags.set_flag_true(10)
 			if a >= 1.5 * a_outer:
 				warnings.warn('[rpetro_ellip] rpetro reaches limit (1.5*diagonal_distance).', AstropyUserWarning)
+				a_max = 1.51 * a_outer
 				break
 		curval = _petrosian_function_ellip(a, center, cutout_stamp_maskzeroed, elongation, theta, flags, constants)
 		# print("label=%d, a_min=%.2f, a_max=%.2f, curval=%.3f"%(constants.label, a_min, a_max, curval))
@@ -213,13 +218,13 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double,ndim=2] cutout_stamp_maskze
 					warnings.warn('rpetro_ellip < annulus_width! ' +
 								  'Setting rpetro_ellip = annulus_width.',
 								  AstropyUserWarning)
-					flags.set_flag_true(12) # unusual
+					flags.set_flag_true(12)  # unusual
 					return a_inner
 			else:
 				a_max = a
 				break
 		a += da
-		# i = i + 1
+	# i = i + 1
 
 	rpetro_ellip = opt.brentq(_petrosian_function_ellip, a_min, a_max,
 							  args=(center, cutout_stamp_maskzeroed, elongation, theta, flags, constants), xtol=1e-6)

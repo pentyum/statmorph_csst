@@ -190,13 +190,7 @@ cdef class Aperture:
 
 cdef class PixelAperture(Aperture):
 	cdef void set_bbox_and_centered_edges(self):
-		try:
-			self.bbox = self.get_bbox()
-		except:
-			print("============ERROR============")
-			print(self.__class__.__name__)
-			print(self.position)
-			print((<CircularAperture>self).r)
+		self.bbox = self.get_bbox()
 		self._centered_edges = self.get_centered_edges()
 
 	cdef (double, double) _xy_extents(self):
