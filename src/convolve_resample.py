@@ -118,7 +118,9 @@ def do_convolve_wht(origin_fits_file: str, save_fits_file: str, kernel) -> str:
 	with fits.open(origin_fits_file) as fits_file:
 		wht_inv = 1 / fits_file[0].data
 		wht_inv = np.where(np.isfinite(wht_inv), wht_inv, np.nan)
-		cov_result = convolve(wht_inv, kernel ** 2, normalize_kernel=True)
+		kernel_square = kernel ** 2
+		kernel_square = kernel_square / np.sum(kernel_square)
+		cov_result = convolve(wht_inv, kernel_square, normalize_kernel=False)
 		hdu = fits.PrimaryHDU(1 / cov_result, header=fits_file[0].header)
 		hdu.writeto(save_fits_file, overwrite=True)
 	return save_fits_file
