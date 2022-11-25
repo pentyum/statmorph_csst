@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+import os.path
 from typing import Sequence, Tuple, Type, Iterable, List, Union, Optional
 
 import cv2
@@ -15,6 +16,8 @@ from reproject import reproject_exact
 
 from utils.check_psfmatch import measure_kernel
 
+logging.basicConfig(level=logging.INFO,
+					format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
 convolve_logger = logging.getLogger("Convolver")
 resampler_logger = logging.getLogger("Resampler")
 
@@ -30,17 +33,18 @@ def get_size_matched_psf_from_file(origin_fits_file: str, psf_file: str) -> np.n
 	psf_fits = fits.open(psf_file)
 	psf_pixel_length: float = psf_fits[0].header["PIXSCL"]
 	origin_wcs = WCS(origin_fits[0].header)
-	origin_pixel_length: float = np.sqrt(origin_wcs.proj_plane_pixel_area).to(u.arcsec).value
+	origin_pixel_length: float = np.sqrt(origin_wcs.proj_plane_pixel_area()).to(u.arcsec).value
 
 	psf: np.ndarray = psf_fits[0].data
 	if abs(psf_pixel_length - origin_pixel_length) > 1e-5:
-		resampler_logger.info("%s的每个像素的长度为%g, 而PSF文件%s的像素长度为%g，需要对PSF进行缩放" % (
-			origin_fits_file, origin_pixel_length, psf_file, psf_pixel_length))
+		resampler_logger.info("图像%s的每个像素的长度为%g, 而PSF文件%s的像素长度为%g，需要对PSF进行缩放" % (
+			os.path.basename(origin_fits_file), origin_pixel_length, os.path.basename(psf_file), psf_pixel_length))
 		new_shape: np.ndarray = (np.array(psf.shape) * psf_pixel_length / origin_pixel_length).astype(np.int32)
 		if (new_shape[0] % 2 == 0) and (new_shape[1] % 2 == 0):
 			new_shape = new_shape + 1
 		psf = psf_reshape(psf, new_shape)
-
+	else:
+		resampler_logger.info("图像%s和PSF文件%s像素大小匹配，均为%g，不进行缩放" % (os.path.basename(origin_fits_file), os.path.basename(psf_file), psf_pixel_length))
 	origin_fits.close()
 	psf_fits.close()
 	return psf
@@ -90,12 +94,14 @@ def get_best_kernel(origin_psf: np.ndarray, target_psf: np.ndarray) -> Tuple[
 	return kernel, min_window_type, min_x, min_fun, D, W_minus
 
 
-def get_best_kernel_from_file(origin_file, origin_psf_file, target_psf_file):
+def get_best_kernel_from_file(origin_file: str, origin_psf_file: str, target_psf_file: str) -> Tuple[
+	np.ndarray, Type, float, float, float, float]:
 	origin_psf = get_size_matched_psf_from_file(origin_file, origin_psf_file)
 	target_psf = get_size_matched_psf_from_file(origin_file, target_psf_file)
 	kernel, min_window_type, min_x, min_fun, D, W_minus = get_best_kernel(origin_psf, target_psf)
 
-	convolve_logger.info("寻找到的%s到%s的最佳匹配参数为(基于%s的像素大小):" % (origin_psf_file, target_psf_file, origin_file))
+	convolve_logger.info(
+		"寻找到的%s到%s的最佳匹配参数为(基于%s的像素大小):" % (os.path.basename(origin_psf_file), os.path.basename(target_psf_file), os.path.basename(origin_file)))
 	convolve_logger.info("\twindows_type: %s" % min_window_type.__name__)
 	convolve_logger.info("\tx: %.3f" % min_x)
 	convolve_logger.info("\tfun: %.3f" % min_fun)
@@ -105,12 +111,18 @@ def get_best_kernel_from_file(origin_file, origin_psf_file, target_psf_file):
 
 
 def get_multiband_kernel_list(origin_file_list: Iterable[str], origin_psf_file_list: Iterable[str],
-							  target_psf_file: str) -> List[np.ndarray]:
+							  target_psf_file: Union[Iterable[str], str]) -> List[np.ndarray]:
 	result_list = []
-	pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
+	threads = min(multiprocessing.cpu_count() - 1, len(origin_file_list))
+	pool = multiprocessing.Pool(threads)
 
-	for origin_file, origin_psf_file in zip(origin_file_list, origin_psf_file_list):
-		result_list.append(pool.apply_async(get_best_kernel_from_file, (origin_file, origin_psf_file, target_psf_file)))
+	if isinstance(target_psf_file, str):
+		target_psf_file_list = [target_psf_file]*len(origin_psf_file_list)
+	else:
+		target_psf_file_list = target_psf_file
+
+	for origin_file, origin_psf_file, target_psf_file2 in zip(origin_file_list, origin_psf_file_list, target_psf_file_list):
+		result_list.append(pool.apply_async(get_best_kernel_from_file, (origin_file, origin_psf_file, target_psf_file2)))
 
 	pool.close()
 	pool.join()
