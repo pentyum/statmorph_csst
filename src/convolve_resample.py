@@ -62,12 +62,9 @@ def get_d(p: float, window_type: Type, origin_psf: np.ndarray, target_psf: np.nd
 def get_best_kernel(origin_psf: np.ndarray, target_psf: np.ndarray) -> Tuple[
 	np.ndarray, Type, float, float, float, float]:
 	opt_result = dict()
-	opt_result[CosineBellWindow] = opt.minimize_scalar(get_d, args=(CosineBellWindow, origin_psf, target_psf),
-													   method="bounded", bounds=(0.01, 10))
-	opt_result[TukeyWindow] = opt.minimize_scalar(get_d, args=(TukeyWindow, origin_psf, target_psf), method="bounded",
-												  bounds=(0.01, 15))
-	opt_result[TopHatWindow] = opt.minimize_scalar(get_d, args=(TopHatWindow, origin_psf, target_psf),
-												   method="bounded", bounds=(0.01, 15))
+	opt_result[CosineBellWindow] = opt.minimize_scalar(get_d, args=(CosineBellWindow, origin_psf, target_psf))
+	opt_result[TukeyWindow] = opt.minimize_scalar(get_d, args=(TukeyWindow, origin_psf, target_psf))
+	opt_result[TopHatWindow] = opt.minimize_scalar(get_d, args=(TopHatWindow, origin_psf, target_psf))
 	opt_result[HanningWindow] = opt.OptimizeResult(x=0, fun=get_d(0, HanningWindow, origin_psf, target_psf))
 
 	min_fun: float = np.inf
