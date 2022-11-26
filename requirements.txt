@@ -4,3 +4,5 @@ astropy
 setuptools
 Cython
 scipy
+reproject
+opencv-python

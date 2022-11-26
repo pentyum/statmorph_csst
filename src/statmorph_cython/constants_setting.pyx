@@ -74,3 +74,5 @@ cdef class ConstantsSetting:
 		self.g2_phase_tolerance = 0.01
 
 		self.verbose = False
+
+		self.label = 0

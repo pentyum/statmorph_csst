@@ -69,3 +69,4 @@ cdef class ConstantsSetting:
 	cdef double g2_phase_tolerance
 
 	cdef bint verbose
+	cdef int label

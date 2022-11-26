@@ -43,6 +43,7 @@ cdef class BaseInfo(MorphInfo):
 		self.calc_g2 = calc_g2
 
 		self.constants = ConstantsSetting()
+		self.constants.label = label
 
 		self.output_image_dir = output_image_dir
 		"""
