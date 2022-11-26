@@ -120,11 +120,11 @@ cdef class BaseInfo(MorphInfo):
 cdef class CASInfo(MorphInfo):
 	cdef tuple _slice_skybox
 	cdef cnp.ndarray _bkg
-	cdef double _sky_asymmetry
+	cdef readonly double _sky_asymmetry
 	cdef double xc_asymmetry, yc_asymmetry
 	cdef readonly double concentration, asymmetry, smoothness, rpetro_circ, r20, r80
 	cdef readonly (double,double) _asymmetry_center
-	cdef double sky_mean, sky_sigma, _sky_smoothness
+	cdef readonly double sky_mean, sky_sigma, _sky_smoothness
 
 cdef class GiniM20Info(MorphInfo):
 	cdef readonly double gini, m20, rpetro_ellip

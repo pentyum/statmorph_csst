@@ -676,15 +676,15 @@ cdef class CASInfo(MorphInfo):
 		super().__init__()
 
 	def get_values(self):
-		return [self._asymmetry_center[0], self._asymmetry_center[1], self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self.runtime, self.flags.value()]
+		return [self._asymmetry_center[0], self._asymmetry_center[1], self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self._sky_asymmetry, self.runtime, self.flags.value()]
 
 	@staticmethod
 	def get_value_names():
-		return ["asymmetry_center_x", "asymmetry_center_y", "rp_circ", "C", "A", "S", "cas_time", "cas_flag"]
+		return ["asymmetry_center_x", "asymmetry_center_y", "rp_circ", "C", "A", "S", "sky_asymmetry", ""cas_time", "cas_flag"]
 
 	@staticmethod
 	def get_value_formats():
-		return ["%f", "%f", "%f", "%f", "%f", "%f", "%f", "%d"]
+		return ["%f", "%f", "%f", "%f", "%f", "%f", "%f", "%f", "%d"]
 
 cdef class GiniM20Info(MorphInfo):
 	def __init__(self):
