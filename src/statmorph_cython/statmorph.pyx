@@ -681,7 +681,7 @@ cdef class CASInfo(MorphInfo):
 
 	@staticmethod
 	def get_value_names():
-		return ["asymmetry_center_x", "asymmetry_center_y", "rp_circ", "C", "A", "S", "sky_asymmetry", ""cas_time", "cas_flag"]
+		return ["asymmetry_center_x", "asymmetry_center_y", "rp_circ", "C", "A", "S", "sky_asymmetry", "cas_time", "cas_flag"]
 
 	@staticmethod
 	def get_value_formats():
