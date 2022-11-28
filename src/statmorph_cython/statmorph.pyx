@@ -214,12 +214,12 @@ cdef class BaseInfo(MorphInfo):
 
 		cdef cnp.ndarray[double,ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
 
-		self.size = len(not_in_mask)
+		self.size = len(cutout_not_in_mask)
 		"""
 		用于计算的星系本体的全部像素的数量
 		"""
 
-		self.surface_brightness = np.mean(not_in_mask)
+		self.surface_brightness = np.mean(cutout_not_in_mask)
 		"""
 		用于计算的星系本体的大小每个像素流量的平均值
 		"""
