@@ -98,6 +98,8 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 		return_list.extend(morph.g2.get_values())
 
 	return_list.extend([morph.runtime, morph.flags.value()])
+	del image, segmap, noisemap, image_compare
+
 	return tuple(return_list)
 
 
