@@ -634,7 +634,7 @@ cdef class BaseInfo(MorphInfo):
 			plt.figure(figsize=(20, 20))
 
 		cdef tuple extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
-		plt.imshow(self._cutout_stamp_maskzeroed, cmap="gray_r", origin="lower", extent=extent)
+		plt.imshow(self._cutout_stamp_maskzeroed, cmap="gray", origin="lower", extent=extent)
 		cdef double vmax = np.percentile(self._cutout_stamp_maskzeroed, 80)
 		plt.clim(0, vmax)
 
