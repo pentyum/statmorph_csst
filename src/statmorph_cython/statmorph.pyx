@@ -212,12 +212,14 @@ cdef class BaseInfo(MorphInfo):
 			self._abort_calculations()
 			return
 
-		self.size = len(self._cutout_stamp[~self._mask_stamp_no_bg])
+		cdef cnp.ndarray[double,ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
+
+		self.size = len(not_in_mask)
 		"""
 		用于计算的星系本体的全部像素的数量
 		"""
 
-		self.surface_brightness = np.mean(self._cutout_stamp[~self._mask_stamp_no_bg])
+		self.surface_brightness = np.mean(not_in_mask)
 		"""
 		用于计算的星系本体的大小每个像素流量的平均值
 		"""
@@ -623,6 +625,8 @@ cdef class BaseInfo(MorphInfo):
 		黑色圆圈为以不对称中心为中心的1.5rp，白色圆圈为用于计算C的r20，灰色圆圈为r80
 		黑色方框为背景区域
 		"""
+		cdef cnp.ndarray sm_all = cnp.PyArray_Where(self._segmap_stamp == self.label, 2, cnp.PyArray_Where(self._segmap_stamp == 0, 0, 1))
+
 		cdef int stamp_x = self._slice_stamp[1].start
 		cdef int stamp_y = self._slice_stamp[0].start
 		cdef int rec_x, rec_y, rec_x_length, rec_y_length
@@ -635,7 +639,7 @@ cdef class BaseInfo(MorphInfo):
 
 		cdef tuple extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
 		plt.imshow(self._cutout_stamp_maskzeroed, cmap="gray", origin="lower", extent=extent)
-		cdef double vmax = np.percentile(self._cutout_stamp_maskzeroed, 97)
+		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 80)
 		plt.clim(0, vmax)
 
 		if self.cas is not None:
@@ -644,16 +648,16 @@ cdef class BaseInfo(MorphInfo):
 			rec_x_length = self.cas._slice_skybox[1].stop - self.cas._slice_skybox[1].start
 			rec_y_length = self.cas._slice_skybox[0].stop - self.cas._slice_skybox[0].start
 
-			rec_sky = plt.Rectangle((rec_x, rec_y), rec_x_length, rec_y_length, edgecolor="black", linewidth=2,
+			rec_sky = plt.Rectangle((rec_x, rec_y), rec_x_length, rec_y_length, edgecolor="white", linewidth=2,
 									fill=False)
 
 			asym_center = (self.cas.xc_asymmetry, self.cas.yc_asymmetry)
 
-			circ_15rp = plt.Circle(asym_center, self.constants.petro_extent_cas * self.cas.rpetro_circ, edgecolor="black",
+			circ_15rp = plt.Circle(asym_center, self.constants.petro_extent_cas * self.cas.rpetro_circ, edgecolor="white",
 								   linewidth=2,
 								   fill=False)
 			circ_r80 = plt.Circle(asym_center, self.cas.r80, edgecolor="gray", linewidth=1, fill=False)
-			circ_r20 = plt.Circle(asym_center, self.cas.r20, edgecolor="white", linewidth=1, fill=False)
+			circ_r20 = plt.Circle(asym_center, self.cas.r20, edgecolor="black", linewidth=1, fill=False)
 
 			plt.scatter(*asym_center, s=10, color="cyan", label="asym c (%.1f,%.1f)" % tuple(self.cas._asymmetry_center))
 
