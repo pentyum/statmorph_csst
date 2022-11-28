@@ -631,15 +631,19 @@ cdef class BaseInfo(MorphInfo):
 		cdef int stamp_y = self._slice_stamp[0].start
 		cdef int rec_x, rec_y, rec_x_length, rec_y_length
 		if self.nx_stamp < 1000 and self.ny_stamp < 1000:
-			plt.figure(figsize=(5, 5))
+			plt.figure(figsize=(10, 5))
 		elif self.nx_stamp < 2500 and self.ny_stamp < 2500:
-			plt.figure(figsize=(10, 10))
+			plt.figure(figsize=(20, 10))
 		else:
-			plt.figure(figsize=(20, 20))
+			plt.figure(figsize=(40, 20))
+
+		plt.subplot(1,2,1)
+		plt.imshow(sm_all, origin="lower")
 
 		cdef tuple extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
-		plt.imshow(self._cutout_stamp_maskzeroed, cmap="gray", origin="lower", extent=extent)
-		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 85)
+		plt.subplot(1,2,2)
+		plt.imshow(self._cutout_stamp, cmap="gray", origin="lower", extent=extent)
+		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 90)
 		plt.clim(0, vmax)
 
 		if self.cas is not None:
@@ -677,6 +681,7 @@ cdef class BaseInfo(MorphInfo):
 		plt.legend()
 
 		plt.savefig("%s/%d.png" % (self.output_image_dir, self.label))
+		plt.close()
 
 cdef class CASInfo(MorphInfo):
 	def __init__(self):
