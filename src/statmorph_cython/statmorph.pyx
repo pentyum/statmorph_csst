@@ -639,7 +639,7 @@ cdef class BaseInfo(MorphInfo):
 
 		cdef tuple extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
 		plt.imshow(self._cutout_stamp_maskzeroed, cmap="gray", origin="lower", extent=extent)
-		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 80)
+		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 85)
 		plt.clim(0, vmax)
 
 		if self.cas is not None:
@@ -659,7 +659,7 @@ cdef class BaseInfo(MorphInfo):
 			circ_r80 = plt.Circle(asym_center, self.cas.r80, edgecolor="gray", linewidth=1, fill=False)
 			circ_r20 = plt.Circle(asym_center, self.cas.r20, edgecolor="black", linewidth=1, fill=False)
 
-			plt.scatter(*asym_center, s=10, color="cyan", label="asym c (%.1f,%.1f)" % tuple(self.cas._asymmetry_center))
+			plt.scatter(*asym_center, s=10, color="red", label="asym c (%.1f,%.1f)" % tuple(self.cas._asymmetry_center))
 
 			plt.gca().add_patch(rec_sky)
 			plt.gca().add_patch(circ_15rp)
