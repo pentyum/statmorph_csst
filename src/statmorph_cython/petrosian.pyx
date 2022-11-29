@@ -84,6 +84,33 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double, ndim=2] _cutout_stamp_maskz
 	cdef double r = r_inner  # initial value
 	cdef double curval
 
+	while r <= r_outer:
+		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
+		if curval == 0:
+			warnings.warn('[rpetro_circ] Found rpetro by chance?',
+						  AstropyUserWarning)
+			return r
+		elif curval > 0:  # we have not reached rpetro yet
+			r_min = r
+		else:  # we are beyond rpetro
+			if r_min == -1:
+				warnings.warn('rpetro_circ < annulus_width! ' +
+							  'Setting rpetro_circ = annulus_width.',
+							  AstropyUserWarning)
+				flags.set_flag_true(10)
+				return r_inner
+			r_max = r
+			break
+		r = r + dr
+
+	assert r_min != -1
+	if r_max == -1:
+		warnings.warn('[rpetro_circ] rpetro too large.',
+					  AstropyUserWarning)
+		flags.set_flag_true(8)
+		r_max = r_outer
+
+	"""
 	while True:
 		if r >= r_outer:
 			warnings.warn('[rpetro_circ] rpetro larger than cutout.', AstropyUserWarning)
@@ -113,6 +140,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double, ndim=2] _cutout_stamp_maskz
 				r_max = r
 				break
 		r += dr
+	"""
 
 	# print("opt: r_min=%d, r_max=%d" % (r_min, r_max))
 	cdef double rpetro_circ = opt.brentq(_petrosian_function_circ, r_min, r_max,
@@ -193,6 +221,34 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double, ndim=2] cutout_stamp_maskz
 	cdef double a = a_inner  # initial value
 	cdef double curval
 	# cdef int i = 0
+
+	while a <= a_outer:
+		curval = _petrosian_function_ellip(a, center, cutout_stamp_maskzeroed, elongation, theta, flags, constants)
+		if curval == 0:
+			warnings.warn('[rpetro_ellip] Found rpetro by chance?',
+						  AstropyUserWarning)
+			return a
+		elif curval > 0:  # we have not reached rpetro yet
+			a_min = a
+		else:  # we are beyond rpetro
+			if a_min == -1:
+				warnings.warn('rpetro_ellip < annulus_width! ' +
+							  'Setting rpetro_ellip = annulus_width.',
+							  AstropyUserWarning)
+				flags.set_flag_true(12)  # unusual
+				return a_inner
+			a_max = a
+			break
+		a = a + da
+
+	assert a_min != -1
+	if a_max == -1:
+		warnings.warn('[rpetro_ellip] rpetro too large.',
+					  AstropyUserWarning)
+		flags.set_flag_true(10)
+		a_max = a_outer
+
+	"""
 	while True:
 		# print("i=%d, a=%.2f"%(i,a))
 		if a >= a_outer:
@@ -225,6 +281,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double, ndim=2] cutout_stamp_maskz
 				break
 		a += da
 	# i = i + 1
+	"""
 
 	rpetro_ellip = opt.brentq(_petrosian_function_ellip, a_min, a_max,
 							  args=(center, cutout_stamp_maskzeroed, elongation, theta, flags, constants), xtol=1e-6)
