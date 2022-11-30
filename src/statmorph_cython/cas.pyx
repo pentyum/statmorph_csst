@@ -236,7 +236,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 		flags.set_flag_true(4) # unusual
 		return -99.0  # invalid
 
-	cdef double asym
+	cdef double asym, ap_area
 
 	if _sky_asymmetry == -99.0:  # invalid skybox
 		asym = ap_abs_diff / ap_abs_sum
