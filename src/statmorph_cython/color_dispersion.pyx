@@ -10,6 +10,8 @@
 """
 The color dispersion parament is quiet complex to calculate,
 Here we repeat the same option for the image_compare
+
+https://ui.adsabs.harvard.edu/abs/2003ApJ...598..827P
 """
 import numpy as np
 import scipy.optimize as opt

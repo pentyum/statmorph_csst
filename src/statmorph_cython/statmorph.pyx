@@ -286,7 +286,7 @@ cdef class BaseInfo(MorphInfo):
 			self.mid = statmorph_cython.mid.calc_mid(self)
 			self.mid.calc_runtime(start)
 			if calc_multiply:
-				self.multiply = statmorph_cython.multiply.multiply(self.mid._cutout_mid)
+				self.multiply = statmorph_cython.multiply.multiplicity(self.mid._cutout_mid)
 
 		if calc_color_dispersion:
 			if image_compare is not None:

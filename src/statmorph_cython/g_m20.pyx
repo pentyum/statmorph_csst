@@ -276,6 +276,26 @@ cdef double get_m20(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, cnp.ndar
 
 	return m20
 
+cdef double get_gini_m20_bulge(double gini, double m20):
+	"""
+	Return the Gini-M20 bulge statistic, F(G, M20), as defined
+	in Rodriguez-Gomez et al. (2019).
+	"""
+	if (gini == -99.0) or (m20 == -99.0):
+		return -99.0  # invalid
+
+	return -0.693 * m20 + 4.95 * gini - 3.96
+
+cdef double get_gini_m20_merger(double gini, double m20):
+	"""
+	Return the Gini-M20 merger statistic, S(G, M20), as defined
+	in Rodriguez-Gomez et al. (2019).
+	"""
+	if (gini == -99.0) or (m20 == -99.0):
+		return -99.0  # invalid
+
+	return 0.139 * m20 + 0.990 * gini - 0.327
+
 cdef GiniM20Info calc_g_m20(BaseInfo base_info, (double, double) asymmetry_center):
 	cdef GiniM20Info g_m20_info = GiniM20Info()
 	cdef double elongation_asymmetry, orientation_asymmetry
@@ -287,4 +307,6 @@ cdef GiniM20Info calc_g_m20(BaseInfo base_info, (double, double) asymmetry_cente
 	g_m20_info._segmap_gini = get_segmap_gini(base_info._cutout_stamp_maskzeroed, g_m20_info.rpetro_ellip, elongation_asymmetry, orientation_asymmetry, base_info._centroid, g_m20_info.flags, base_info.constants)
 	g_m20_info.gini = get_gini(base_info._cutout_stamp_maskzeroed, g_m20_info._segmap_gini, g_m20_info.flags)
 	g_m20_info.m20 = get_m20(base_info._cutout_stamp_maskzeroed, g_m20_info._segmap_gini, g_m20_info.flags)
+	g_m20_info.f = get_gini_m20_bulge(g_m20_info.gini, g_m20_info.m20)
+	g_m20_info.s = get_gini_m20_merger(g_m20_info.gini, g_m20_info.m20)
 	return g_m20_info

@@ -15,6 +15,10 @@ from scipy import signal
 
 cnp.import_array()
 
+"""
+https://ui.adsabs.harvard.edu/abs/2018MNRAS.477L.101R
+"""
+
 cdef class G2Calculator:
 	# gradients
 	def __cinit__(self, double[:,:] image, int contour_pixels_count, double module_tolerance, double phase_tolerance):

@@ -5,13 +5,15 @@
 # cython: initializedcheck=False
 
 ######################
-# Calculate Multiply #
+# Calculate multiplicity #
 ######################
 
 """
 In the following part, we calculate the multiply statistic,
 since the origin defination of this para is related to redshift z,
 Here we choose the MID segmap as the
+
+https://ui.adsabs.harvard.edu/abs/2007ApJ...656....1L
 """
 import warnings
 
@@ -66,7 +68,7 @@ cdef cnp.ndarray[double,ndim=2] image_reshape(cnp.ndarray[double,ndim=2] image):
 	cdef cnp.ndarray[double,ndim=2] new_image_2d = new_image.reshape((y_size, x_size))
 	return new_image_2d
 
-cdef double multiply(cnp.ndarray[double,ndim=2] _cutout_mid):
+cdef double multiplicity(cnp.ndarray[double,ndim=2] _cutout_mid):
 	cdef cnp.ndarray[double,ndim=2] image = _cutout_mid
 	cdef int x_size = image.shape[1]
 	cdef int y_size = image.shape[0]
