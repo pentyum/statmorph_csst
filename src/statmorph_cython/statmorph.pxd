@@ -76,6 +76,8 @@ cdef class BaseInfo(MorphInfo):
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center)
 
+	cdef void _check_segmaps(self)
+
 	cdef tuple get_slice_stamp(self)
 
 	cdef int get_xmin_stamp(self)
