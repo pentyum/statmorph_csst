@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import time
+import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from configparser import ConfigParser
 import multiprocessing
@@ -97,6 +98,11 @@ class MorphProvider(abc.ABC):
 					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		pass
+
+	def get_empty_result(self, label):
+		result_list = self.get_result_format() % np.zeros(len(self.get_result_header()))
+		result_list[0] = label
+		return result_list
 
 
 class StatmorphVanilla(MorphProvider):
@@ -196,8 +202,12 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 		shm_img_cmp = SharedMemory(shm_img_cmp_name)
 		image_compare = np.ndarray(shape, buffer=shm_img_cmp.buf, dtype=img_dtype)
 
-	return_list = morph_provider.measure_label(image, segmap, noisemap, segm_slice, label,
-											   image_compare,output_image_dir, set_centroid, set_asym_center)
+	try:
+		return_list = morph_provider.measure_label(image, segmap, noisemap, segm_slice, label,
+												   image_compare, output_image_dir, set_centroid, set_asym_center)
+	except:
+		logger.error(str(label)+": "+traceback.format_exc())
+		return_list = morph_provider.get_empty_result(label)
 
 	del image, segmap, noisemap, image_compare
 
@@ -220,7 +230,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
-				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool=False):
+				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
@@ -281,7 +291,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 	else:
 		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiply,
 														calc_color_dispersion, calc_g2)
-	logger.info("使用"+morph_provider.__class__.__qualname__)
+	logger.info("使用" + morph_provider.__class__.__qualname__)
 
 	result_format = morph_provider.get_result_format()
 	result_all = [" ".join(morph_provider.get_result_header()) + "\n"]
@@ -571,7 +581,8 @@ def main(argv) -> int:
 				  sextractor.noise_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
-				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file, use_vanilla)
+				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file,
+				  use_vanilla)
 	return 0
 
 
