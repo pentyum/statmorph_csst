@@ -22,7 +22,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef cnp.ndarray _weightmap
 	cdef double _gain
 
-	cdef bint flag_catastrophic
+	cdef readonly bint flag_catastrophic
 	cdef bint _use_centroid
 
 	cdef ConstantsSetting constants
