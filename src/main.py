@@ -52,13 +52,10 @@ class MorphProvider(abc.ABC):
 		result_format = ["%d %d %f %f %f %f %f"]
 		if self.calc_cas:
 			result_format.extend(CASInfo.get_value_formats())
-			logger.info("计算CAS")
 		if self.calc_g_m20:
 			result_format.extend(GiniM20Info.get_value_formats())
-			logger.info("计算G,M20")
 		if self.calc_mid:
 			result_format.extend(MIDInfo.get_value_formats())
-			logger.info("计算MID")
 			if self.calc_multiply:
 				result_format.extend(["%f"])
 		if self.calc_color_dispersion:
@@ -284,6 +281,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 	else:
 		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiply,
 														calc_color_dispersion, calc_g2)
+	logger.info("使用"+morph_provider.__class__.__qualname__)
+
 	result_format = morph_provider.get_result_format()
 	result_all = [" ".join(morph_provider.get_result_header()) + "\n"]
 
