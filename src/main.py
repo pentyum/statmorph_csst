@@ -1,5 +1,5 @@
 #!/bin/python3
-
+import abc
 import getopt
 import logging
 import os
@@ -39,71 +39,133 @@ def read_properties(path) -> Dict[str, str]:
 	return itemDict
 
 
-def run_statmorph_one_cython(image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
-							 label: int, calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
-							 calc_color_dispersion: bool, image_compare: Optional[np.ndarray], calc_g2: bool,
-							 output_image_dir: str, set_centroid: Tuple[float, float],
-							 set_asym_center: Tuple[float, float]):
-	morph = statmorph.BaseInfo(
-		image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
-		output_image_dir=output_image_dir, set_centroid=set_centroid)
-	morph.calculate_morphology(calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion, calc_g2,
-							   set_asym_center)
+class MorphProvider(abc.ABC):
+	def __init__(self, calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion, calc_g2):
+		self.calc_cas: bool = calc_cas
+		self.calc_g_m20: bool = calc_g_m20
+		self.calc_mid: bool = calc_mid
+		self.calc_multiply: bool = calc_multiply
+		self.calc_color_dispersion: bool = calc_color_dispersion
+		self.calc_g2: bool = calc_g2
 
-	return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
-				   morph._rpetro_circ_centroid, morph.sn_per_pixel]
-	if calc_cas:
-		return_list.extend(morph.cas.get_values())
-	if calc_g_m20:
-		return_list.extend(morph.g_m20.get_values())
-	if calc_mid:
-		return_list.extend(morph.mid.get_values())
-		if calc_multiply:
-			return_list.extend([morph.multiply])
-	if calc_color_dispersion:
-		return_list.extend(morph.compare_info.get_values())
-	if calc_g2:
-		return_list.extend(morph.g2.get_values())
+	def get_result_format(self):
+		result_format = ["%d %d %f %f %f %f %f"]
+		if self.calc_cas:
+			result_format.extend(CASInfo.get_value_formats())
+			logger.info("计算CAS")
+		if self.calc_g_m20:
+			result_format.extend(GiniM20Info.get_value_formats())
+			logger.info("计算G,M20")
+		if self.calc_mid:
+			result_format.extend(MIDInfo.get_value_formats())
+			logger.info("计算MID")
+			if self.calc_multiply:
+				result_format.extend(["%f"])
+		if self.calc_color_dispersion:
+			result_format.extend(CompareInfo.get_value_formats())
+		if self.calc_g2:
+			result_format.extend(G2Info.get_value_formats())
 
-	return_list.extend([morph.runtime, morph.flags.value()])
-	return return_list
+		result_format.extend(["%f", "%d"])
+
+		result_format = " ".join(result_format) + "\n"
+		return result_format
+
+	def get_result_header(self):
+		result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid",
+						 "sn_per_pixel"]
+
+		if self.calc_cas:
+			result_header.extend(CASInfo.get_value_names())
+			logger.info("计算CAS")
+		if self.calc_g_m20:
+			result_header.extend(GiniM20Info.get_value_names())
+			logger.info("计算G,M20")
+		if self.calc_mid:
+			result_header.extend(MIDInfo.get_value_names())
+			logger.info("计算MID")
+			if self.calc_multiply:
+				result_header.extend(["multiply"])
+		if self.calc_color_dispersion:
+			result_header.extend(CompareInfo.get_value_names())
+		if self.calc_g2:
+			result_header.extend(G2Info.get_value_names())
+
+		result_header.extend(["runtime", "base_flag"])
+
+		return result_header
+
+	@abc.abstractmethod
+	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		pass
 
 
-def run_statmorph_one_vanilla(image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
-							  label: int, calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
-							  calc_color_dispersion: bool, image_compare: Optional[np.ndarray], calc_g2: bool,
-							  output_image_dir: str, set_centroid: Tuple[float, float],
-							  set_asym_center: Tuple[float, float]):
-	morph = SourceMorphology(
-		image, segmap, label, segm_slice, weightmap=noisemap)
-	morph._calculate_morphology(calc_cas, calc_g_m20, calc_mid)
+class StatmorphVanilla(MorphProvider):
 
-	return_list = [label, 0, 0, morph._centroid[0], morph._centroid[1],
-				   morph._rpetro_circ_centroid, morph.sn_per_pixel]
-	if calc_cas:
-		return_list.extend(
-			[morph._asymmetry_center[0], morph._asymmetry_center[1], morph.rpetro_circ, morph.concentration,
-			 morph.asymmetry, morph.smoothness, morph._sky_asymmetry, 0, 0])
-	if calc_g_m20:
-		return_list.extend([morph.rpetro_ellip, morph.gini, morph.m20, 0, 0])
-	if calc_mid:
-		return_list.extend([morph.multimode, morph.intensity, morph.deviation, 0, 0])
-		if calc_multiply:
-			return_list.extend([0])
-	if calc_color_dispersion:
-		return_list.extend([0, 0])
-	if calc_g2:
-		return_list.extend([0, 0])
+	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		morph = SourceMorphology(
+			image, segmap, label, segm_slice, weightmap=noisemap)
+		morph._calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid)
 
-	return_list.extend([morph.runtime, morph.flag])
-	return return_list
+		return_list = [label, 0, 0, morph._centroid[0], morph._centroid[1],
+					   morph._rpetro_circ_centroid, morph.sn_per_pixel]
+		if self.calc_cas:
+			return_list.extend(
+				[morph._asymmetry_center[0], morph._asymmetry_center[1], morph.rpetro_circ, morph.concentration,
+				 morph.asymmetry, morph.smoothness, morph._sky_asymmetry, 0, 0])
+		if self.calc_g_m20:
+			return_list.extend([morph.rpetro_ellip, morph.gini, morph.m20, 0, 0])
+		if self.calc_mid:
+			return_list.extend([morph.multimode, morph.intensity, morph.deviation, 0, 0])
+			if self.calc_multiply:
+				return_list.extend([0])
+		if self.calc_color_dispersion:
+			return_list.extend([0, 0])
+		if self.calc_g2:
+			return_list.extend([0, 0])
+
+		return_list.extend([morph.runtime, morph.flag])
+		return return_list
+
+
+class StatmorphCython(MorphProvider):
+	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		morph = statmorph.BaseInfo(
+			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
+			output_image_dir=output_image_dir, set_centroid=set_centroid)
+		morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiply,
+								   self.calc_color_dispersion, self.calc_g2,
+								   set_asym_center)
+
+		return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
+					   morph._rpetro_circ_centroid, morph.sn_per_pixel]
+		if self.calc_cas:
+			return_list.extend(morph.cas.get_values())
+		if self.calc_g_m20:
+			return_list.extend(morph.g_m20.get_values())
+		if self.calc_mid:
+			return_list.extend(morph.mid.get_values())
+			if self.calc_multiply:
+				return_list.extend([morph.multiply])
+		if self.calc_color_dispersion:
+			return_list.extend(morph.compare_info.get_values())
+		if self.calc_g2:
+			return_list.extend(morph.g2.get_values())
+
+		return_list.extend([morph.runtime, morph.flags.value()])
+		return return_list
 
 
 def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_name: Optional[str], segm_slice,
-							label: int, shape, calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
-							calc_color_dispersion: bool, shm_img_cmp_name: Optional[str], calc_g2: bool,
+							label: int, shape, shm_img_cmp_name: Optional[str],
 							output_image_dir: str, set_centroid: Tuple[float, float],
-							set_asym_center: Tuple[float, float], img_dtype, segm_dtype):
+							set_asym_center: Tuple[float, float], img_dtype, segm_dtype, morph_provider: MorphProvider):
 	"""
 		label: int
 		rpetro_circ_centroid: double
@@ -137,9 +199,8 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 		shm_img_cmp = SharedMemory(shm_img_cmp_name)
 		image_compare = np.ndarray(shape, buffer=shm_img_cmp.buf, dtype=img_dtype)
 
-	return_list = run_statmorph_one_cython(image, segmap, noisemap, segm_slice, label,
-										   calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
-										   image_compare, calc_g2, output_image_dir, set_centroid, set_asym_center)
+	return_list = morph_provider.measure_label(image, segmap, noisemap, segm_slice, label,
+											   image_compare,output_image_dir, set_centroid, set_asym_center)
 
 	del image, segmap, noisemap, image_compare
 
@@ -217,37 +278,10 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		run_labels = [run_specified_label]
 		logger.info("只运行label=%d" % run_specified_label)
 
-	result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid",
-					 "sn_per_pixel"]
-	result_format = ["%d %d %f %f %f %f %f"]
-
-	if calc_cas:
-		result_header.extend(CASInfo.get_value_names())
-		result_format.extend(CASInfo.get_value_formats())
-		logger.info("计算CAS")
-	if calc_g_m20:
-		result_header.extend(GiniM20Info.get_value_names())
-		result_format.extend(GiniM20Info.get_value_formats())
-		logger.info("计算G,M20")
-	if calc_mid:
-		result_header.extend(MIDInfo.get_value_names())
-		result_format.extend(MIDInfo.get_value_formats())
-		logger.info("计算MID")
-		if calc_multiply:
-			result_header.extend(["multiply"])
-			result_format.extend(["%f"])
-	if calc_color_dispersion:
-		result_header.extend(CompareInfo.get_value_names())
-		result_format.extend(CompareInfo.get_value_formats())
-	if calc_g2:
-		result_header.extend(G2Info.get_value_names())
-		result_format.extend(G2Info.get_value_formats())
-
-	result_header.extend(["runtime", "base_flag"])
-	result_format.extend(["%f", "%d"])
-
-	result_all = [" ".join(result_header) + "\n"]
-	result_format = " ".join(result_format) + "\n"
+	morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiply,
+													calc_color_dispersion, calc_g2)
+	result_format = morph_provider.get_result_format()
+	result_all = [" ".join(morph_provider.get_result_header()) + "\n"]
 
 	start_time = time.time()
 	with SharedMemoryManager() as smm:
@@ -321,8 +355,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 
 				fs.append(
 					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
-							   shape, calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
-							   shm_img_cmp_name, calc_g2, output_image_dir, set_centroid, set_asym_center,
+							   shape, shm_img_cmp_name, output_image_dir, set_centroid, set_asym_center,
 							   img_dtype, segm_dtype))
 			for result in as_completed(fs):
 				line = result_format % result.result()
@@ -417,6 +450,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-e, --calc_color_dispersion 是否测量color_dispersion
 	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)，若不测量则为null
 	-b, --calc_g2 是否测量G2
+	-C, --use_cython 是否使用cython版，默认为是
 	-h, --help 显示此帮助
 """
 
@@ -456,7 +490,8 @@ def main(argv) -> int:
 		"u": ("calc_multiply", False),
 		"e": ("calc_color_dispersion", False),
 		"m": ("image_compare_file", True),
-		"b": ("calc_g2", False)
+		"b": ("calc_g2", False),
+		"C": ("use_cython", False)
 	}
 
 	try:
