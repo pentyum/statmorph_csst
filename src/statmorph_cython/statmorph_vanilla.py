@@ -388,7 +388,7 @@ class SourceMorphology(object):
 				 petro_extent_cas=1.5, petro_fraction_cas=0.25,
 				 boxcar_size_mid=3.0, niter_bh_mid=5, sigma_mid=1.0,
 				 petro_extent_flux=2.0, boxcar_size_shape_asym=3.0,
-				 sersic_maxiter=500, segmap_overlap_ratio=0.25, verbose=False, auto_calc=True):
+				 sersic_maxiter=500, segmap_overlap_ratio=0.25, verbose=False):
 		self._image = image
 		self._segmap = segmap
 		self.label = label
@@ -476,9 +476,6 @@ class SourceMorphology(object):
 
 		# For simplicity, evaluate all "lazy" properties at once:
 
-		if auto_calc:
-			self._calculate_morphology()
-
 	def __getitem__(self, key):
 		return getattr(self, key)
 
@@ -526,12 +523,83 @@ class SourceMorphology(object):
 		self.flag_sersic = 1
 		self.runtime = -99.0
 
-	def _calculate_morphology(self):
+	def _calculate_morphology(self, calc_cas:bool=True, calc_g_m20:bool=True, calc_mid:bool=True):
 		"""
 		Calculate all morphological parameters, which are stored
 		as "lazy" properties.
 		"""
-		for q in _quantity_names:
+		quantity_names = [
+			'xc_centroid',
+			'yc_centroid',
+			'sn_per_pixel',
+			'xmin_stamp',
+			'ymin_stamp',
+			'xmax_stamp',
+			'ymax_stamp',
+			'nx_stamp',
+			'ny_stamp',
+		]
+		cas_quantity = [
+			'sky_mean',
+			'sky_median',
+			'sky_sigma',
+			'xc_asymmetry',
+			'yc_asymmetry',
+			'concentration',
+			'asymmetry',
+			'smoothness',
+			'rpetro_circ',
+			'r20',
+			'r50',
+			'r80',
+		]
+		g_m20_quantity = [
+			'rpetro_ellip',
+			'gini',
+			'm20',
+			'gini_m20_bulge',
+			'gini_m20_merger',
+		]
+		mid_quantity = [
+			'multimode',
+			'intensity',
+			'deviation',
+		]
+		other_quantity = [
+			'flux_circ',
+			'flux_ellip',
+
+			'rmax_circ',
+			'rmax_ellip',
+			'rhalf_circ',
+			'rhalf_ellip',
+
+			'ellipticity_centroid',
+			'elongation_centroid',
+			'orientation_centroid',
+			'ellipticity_asymmetry',
+			'elongation_asymmetry',
+			'orientation_asymmetry',
+
+			'outer_asymmetry',
+			'shape_asymmetry',
+
+			'sersic_amplitude',
+			'sersic_rhalf',
+			'sersic_n',
+			'sersic_xc',
+			'sersic_yc',
+			'sersic_ellip',
+			'sersic_theta'
+		]
+		if calc_cas:
+			quantity_names = quantity_names+cas_quantity
+		if calc_g_m20:
+			quantity_names = quantity_names+g_m20_quantity
+		if calc_mid:
+			quantity_names = quantity_names+mid_quantity
+
+		for q in quantity_names:
 			tmp = self[q]
 
 		# Check if image is background-subtracted; set flag = 2 (bad) if not.

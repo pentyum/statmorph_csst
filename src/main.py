@@ -75,7 +75,7 @@ def run_statmorph_one_vanilla(image: np.ndarray, segmap: np.ndarray, noisemap: O
 							  output_image_dir: str, set_centroid: Tuple[float, float],
 							  set_asym_center: Tuple[float, float]):
 	morph = SourceMorphology(
-		image, segmap, label, segm_slice, weightmap=noisemap, auto_calc=False)
+		image, segmap, label, segm_slice, weightmap=noisemap)
 	morph._calculate_morphology(calc_cas, calc_g_m20, calc_mid)
 
 	return_list = [label, 0, 0, morph._centroid[0], morph._centroid[1],
