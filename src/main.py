@@ -48,8 +48,13 @@ class MorphProvider(abc.ABC):
 		self.calc_multiply: bool = calc_multiply
 		self.calc_color_dispersion: bool = calc_color_dispersion
 		self.calc_g2: bool = calc_g2
+		self.result_format: str = ""
+		self.result_header: List[str] = []
 
 	def get_result_format(self) -> str:
+		if self.result_format != "":
+			return self.result_format
+
 		result_format = ["%d %d %f %f %f %f %f"]
 		if self.calc_cas:
 			result_format.extend(CASInfo.get_value_formats())
@@ -67,21 +72,22 @@ class MorphProvider(abc.ABC):
 		result_format.extend(["%f", "%d"])
 
 		result_format_str = " ".join(result_format) + "\n"
+		self.result_format = result_format_str
 		return result_format_str
 
 	def get_result_header(self) -> List[str]:
+		if len(self.result_header) != 0:
+			return self.result_header
+
 		result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid",
 						 "sn_per_pixel"]
 
 		if self.calc_cas:
 			result_header.extend(CASInfo.get_value_names())
-			logger.info("计算CAS")
 		if self.calc_g_m20:
 			result_header.extend(GiniM20Info.get_value_names())
-			logger.info("计算G,M20")
 		if self.calc_mid:
 			result_header.extend(MIDInfo.get_value_names())
-			logger.info("计算MID")
 			if self.calc_multiply:
 				result_header.extend(["multiply"])
 		if self.calc_color_dispersion:
@@ -90,7 +96,7 @@ class MorphProvider(abc.ABC):
 			result_header.extend(G2Info.get_value_names())
 
 		result_header.extend(["runtime", "base_flag"])
-
+		self.result_header = result_header
 		return result_header
 
 	@abc.abstractmethod
@@ -234,6 +240,22 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
 				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
+
+	calc_para_str_list = []
+	if calc_cas:
+		calc_para_str_list.append("CAS")
+	if calc_g_m20:
+		calc_para_str_list.append("G_M20")
+	if calc_mid:
+		calc_para_str_list.append("MID")
+	if calc_multiply:
+		calc_para_str_list.append("multiplicity")
+	if calc_color_dispersion:
+		calc_para_str_list.append("color_dispersion(ξ)")
+	if calc_g2:
+		calc_para_str_list.append("G2")
+
+	logger.info("计算参数: " + ", ".join(calc_para_str_list))
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
 	if center_file is not None:
