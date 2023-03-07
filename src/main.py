@@ -100,7 +100,7 @@ class MorphProvider(abc.ABC):
 		pass
 
 	def get_empty_result(self, label):
-		result_list = self.get_result_format() % np.zeros(len(self.get_result_header()))
+		result_list = self.get_result_format() % np.zeros(len(self.get_result_header())).tolist()
 		result_list[0] = label
 		return result_list
 
