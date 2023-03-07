@@ -223,7 +223,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
-				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None):
+				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool=False):
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
@@ -278,8 +278,12 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		run_labels = [run_specified_label]
 		logger.info("只运行label=%d" % run_specified_label)
 
-	morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiply,
-													calc_color_dispersion, calc_g2)
+	if use_vanilla:
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_mid, calc_multiply,
+														 calc_color_dispersion, calc_g2)
+	else:
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiply,
+														calc_color_dispersion, calc_g2)
 	result_format = morph_provider.get_result_format()
 	result_all = [" ".join(morph_provider.get_result_header()) + "\n"]
 
@@ -356,7 +360,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				fs.append(
 					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
 							   shape, shm_img_cmp_name, output_image_dir, set_centroid, set_asym_center,
-							   img_dtype, segm_dtype))
+							   img_dtype, segm_dtype, morph_provider))
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)
@@ -450,7 +454,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-e, --calc_color_dispersion 是否测量color_dispersion
 	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)，若不测量则为null
 	-b, --calc_g2 是否测量G2
-	-C, --use_cython 是否使用cython版，默认为是
+	-v, --use_vanilla 是否使用vanilla版
 	-h, --help 显示此帮助
 """
 
@@ -491,7 +495,7 @@ def main(argv) -> int:
 		"e": ("calc_color_dispersion", False),
 		"m": ("image_compare_file", True),
 		"b": ("calc_g2", False),
-		"C": ("use_cython", False)
+		"v": ("use_vanilla", False)
 	}
 
 	try:
@@ -539,6 +543,7 @@ def main(argv) -> int:
 	image_compare_file: Optional[str] = config["image_compare_file"]
 	center_file: Optional[str] = config["center_file"]
 	calc_g2: bool = check_not_false(config["calc_g2"])
+	use_vanilla: bool = check_not_false(config["use_vanilla"])
 
 	if not check_not_null(measure_file):
 		measure_file = None
@@ -567,7 +572,7 @@ def main(argv) -> int:
 				  sextractor.noise_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
-				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file)
+				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file, use_vanilla)
 	return 0
 
 
