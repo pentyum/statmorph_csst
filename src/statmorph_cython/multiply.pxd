@@ -2,4 +2,4 @@
 
 cimport numpy as cnp
 
-cdef double multiply(cnp.ndarray[double,ndim=2] _cutout_mid)
+cdef double multiplicity(cnp.ndarray[double,ndim=2] _cutout_mid)
