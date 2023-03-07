@@ -333,6 +333,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		# Spawn some processes to do some work
 		with ProcessPoolExecutor(threads) as exe:
 			fs = []
+			ran_label_list = []
 			for label in run_labels:
 				set_centroid: Tuple[float, float] = (-1, -1)
 				set_asym_center: Tuple[float, float] = (-1, -1)
@@ -360,9 +361,16 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
 							   shape, shm_img_cmp_name, output_image_dir, set_centroid, set_asym_center,
 							   img_dtype, segm_dtype, morph_provider))
+				ran_label_list.append(label)
+			i = 0
 			for result in as_completed(fs):
-				line = result_format % result.result()
-				result_all.append(line)
+				try:
+					line = result_format % result.result()
+					result_all.append(line)
+				except Exception as e:
+					logger.error("label " + str(ran_label_list[i]) + ": "+str(e))
+					return
+				i = i + 1
 
 	logger.info(f'用时: {time.time() - start_time:.2f}s')
 
