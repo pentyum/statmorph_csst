@@ -111,7 +111,7 @@ class StatmorphVanilla(MorphProvider):
 					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		morph = SourceMorphology(
-			image, segmap, label, segm_slice, weightmap=noisemap)
+			image, segmap, label, weightmap=noisemap)
 		morph._calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid)
 
 		return_list = [label, 0, 0, morph._centroid[0], morph._centroid[1],
