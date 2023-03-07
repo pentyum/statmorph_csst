@@ -433,7 +433,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-p, --run_percentage=运行全部源数量的百分比，100表示全部运行
 	-l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
 	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式则还包括measure_file
-	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果
+	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果，SExtractor的输出文件夹必须包含subback.fits,segmap.fits,noise.fits三个图像文件和catalog.txt星表文件
 	-D, --sextractor_detect_minarea
 	-T, --sextractor_detect_thresh
 	-A, --sextractor_analysis_thresh
@@ -445,7 +445,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
-	-n, --center_file=预定义的中心文件
+	-n, --center_file=预定义的星系中心文件，用于取代星系质心和不对称中心
 	-c, --calc_cas 是否测量CAS
 	-g, --calc_g_m20 是否测量Gini,M20
 	-d, --calc_mid 是否测量MID
