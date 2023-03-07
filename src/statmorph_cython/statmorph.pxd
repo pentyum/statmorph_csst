@@ -71,6 +71,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly CompareInfo compare_info
 	cdef readonly G2Info g2
 	cdef readonly long global_start
+	cdef readonly logger
 
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center)

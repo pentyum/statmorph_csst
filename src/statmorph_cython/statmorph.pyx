@@ -34,8 +34,7 @@ cdef class BaseInfo(MorphInfo):
 				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
 				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
 		super().__init__()
-		cp = multiprocessing.current_process()
-		cp.name = "%s(%d)" % (cp.name,label)
+		self.logger = None
 		self.constants = ConstantsSetting()
 		self.constants.label = label
 
@@ -155,7 +154,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 
 		if self.nx_stamp * self.ny_stamp > 10000000 :
-			warnings.warn('Cutout size too big (%d*%d>10M), skip.' % (self.nx_stamp,self.ny_stamp), AstropyUserWarning)
+			warnings.warn('%d: Cutout size too big (%d*%d>10M), skip.' % (self.label, self.nx_stamp,self.ny_stamp), AstropyUserWarning)
 			self._abort_calculations()
 			return
 
@@ -203,7 +202,7 @@ cdef class BaseInfo(MorphInfo):
 		# If not, this is bad enough to abort all calculations and return
 		# an empty object.
 		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
-			warnings.warn('Total flux is nonpositive. Returning empty object.',
+			warnings.warn('%d: Total flux is nonpositive. Returning empty object.'%self.label,
 						  AstropyUserWarning)
 			self._abort_calculations()
 			return
@@ -300,7 +299,7 @@ cdef class BaseInfo(MorphInfo):
 				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, self.image_compare)
 				self.compare_info.calc_runtime(start)
 			else:
-				warnings.warn("[Color dispersion] compare image not defined")
+				warnings.warn("%d: [Color dispersion] compare image not defined"%self.label)
 
 		if calc_g2:
 			start = clock()
@@ -499,8 +498,8 @@ cdef class BaseInfo(MorphInfo):
 		nx = self.nx_stamp
 		if (yc < 0) or (yc >= ny) or (xc < 0) or (xc >= nx):
 
-			warnings.warn('Centroid is out-of-range. Fixing at center of ' +
-						  'postage stamp (bad!).', AstropyUserWarning)
+			warnings.warn('%d: Centroid is out-of-range. Fixing at center of ' +
+						  'postage stamp (bad!).'%self.label, AstropyUserWarning)
 			yc = ny / 2.0
 			xc = nx / 2.0
 			self.flags.set_flag_true(0) # unusual
@@ -509,7 +508,7 @@ cdef class BaseInfo(MorphInfo):
 		cdef int ic = int(round(self._yc_stamp))
 		cdef int jc = int(round(self._xc_stamp))
 		if self._cutout_stamp_maskzeroed[ic][jc] == 0.0:
-			warnings.warn('Centroid is masked.', AstropyUserWarning)
+			warnings.warn('%d: Centroid is masked.'%self.label, AstropyUserWarning)
 			self.flags.set_flag_true(1)
 
 		#return np.array([xc, yc])
@@ -573,7 +572,7 @@ cdef class BaseInfo(MorphInfo):
 			return -99.0
 
 		if np.any(noisemap < 0):
-			warnings.warn('[sn_per_pixel] Some negative weightmap values.',
+			warnings.warn('%d: [sn_per_pixel] Some negative weightmap values.'%self.label,
 						  AstropyUserWarning)
 			noisemap = np.abs(noisemap)
 
@@ -586,7 +585,7 @@ cdef class BaseInfo(MorphInfo):
 		cdef double snp
 
 		if np.sum(locs) == 0:
-			warnings.warn('Invalid sn_per_pixel.', AstropyUserWarning)
+			warnings.warn('%d: Invalid sn_per_pixel.'%self.label, AstropyUserWarning)
 			self.flags.set_flag_true(2)
 			snp = -99.0  # invalid
 		else:
