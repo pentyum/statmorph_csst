@@ -259,7 +259,7 @@ cdef class BaseInfo(MorphInfo):
 
 
 
-	cdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
+	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center):
 		cdef (double, double) center_used
 		cdef long start
