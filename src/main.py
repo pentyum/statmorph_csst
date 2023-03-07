@@ -49,7 +49,7 @@ class MorphProvider(abc.ABC):
 		self.calc_color_dispersion: bool = calc_color_dispersion
 		self.calc_g2: bool = calc_g2
 
-	def get_result_format(self):
+	def get_result_format(self) -> str:
 		result_format = ["%d %d %f %f %f %f %f"]
 		if self.calc_cas:
 			result_format.extend(CASInfo.get_value_formats())
@@ -66,10 +66,10 @@ class MorphProvider(abc.ABC):
 
 		result_format.extend(["%f", "%d"])
 
-		result_format = " ".join(result_format) + "\n"
-		return result_format
+		result_format_str = " ".join(result_format) + "\n"
+		return result_format_str
 
-	def get_result_header(self):
+	def get_result_header(self) -> List[str]:
 		result_header = ["label", "size", "surface_brightness", "centroid_x", "centroid_y", "rp_circ_centroid",
 						 "sn_per_pixel"]
 
@@ -99,10 +99,10 @@ class MorphProvider(abc.ABC):
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		pass
 
-	def get_empty_result(self, label):
-		result_list = self.get_result_format() % np.zeros(len(self.get_result_header())).tolist()
-		result_list[0] = label
-		return result_list
+	def get_empty_result(self, label) -> List:
+		empty_result: List = np.zeros(len(self.get_result_header())).tolist()
+		empty_result[0] = label
+		return empty_result
 
 
 class StatmorphVanilla(MorphProvider):
@@ -206,7 +206,7 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 		return_list = morph_provider.measure_label(image, segmap, noisemap, segm_slice, label,
 												   image_compare, output_image_dir, set_centroid, set_asym_center)
 	except:
-		logger.error(str(label)+": "+traceback.format_exc())
+		logger.error(str(label) + ": " + traceback.format_exc())
 		return_list = morph_provider.get_empty_result(label)
 
 	del image, segmap, noisemap, image_compare
