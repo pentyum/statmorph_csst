@@ -3,7 +3,7 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
-
+import multiprocessing
 import warnings
 
 from astropy.utils.exceptions import AstropyUserWarning
@@ -34,6 +34,8 @@ cdef class BaseInfo(MorphInfo):
 				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
 				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
 		super().__init__()
+		cp = multiprocessing.current_process()
+		cp.name = "%s(%d)" % (cp.name,label)
 		self.constants = ConstantsSetting()
 		self.constants.label = label
 
