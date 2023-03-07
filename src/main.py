@@ -112,7 +112,8 @@ class StatmorphVanilla(MorphProvider):
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		morph = SourceMorphology(
 			image, segmap, label, weightmap=noisemap)
-		morph._calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid)
+		if morph.flag != 4:
+			morph._calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid)
 
 		return_list = [label, 0, 0, morph._centroid[0], morph._centroid[1],
 					   morph._rpetro_circ_centroid, morph.sn_per_pixel]
@@ -142,9 +143,10 @@ class StatmorphCython(MorphProvider):
 		morph = statmorph.BaseInfo(
 			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
 			output_image_dir=output_image_dir, set_centroid=set_centroid)
-		morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiply,
-								   self.calc_color_dispersion, self.calc_g2,
-								   set_asym_center)
+		if not morph.flag_catastrophic:
+			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiply,
+									   self.calc_color_dispersion, self.calc_g2,
+									   set_asym_center)
 
 		return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
 					   morph._rpetro_circ_centroid, morph.sn_per_pixel]
