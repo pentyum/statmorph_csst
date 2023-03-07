@@ -72,8 +72,8 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly G2Info g2
 	cdef readonly long global_start
 
-	cdef void calculate_morphology(self, bint calc_cas=True, bint calc_g_m20=True, bint calc_mid=True, bint calc_multiply=False,
-				 bint calc_color_dispersion=False, bint calc_g2=False, tuple set_asym_center=(-1, -1))
+	cdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
+				 bint calc_color_dispersion, bint calc_g2, tuple set_asym_center)
 
 	cdef tuple get_slice_stamp(self)
 
