@@ -34,10 +34,10 @@ def read_properties(path) -> Dict[str, str]:
 	s_config = "[properties]\n%s" % s_config
 	config.read_string(s_config)
 	items = config.items('properties')
-	itemDict = {}
+	item_dict = {}
 	for key, value in items:
-		itemDict[key] = value
-	return itemDict
+		item_dict[key] = value
+	return item_dict
 
 
 class MorphProvider(abc.ABC):

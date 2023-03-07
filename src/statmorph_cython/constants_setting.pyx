@@ -70,6 +70,8 @@ cdef class ConstantsSetting:
 		self.sigma_mid = 1.0
 		self.niter_bh_mid = 5
 
+		self.segmap_overlap_ratio = 0.25
+
 		self.g2_modular_tolerance = 0.01
 		self.g2_phase_tolerance = 0.01
 

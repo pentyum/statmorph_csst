@@ -65,6 +65,8 @@ cdef class ConstantsSetting:
 	cdef double sigma_mid
 	cdef int niter_bh_mid
 
+	cdef double segmap_overlap_ratio
+
 	cdef double g2_modular_tolerance
 	cdef double g2_phase_tolerance
 

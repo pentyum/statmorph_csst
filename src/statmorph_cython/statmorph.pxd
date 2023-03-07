@@ -136,7 +136,7 @@ cdef class GiniM20Info(MorphInfo):
 	cdef cnp.ndarray _segmap_gini
 
 cdef class MIDInfo(MorphInfo):
-	cdef cnp.ndarray _cutout_mid
+	cdef cnp.ndarray _cutout_mid, _segmap_mid
 	cdef readonly double multimode, intensity, deviation
 
 cdef class G2Info(MorphInfo):

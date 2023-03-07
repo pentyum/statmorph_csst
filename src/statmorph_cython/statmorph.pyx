@@ -308,11 +308,44 @@ cdef class BaseInfo(MorphInfo):
 
 		self.sn_per_pixel = self.get_sn_per_pixel()
 
+		self._check_segmaps()
+
 		# Save image
 		if self.output_image_dir is not None:
 			self.save_image()
 
 		self.calc_runtime(self.global_start)
+
+	cdef void _check_segmaps(self):
+		"""
+		Compare Gini segmap and MID segmap; set flag = 1 (suspect) if they are
+		very different from each other.
+		"""
+		cdef double area_max, area_overlap, area_ratio
+
+		if self.calc_g_m20 and self.calc_mid:
+			area_max = max(np.sum(self.g_m20._segmap_gini),
+						   np.sum(self.mid._segmap_mid))
+			area_overlap = np.sum(self.g_m20._segmap_gini &
+								  self.mid._segmap_mid)
+
+			area_ratio = area_overlap / float(area_max)
+			if area_ratio < self.constants.segmap_overlap_ratio:
+				if self.constants.verbose:
+					warnings.warn('%d: Gini and MID segmaps are quite different.'%self.label,
+								  AstropyUserWarning)
+				self.flags.set_flag_true(13)  # suspect
+
+		elif self.calc_g_m20:
+			area_max = np.sum(self.g_m20._segmap_gini)
+		elif self.calc_mid:
+			area_max = np.sum(self.mid._segmap_mid)
+		else:
+			return
+		if area_max == 0:
+			warnings.warn('%d: Segmaps are empty!'%self.label, AstropyUserWarning)
+			self.flags.set_flag_true(14)  # bad
+			return
 
 	cdef tuple get_slice_stamp(self):
 		"""

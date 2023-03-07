@@ -450,6 +450,7 @@ cdef MIDInfo calc_mid(BaseInfo base_info):
 			_segmap_mid = base_info.g_m20._segmap_gini
 		else:
 			return None
+	mid_info._segmap_mid = _segmap_mid
 
 	cdef cnp.ndarray[double,ndim=2] _cutout_mid = get_cutout_mid(_cutout_stamp_maskzeroed_no_bg_nonnegative, _segmap_mid)
 	mid_info._cutout_mid = _cutout_mid

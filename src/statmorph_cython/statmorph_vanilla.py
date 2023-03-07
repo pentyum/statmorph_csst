@@ -469,12 +469,12 @@ class SourceMorphology(object):
 		self._x_maxval_stamp = maxval_stamp_pos[1]
 		self._y_maxval_stamp = maxval_stamp_pos[0]
 
-		# --------------------------------------------------------------------
-		# NOTE: most morphology calculations have not been performed yet, but
-		# this will change below this line. Modify this __init__ with care.
-		# --------------------------------------------------------------------
+	# --------------------------------------------------------------------
+	# NOTE: most morphology calculations have not been performed yet, but
+	# this will change below this line. Modify this __init__ with care.
+	# --------------------------------------------------------------------
 
-		# For simplicity, evaluate all "lazy" properties at once:
+	# For simplicity, evaluate all "lazy" properties at once:
 
 	def __getitem__(self, key):
 		return getattr(self, key)
@@ -523,7 +523,7 @@ class SourceMorphology(object):
 		self.flag_sersic = 1
 		self.runtime = -99.0
 
-	def _calculate_morphology(self, calc_cas:bool=True, calc_g_m20:bool=True, calc_mid:bool=True):
+	def _calculate_morphology(self, calc_cas: bool = True, calc_g_m20: bool = True, calc_mid: bool = True):
 		"""
 		Calculate all morphological parameters, which are stored
 		as "lazy" properties.
@@ -593,11 +593,11 @@ class SourceMorphology(object):
 			'sersic_theta'
 		]
 		if calc_cas:
-			quantity_names = quantity_names+cas_quantity
+			quantity_names = quantity_names + cas_quantity
 		if calc_g_m20:
-			quantity_names = quantity_names+g_m20_quantity
+			quantity_names = quantity_names + g_m20_quantity
 		if calc_mid:
-			quantity_names = quantity_names+mid_quantity
+			quantity_names = quantity_names + mid_quantity
 
 		for q in quantity_names:
 			tmp = self[q]
@@ -608,31 +608,39 @@ class SourceMorphology(object):
 			self.flag = 2
 
 		# Check segmaps and set flag = 1 (suspect) if they are very different
-		self._check_segmaps()
+		self._check_segmaps(calc_g_m20, calc_mid)
 
 		# Save runtime
 		self.runtime = time.time() - self.start_time
 
-	def _check_segmaps(self):
+	def _check_segmaps(self, calc_g_m20: bool, calc_mid: bool):
 		"""
 		Compare Gini segmap and MID segmap; set flag = 1 (suspect) if they are
 		very different from each other.
 		"""
-		area_max = max(np.sum(self._segmap_gini),
-					   np.sum(self._segmap_mid))
-		area_overlap = np.sum(self._segmap_gini &
-							  self._segmap_mid)
+		if calc_g_m20 and calc_mid:
+			area_max = max(np.sum(self._segmap_gini),
+						   np.sum(self._segmap_mid))
+			area_overlap = np.sum(self._segmap_gini &
+								  self._segmap_mid)
+
+			area_ratio = area_overlap / float(area_max)
+			if area_ratio < self._segmap_overlap_ratio:
+				if self._verbose:
+					warnings.warn('Gini and MID segmaps are quite different.',
+								  AstropyUserWarning)
+				self.flag = max(self.flag, 1)  # suspect
+
+		elif calc_g_m20:
+			area_max = np.sum(self._segmap_gini)
+		elif calc_mid:
+			area_max = np.sum(self._segmap_mid)
+		else:
+			return
 		if area_max == 0:
 			warnings.warn('Segmaps are empty!', AstropyUserWarning)
 			self.flag = 2  # bad
 			return
-
-		area_ratio = area_overlap / float(area_max)
-		if area_ratio < self._segmap_overlap_ratio:
-			if self._verbose:
-				warnings.warn('Gini and MID segmaps are quite different.',
-							  AstropyUserWarning)
-			self.flag = max(self.flag, 1)  # suspect
 
 	@lazyproperty
 	def _centroid(self):
