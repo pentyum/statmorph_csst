@@ -31,17 +31,9 @@ cnp.import_array()
 cdef class BaseInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double,ndim=2] image, cnp.ndarray[int,ndim=2] segmap, tuple segmap_slice,
 				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
-				 double gain=-1, bint calc_cas=True, bint calc_g_m20=True, bint calc_mid=True, bint calc_multiply=False,
-				 bint calc_color_dispersion=False, cnp.ndarray[double,ndim=2] image_compare=None, bint calc_g2=False,
-				 str output_image_dir=None, tuple set_centroid=(-1, -1), tuple set_asym_center=(-1, -1)):
+				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
+				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
 		super().__init__()
-		self.calc_cas = calc_cas
-		self.calc_g_m20 = calc_g_m20
-		self.calc_mid = calc_mid
-		self.calc_multiply = calc_multiply
-		self.calc_color_dispersion = calc_color_dispersion
-		self.calc_g2 = calc_g2
-
 		self.constants = ConstantsSetting()
 		self.constants.label = label
 
@@ -85,8 +77,10 @@ cdef class BaseInfo(MorphInfo):
 		增益
 		"""
 
+		self.image_compare = image_compare
+
 		# Measure runtime
-		cdef long global_start = clock()
+		self.global_start = clock()
 
 		# if not isinstance(self._segmap, photutils.SegmentationImage):
 		#	self._segmap = photutils.SegmentationImage(self._segmap)
@@ -263,8 +257,19 @@ cdef class BaseInfo(MorphInfo):
 		以光度质心为中心的Petrosian圆形孔径半径
 		"""
 
+
+
+	cdef void calculate_morphology(self, bint calc_cas=True, bint calc_g_m20=True, bint calc_mid=True, bint calc_multiply=False,
+				 bint calc_color_dispersion=False, bint calc_g2=False, tuple set_asym_center=(-1, -1)):
 		cdef (double, double) center_used
 		cdef long start
+
+		self.calc_cas = calc_cas
+		self.calc_g_m20 = calc_g_m20
+		self.calc_mid = calc_mid
+		self.calc_multiply = calc_multiply
+		self.calc_color_dispersion = calc_color_dispersion
+		self.calc_g2 = calc_g2
 
 		if calc_cas:
 			start = clock()
@@ -274,7 +279,6 @@ cdef class BaseInfo(MorphInfo):
 		else:
 			self._use_centroid = True
 			center_used = self._centroid
-
 
 		if calc_g_m20:
 			start = clock()
@@ -289,10 +293,9 @@ cdef class BaseInfo(MorphInfo):
 				self.multiply = statmorph_cython.multiply.multiplicity(self.mid._cutout_mid)
 
 		if calc_color_dispersion:
-			if image_compare is not None:
+			if self.image_compare is not None:
 				start = clock()
-				self.image_compare = image_compare
-				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, image_compare)
+				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, self.image_compare)
 				self.compare_info.calc_runtime(start)
 			else:
 				warnings.warn("[Color dispersion] compare image not defined")
@@ -308,7 +311,7 @@ cdef class BaseInfo(MorphInfo):
 		if self.output_image_dir is not None:
 			self.save_image()
 
-		self.calc_runtime(global_start)
+		self.calc_runtime(self.global_start)
 
 	cdef tuple get_slice_stamp(self):
 		"""

@@ -15,6 +15,7 @@ from typing import Dict, Optional, Tuple, List, Union
 import numpy as np
 import photutils
 import statmorph_cython.statmorph as statmorph
+from statmorph_cython.statmorph_vanilla import SourceMorphology
 from statmorph_cython.statmorph import CASInfo, GiniM20Info, MIDInfo, CompareInfo, G2Info
 from astropy.io import fits
 from astropy.table import Table, Column, join
@@ -36,6 +37,66 @@ def read_properties(path) -> Dict[str, str]:
 	for key, value in items:
 		itemDict[key] = value
 	return itemDict
+
+
+def run_statmorph_one_cython(image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
+							 label: int, calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
+							 calc_color_dispersion: bool, image_compare: Optional[np.ndarray], calc_g2: bool,
+							 output_image_dir: str, set_centroid: Tuple[float, float],
+							 set_asym_center: Tuple[float, float]):
+	morph = statmorph.BaseInfo(
+		image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
+		output_image_dir=output_image_dir, set_centroid=set_centroid)
+	morph.calculate_morphology(calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion, calc_g2,
+							   set_asym_center)
+
+	return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
+				   morph._rpetro_circ_centroid, morph.sn_per_pixel]
+	if calc_cas:
+		return_list.extend(morph.cas.get_values())
+	if calc_g_m20:
+		return_list.extend(morph.g_m20.get_values())
+	if calc_mid:
+		return_list.extend(morph.mid.get_values())
+		if calc_multiply:
+			return_list.extend([morph.multiply])
+	if calc_color_dispersion:
+		return_list.extend(morph.compare_info.get_values())
+	if calc_g2:
+		return_list.extend(morph.g2.get_values())
+
+	return_list.extend([morph.runtime, morph.flags.value()])
+	return return_list
+
+
+def run_statmorph_one_vanilla(image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
+							  label: int, calc_cas: bool, calc_g_m20: bool, calc_mid: bool, calc_multiply: bool,
+							  calc_color_dispersion: bool, image_compare: Optional[np.ndarray], calc_g2: bool,
+							  output_image_dir: str, set_centroid: Tuple[float, float],
+							  set_asym_center: Tuple[float, float]):
+	morph = SourceMorphology(
+		image, segmap, label, segm_slice, weightmap=noisemap, auto_calc=False)
+	morph._calculate_morphology(calc_cas, calc_g_m20, calc_mid)
+
+	return_list = [label, 0, 0, morph._centroid[0], morph._centroid[1],
+				   morph._rpetro_circ_centroid, morph.sn_per_pixel]
+	if calc_cas:
+		return_list.extend(
+			[morph._asymmetry_center[0], morph._asymmetry_center[1], morph.rpetro_circ, morph.concentration,
+			 morph.asymmetry, morph.smoothness, morph._sky_asymmetry, 0, 0])
+	if calc_g_m20:
+		return_list.extend([morph.rpetro_ellip, morph.gini, morph.m20, 0, 0])
+	if calc_mid:
+		return_list.extend([morph.multimode, morph.intensity, morph.deviation, 0, 0])
+		if calc_multiply:
+			return_list.extend([0])
+	if calc_color_dispersion:
+		return_list.extend([0, 0])
+	if calc_g2:
+		return_list.extend([0, 0])
+
+	return_list.extend([morph.runtime, morph.flag])
+	return return_list
 
 
 def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_name: Optional[str], segm_slice,
@@ -76,28 +137,10 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 		shm_img_cmp = SharedMemory(shm_img_cmp_name)
 		image_compare = np.ndarray(shape, buffer=shm_img_cmp.buf, dtype=img_dtype)
 
-	morph = statmorph.BaseInfo(
-		image, segmap, segm_slice, label, weightmap=noisemap, calc_cas=calc_cas, calc_g_m20=calc_g_m20,
-		calc_mid=calc_mid, calc_multiply=calc_multiply, calc_color_dispersion=calc_color_dispersion,
-		image_compare=image_compare,
-		calc_g2=calc_g2, output_image_dir=output_image_dir, set_centroid=set_centroid, set_asym_center=set_asym_center)
+	return_list = run_statmorph_one_cython(image, segmap, noisemap, segm_slice, label,
+										   calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion,
+										   image_compare, calc_g2, output_image_dir, set_centroid, set_asym_center)
 
-	return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
-				   morph._rpetro_circ_centroid, morph.sn_per_pixel]
-	if calc_cas:
-		return_list.extend(morph.cas.get_values())
-	if calc_g_m20:
-		return_list.extend(morph.g_m20.get_values())
-	if calc_mid:
-		return_list.extend(morph.mid.get_values())
-		if calc_multiply:
-			return_list.extend([morph.multiply])
-	if calc_color_dispersion:
-		return_list.extend(morph.compare_info.get_values())
-	if calc_g2:
-		return_list.extend(morph.g2.get_values())
-
-	return_list.extend([morph.runtime, morph.flags.value()])
 	del image, segmap, noisemap, image_compare
 
 	return tuple(return_list)
@@ -485,7 +528,8 @@ def main(argv) -> int:
 
 	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
 								my_sextractor_config)
-	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file, sextractor.noise_file,
+	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
+				  sextractor.noise_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
 				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file)

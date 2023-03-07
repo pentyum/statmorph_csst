@@ -6,3 +6,4 @@ Cython
 scipy
 reproject
 opencv-python
+scikit-image~=0.20.0
