@@ -368,7 +368,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 					line = result_format % result.result()
 					result_all.append(line)
 				except Exception as e:
-					logger.error("label " + str(ran_label_list[i]) + ": "+str(e))
+					print("label " + str(ran_label_list[i]) + ": "+str(e))
 					return
 				i = i + 1
 
