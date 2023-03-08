@@ -59,14 +59,14 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly bint calc_cas
 	cdef readonly bint calc_g_m20
 	cdef readonly bint calc_mid
-	cdef readonly bint calc_multiply
+	cdef readonly bint calc_multiplicity
 	cdef readonly bint calc_color_dispersion
 	cdef readonly bint calc_g2
 
 	cdef readonly CASInfo cas
 	cdef readonly GiniM20Info g_m20
 	cdef readonly MIDInfo mid
-	cdef readonly double multiply
+	cdef readonly double multiplicity
 	cdef cnp.ndarray image_compare
 	cdef readonly CompareInfo compare_info
 	cdef readonly G2Info g2

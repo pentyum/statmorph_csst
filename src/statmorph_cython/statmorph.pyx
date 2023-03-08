@@ -260,7 +260,7 @@ cdef class BaseInfo(MorphInfo):
 
 
 
-	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
+	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiplicity,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center):
 		cdef (double, double) center_used
 		cdef long start
@@ -268,7 +268,7 @@ cdef class BaseInfo(MorphInfo):
 		self.calc_cas = calc_cas
 		self.calc_g_m20 = calc_g_m20
 		self.calc_mid = calc_mid
-		self.calc_multiply = calc_multiply
+		self.calc_multiplicity = calc_multiplicity
 		self.calc_color_dispersion = calc_color_dispersion
 		self.calc_g2 = calc_g2
 
@@ -290,8 +290,8 @@ cdef class BaseInfo(MorphInfo):
 			start = clock()
 			self.mid = statmorph_cython.mid.calc_mid(self)
 			self.mid.calc_runtime(start)
-			if calc_multiply:
-				self.multiply = statmorph_cython.multiply.multiplicity(self.mid._cutout_mid)
+			if calc_multiplicity:
+				self.multiplicity = statmorph_cython.multiply.multiplicity(self.mid._cutout_mid)
 
 		if calc_color_dispersion:
 			if self.image_compare is not None:
@@ -647,8 +647,8 @@ cdef class BaseInfo(MorphInfo):
 			self.g_m20 = GiniM20Info()
 		if self.calc_mid:
 			self.mid = MIDInfo()
-			if self.calc_multiply:
-				self.multiply = -99
+			if self.calc_multiplicity:
+				self.multiplicity = -99
 		if self.calc_color_dispersion:
 			self.compare_info = CompareInfo()
 		if self.calc_g2:

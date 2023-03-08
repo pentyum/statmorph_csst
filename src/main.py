@@ -41,11 +41,11 @@ def read_properties(path) -> Dict[str, str]:
 
 
 class MorphProvider(abc.ABC):
-	def __init__(self, calc_cas, calc_g_m20, calc_mid, calc_multiply, calc_color_dispersion, calc_g2):
+	def __init__(self, calc_cas, calc_g_m20, calc_mid, calc_multiplicity, calc_color_dispersion, calc_g2):
 		self.calc_cas: bool = calc_cas
 		self.calc_g_m20: bool = calc_g_m20
 		self.calc_mid: bool = calc_mid
-		self.calc_multiply: bool = calc_multiply
+		self.calc_multiplicity: bool = calc_multiplicity
 		self.calc_color_dispersion: bool = calc_color_dispersion
 		self.calc_g2: bool = calc_g2
 		self.result_format: str = ""
@@ -62,7 +62,7 @@ class MorphProvider(abc.ABC):
 			result_format.extend(GiniM20Info.get_value_formats())
 		if self.calc_mid:
 			result_format.extend(MIDInfo.get_value_formats())
-			if self.calc_multiply:
+			if self.calc_multiplicity:
 				result_format.extend(["%f"])
 		if self.calc_color_dispersion:
 			result_format.extend(CompareInfo.get_value_formats())
@@ -88,8 +88,8 @@ class MorphProvider(abc.ABC):
 			result_header.extend(GiniM20Info.get_value_names())
 		if self.calc_mid:
 			result_header.extend(MIDInfo.get_value_names())
-			if self.calc_multiply:
-				result_header.extend(["multiply"])
+			if self.calc_multiplicity:
+				result_header.extend(["multiplicity"])
 		if self.calc_color_dispersion:
 			result_header.extend(CompareInfo.get_value_names())
 		if self.calc_g2:
@@ -131,7 +131,7 @@ class StatmorphVanilla(MorphProvider):
 			return_list.extend([morph.rpetro_ellip, morph.gini, morph.m20, 0, 0])
 		if self.calc_mid:
 			return_list.extend([morph.multimode, morph.intensity, morph.deviation, 0, 0])
-			if self.calc_multiply:
+			if self.calc_multiplicity:
 				return_list.extend([0])
 		if self.calc_color_dispersion:
 			return_list.extend([0, 0])
@@ -150,7 +150,7 @@ class StatmorphCython(MorphProvider):
 			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
 			output_image_dir=output_image_dir, set_centroid=set_centroid)
 		if not morph.flag_catastrophic:
-			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiply,
+			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiplicity,
 									   self.calc_color_dispersion, self.calc_g2,
 									   set_asym_center)
 
@@ -162,8 +162,8 @@ class StatmorphCython(MorphProvider):
 			return_list.extend(morph.g_m20.get_values())
 		if self.calc_mid:
 			return_list.extend(morph.mid.get_values())
-			if self.calc_multiply:
-				return_list.extend([morph.multiply])
+			if self.calc_multiplicity:
+				return_list.extend([morph.multiplicity])
 		if self.calc_color_dispersion:
 			return_list.extend(morph.compare_info.get_values())
 		if self.calc_g2:
@@ -236,7 +236,7 @@ def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: 
 def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_file: Optional[str], save_file: str,
 				  threads: int, run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
-				  calc_mid: bool = False, calc_multiply: bool = False, calc_color_dispersion: bool = False,
+				  calc_mid: bool = False, calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
 				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
 				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
@@ -248,7 +248,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		calc_para_str_list.append("G_M20")
 	if calc_mid:
 		calc_para_str_list.append("MID")
-	if calc_multiply:
+	if calc_multiplicity:
 		calc_para_str_list.append("multiplicity")
 	if calc_color_dispersion:
 		calc_para_str_list.append("color_dispersion(ξ)")
@@ -310,10 +310,10 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		logger.info("只运行label=%d" % run_specified_label)
 
 	if use_vanilla:
-		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_mid, calc_multiply,
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
 														 calc_color_dispersion, calc_g2)
 	else:
-		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiply,
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
 														calc_color_dispersion, calc_g2)
 	logger.info("使用" + morph_provider.__class__.__qualname__)
 
@@ -483,7 +483,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-c, --calc_cas 是否测量CAS
 	-g, --calc_g_m20 是否测量Gini,M20
 	-d, --calc_mid 是否测量MID
-	-u, --calc_multiply 是否测量multiply
+	-u, --calc_multiplicity 是否测量multiplicity
 	-e, --calc_color_dispersion 是否测量color_dispersion
 	-m, --image_compare_file 测量color_dispersion中用于比较的图像(已经扣除了背景)，若不测量则为null
 	-b, --calc_g2 是否测量G2
@@ -524,7 +524,7 @@ def main(argv) -> int:
 		"c": ("calc_cas", False),
 		"g": ("calc_g_m20", False),
 		"d": ("calc_mid", False),
-		"u": ("calc_multiply", False),
+		"u": ("calc_multiplicity", False),
 		"e": ("calc_color_dispersion", False),
 		"m": ("image_compare_file", True),
 		"b": ("calc_g2", False),
@@ -571,7 +571,7 @@ def main(argv) -> int:
 	calc_cas: bool = check_not_false(config["calc_cas"])
 	calc_g_m20: bool = check_not_false(config["calc_g_m20"])
 	calc_mid: bool = check_not_false(config["calc_mid"])
-	calc_multiply: bool = check_not_false(config["calc_multiply"])
+	calc_multiplicity: bool = check_not_false(config["calc_multiplicity"])
 	calc_color_dispersion: bool = check_not_false(config["calc_color_dispersion"])
 	image_compare_file: Optional[str] = config["image_compare_file"]
 	center_file: Optional[str] = config["center_file"]
@@ -605,7 +605,7 @@ def main(argv) -> int:
 				  sextractor.noise_file,
 				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
-				  calc_multiply, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file,
+				  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file,
 				  use_vanilla)
 	return 0
 
