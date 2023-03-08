@@ -185,6 +185,7 @@ cpdef double _asymmetry_function((double, double) center, cnp.ndarray[double,ndi
 	asym : The asymmetry statistic for the given center.
 
 	"""
+	# image = cnp.PyArray_Cast(image, cnp.NPY_DOUBLE)
 	# image = np.float64(image)  # skimage wants double
 	cdef int ny = image.shape[0]
 	cdef int nx = image.shape[1]

@@ -148,7 +148,7 @@ cdef cnp.ndarray get_segmap_mid(cnp.ndarray[double,ndim=1] _sorted_pixelvals_sta
 
 	# Regularize a bit the shape of the segmap:
 	cdef cnp.ndarray segmap_float = ndi.uniform_filter(
-		np.float64(locs_main_clump), size=constants.boxcar_size_mid)
+		cnp.PyArray_Cast(locs_main_clump, cnp.NPY_DOUBLE), size=constants.boxcar_size_mid)
 	cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap = segmap_float > 0.5
 
 	# Make sure that brightest pixel is in segmap

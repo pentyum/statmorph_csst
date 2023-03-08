@@ -25,7 +25,7 @@ cdef double _aperture_area(PixelAperture ap, cnp.ndarray[cnp.npy_bool,ndim=2] ma
 	Calculate the area of a photutils aperture object,
 	excluding masked pixels.
 	"""
-	return do_photometry(ap, np.float64(~mask))
+	return do_photometry(ap, cnp.PyArray_Cast(~mask, cnp.NPY_DOUBLE))
 
 cdef double _aperture_mean_nomask(PixelAperture ap, cnp.ndarray[double,ndim=2] image):
 	"""

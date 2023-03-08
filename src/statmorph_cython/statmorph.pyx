@@ -709,10 +709,10 @@ cdef class BaseInfo(MorphInfo):
 
 		plt.scatter(self.xc_centroid, self.yc_centroid, s=10, color="olive",
 					label="centroid (%.1f,%.1f)" % tuple(self._centroid))
-		plt.contour(self._mask_stamp_no_bg, colors="green", extent=extent, levels=1)
+		plt.contour(self._mask_stamp_no_bg, colors="green", extent=extent, levels=[0.5])
 
 		if self.g_m20 is not None:
-			plt.contour(self.g_m20._segmap_gini, colors="yellow", extent=extent, levels=1)
+			plt.contour(self.g_m20._segmap_gini, colors="yellow", extent=extent, levels=[0.5])
 
 		plt.tight_layout()
 		plt.legend()
