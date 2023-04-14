@@ -413,6 +413,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 
 	logger.info("文件已保存至" + save_file)
 
+def run_statmorph_stamp():
+	pass
 
 def opts_to_dict(opts: List[Tuple[str, str]], arg_short_dict: Dict[str, Tuple[str, bool]],
 				 opt_dict: Optional[Dict[str, str]] = None) -> Dict[str, str]:
@@ -457,7 +459,7 @@ def get_basename_without_end(path) -> str:
 	return bn
 
 
-help_str = """SExtractor-Statmorph 简化合并版使用说明
+help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
 
 	-j, --threads=并行进程数量，若为0则为CPU核心数量-1(若为单核则为1)
 	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件(深度越深，PSF越大越好)，若跳过SExtractor可以不需要
@@ -466,7 +468,7 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-o, --save_file=形态学参数输出文件名，若不指定则默认为image_file的文件名(不包括后缀).txt，双图像模式则还包括measure_file
 	-p, --run_percentage=运行全部源数量的百分比，100表示全部运行
 	-l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
-	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式则还包括measure_file
+	-s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式下默认文件名还会包括measure_file，如果跳过sextractor，那么必须指定该项
 	-k, --skip_sextractor 是否直接利用SExtractor已经生成的结果，SExtractor的输出文件夹必须包含subback.fits,segmap.fits,noise.fits三个图像文件和catalog.txt星表文件
 	-D, --sextractor_detect_minarea
 	-T, --sextractor_detect_thresh
@@ -476,6 +478,8 @@ help_str = """SExtractor-Statmorph 简化合并版使用说明
 	-S, --sextractor_back_size
 	-F, --sextractor_back_filtersize
 	-P, --sextractor_backphoto_thick
+	-r, --stamp_dir 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建
+	-q, --stamp_hdu_index 在stamp模式下，读取fits文件的第几个hdu
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
@@ -517,6 +521,8 @@ def main(argv) -> int:
 		"S": ("sextractor_back_size", True),
 		"F": ("sextractor_back_filtersize", True),
 		"P": ("sextractor_backphoto_thick", True),
+		"r": ("stamp_dir", True),
+		"q": ("stamp_hdu_index", True),
 		"a": ("output_image_dir", True),
 		"f": ("ignore_mag_fainter_than", True),
 		"t": ("ignore_class_star_greater_than", True),
@@ -565,6 +571,9 @@ def main(argv) -> int:
 	my_sextractor_config["back_filtersize"] = int(config["sextractor_back_filtersize"])
 	my_sextractor_config["backphoto_thick"] = int(config["sextractor_backphoto_thick"])
 
+	stamp_dir: Optional[str] = config["stamp_dir"]
+	stamp_hdu_index: int = int(config["stamp_hdu_index"])
+
 	output_image_dir: Optional[str] = config["output_image_dir"]
 	ignore_mag_fainter_than: float = float(config["ignore_mag_fainter_than"])
 	ignore_class_star_greater_than: float = float(config["ignore_class_star_greater_than"])
@@ -586,6 +595,8 @@ def main(argv) -> int:
 		image_compare_file = None
 	if not check_not_null(center_file):
 		center_file = None
+	if not check_not_null(stamp_dir):
+		stamp_dir = None
 
 	run_name = get_basename_without_end(detect_file)
 	if measure_file is not None:
@@ -601,12 +612,16 @@ def main(argv) -> int:
 
 	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
 								my_sextractor_config)
-	run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
-				  sextractor.noise_file,
-				  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
-				  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
-				  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file,
-				  use_vanilla)
+	if stamp_dir is None:
+		run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
+					  sextractor.noise_file,
+					  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
+					  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
+					  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir, center_file,
+					  use_vanilla)
+	else:
+		run_statmorph_stamp()
+
 	return 0
 
 
