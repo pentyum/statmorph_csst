@@ -6,6 +6,7 @@
 
 import warnings
 
+from astropy.io import fits
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 from astropy.convolution import convolve
@@ -121,6 +122,16 @@ cdef class BaseInfo(MorphInfo):
 		self._segmap_stamp = self._segmap[self._slice_stamp]
 		"""
 		segmap在该星系处的切片
+		"""
+
+		self._weightmap_stamp_old = self._weightmap[self._slice_stamp]
+		"""
+		weightmap在该星系处的切片，原始值
+		"""
+
+		self._mask_stamp_old = self._mask[self._slice_stamp]
+		"""
+		mask在该星系处的切片，原始值
 		"""
 
 		self.xmin_stamp = self.get_xmin_stamp()
@@ -423,7 +434,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		cdef cnp.ndarray locs_invalid = ~np.isfinite(self._cutout_stamp)
 		if self._weightmap is not None:
-			locs_invalid |= ~np.isfinite(self._weightmap[self._slice_stamp])
+			locs_invalid |= ~np.isfinite(self._weightmap_stamp_old)
 		return locs_invalid
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] _get_badpixels(self, cnp.ndarray[double, ndim=2] image):
@@ -478,7 +489,7 @@ cdef class BaseInfo(MorphInfo):
 		# cdef cnp.ndarray segmap_stamp = self._segmap[self._slice_stamp]
 		cdef cnp.ndarray mask_stamp = (self._segmap_stamp != 0) & (self._segmap_stamp != self.label)
 		if self._mask is not None:
-			mask_stamp |= self._mask[self._slice_stamp]
+			mask_stamp |= self._mask_stamp_old
 		mask_stamp |= self._mask_stamp_nan
 		mask_stamp |= self._mask_stamp_badpixels
 		return mask_stamp
@@ -590,7 +601,7 @@ cdef class BaseInfo(MorphInfo):
 			"""
 			return None
 		else:
-			weightmap_stamp = self._weightmap[self._slice_stamp]
+			weightmap_stamp = self._weightmap_stamp_old.copy()
 
 		weightmap_stamp[self._mask_stamp_nan] = 0.0
 		return weightmap_stamp
@@ -719,6 +730,237 @@ cdef class BaseInfo(MorphInfo):
 
 		plt.savefig("%s/%d.png" % (self.output_image_dir, self.label))
 		plt.close()
+
+cdef class IndividualBaseInfo(BaseInfo):
+	def __init__(self,  int label, str fits_file_name, int fits_hdu_index=0,
+				 str mask_file_name=None, int mask_hdu_index=0,
+				 str weightmap=None, int weightmap_hdu_index=0,
+				 double gain=-1,
+				 str image_compare_file_name=None, int image_compare_hdu_index=0,
+				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
+		MorphInfo.__init__(self)
+		self.logger = None
+		self.constants = ConstantsSetting()
+		self.constants.label = label
+
+		self.output_image_dir = output_image_dir
+		"""
+		图像输出文件夹，None表示不输出
+		"""
+
+		self._image_fits = fits.open(fits_file_name)
+		"""
+		输入的原始图像引用
+		"""
+
+		self._mask_fits = fits.open(mask_file_name)
+		"""
+		输入的segmentation map应用
+		"""
+
+		self.label = label
+		"""
+		该星系在在segmap中的label
+		"""
+
+		self._weightmap_fits = fits.open(weightmap)
+		"""
+		权重图
+		"""
+
+		self._gain = gain
+		"""
+		增益
+		"""
+
+		self._image_compare_fits = fits.open(image_compare_file_name)
+
+		# Measure runtime
+		self.global_start = clock()
+
+		# if not isinstance(self._segmap, photutils.SegmentationImage):
+		#	self._segmap = photutils.SegmentationImage(self._segmap)
+
+		# Check sanity of input data
+		# self._segmap.check_labels([self.label])
+		# assert (self._segmap.shape[0] == self._image.shape[0]) and (self._segmap.shape[1] == self._image.shape[1])
+
+		self.flag_catastrophic = False  # this one is reserved for really bad cases
+		"""
+		严重错误
+		"""
+
+		# If something goes wrong, use centroid instead of asymmetry center
+		# (better performance in some pathological cases, e.g. GOODS-S 32143):
+		self._use_centroid = False
+		"""
+		是否用光度分布平均值而不是不对称中心，如果不计算cas则用光度分布平均值
+		"""
+
+		self._cutout_stamp = self._image_fits[fits_hdu_index].data
+		"""
+		原始图像在该星系处的切片
+		"""
+
+		self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=int)
+		"""
+		segmap在该星系处的切片
+		"""
+
+		if self._weightmap_fits is not None:
+			self._weightmap_stamp_old = self._weightmap_fits[weightmap_hdu_index].data
+		else:
+			self._weightmap_stamp_old = None
+		"""
+		weightmap在该星系处的切片，原始值
+		"""
+
+		if self._mask_fits is not None:
+			self._mask_stamp_old = self._mask_fits[mask_hdu_index].data
+		else:
+			self._mask_stamp_old = None
+		"""
+		mask在该星系处的切片，原始值
+		"""
+
+		assert cnp.PyArray_SAMESHAPE(self._segmap_stamp, self._cutout_stamp)
+		if self._mask_stamp_old is not None:
+			assert cnp.PyArray_SAMESHAPE(self._mask_stamp_old, self._cutout_stamp)
+			assert cnp.PyArray_ISBOOL(self._mask_stamp_old)
+		if self._weightmap_stamp_old is not None:
+			assert cnp.PyArray_SAMESHAPE(self._weightmap_stamp_old, self._cutout_stamp)
+
+
+		self.nx_stamp = self.get_nx_stamp()
+		"""
+		图像切片的宽度
+		"""
+
+		self.ny_stamp = self.get_ny_stamp()
+		"""
+		图像切片的高度
+		"""
+
+		if self.nx_stamp * self.ny_stamp > 10000000:
+			warnings.warn('%d: Cutout size too big (%d*%d>10M), skip.' % (self.label, self.nx_stamp, self.ny_stamp),
+						  AstropyUserWarning)
+			self._abort_calculations()
+			return
+
+		self._mask_stamp_nan = self.get_mask_stamp_nan()
+		"""
+		图像切片中有哪些点是nan或者inf
+		"""
+
+		self._weightmap_stamp = self.get_weightmap_stamp()
+		"""
+		weightmap在该星系处的切片
+		"""
+
+		self.num_badpixels = -1
+		"""
+		图像切片中的坏点数量，也就是不满足abs(原始图像而切片-周围平均后的图像切片)<=n_sigma_outlier*std像素的数量
+		"""
+
+		self._mask_stamp_badpixels = self.get_mask_stamp_badpixels()
+		"""
+		图像切片中坏点存在位置
+		"""
+
+		self._mask_stamp = self.get_mask_stamp()
+		"""
+		图像切片的总mask，该mask是segmap中非label的源、输入的mask、nan或者inf位置和坏点位置的并集
+		"""
+
+		self._mask_stamp_no_bg = self.get_mask_stamp_no_bg()
+		"""
+		图像切片的包括背景的mask，即总mask和segmap中label=0位置(即背景)的并集
+		"""
+
+		self._cutout_stamp_maskzeroed = self.get_cutout_stamp_maskzeroed()
+		"""
+		获得星系本体+背景的图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp中的总mask，包括其它label的源、输入的mask、nan、inf和坏点
+		"""
+
+		self._cutout_stamp_maskzeroed_no_bg = self.get_cutout_stamp_maskzeroed_no_bg()
+		"""
+		获得星系本体图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp_no_bg中的包括背景的总mask。
+		"""
+
+		# Check that the labeled galaxy segment has a positive flux sum.
+		# If not, this is bad enough to abort all calculations and return
+		# an empty object.
+		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
+			warnings.warn('%d: Total flux is nonpositive. Returning empty object.' % self.label,
+						  AstropyUserWarning)
+			self._abort_calculations()
+			return
+
+		cdef cnp.ndarray[double, ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
+
+		self.size = len(cutout_not_in_mask)
+		"""
+		用于计算的星系本体的全部像素的数量
+		"""
+
+		self.surface_brightness = np.mean(cutout_not_in_mask)
+		"""
+		用于计算的星系本体的大小每个像素流量的平均值
+		"""
+
+		if set_centroid == (-1, -1):
+			self._centroid = self.get_centroid()
+		else:
+			self._centroid = set_centroid
+		"""
+		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
+		"""
+
+		self.xc_centroid = self._centroid[0]
+		"""
+		星系光度质心的x坐标，相对于整个图像的
+		"""
+
+		self.yc_centroid = self._centroid[1]
+		"""
+		星系光度质心的y坐标，相对于整个图像的
+		"""
+
+		# Centroid of the source relative to the "postage stamp" cutout:
+		self._xc_stamp = self._centroid[0]
+		"""
+		星系光度质心的x坐标，相对于切片的
+		"""
+
+		self._yc_stamp = self._centroid[1]
+		"""
+		星系光度质心的x坐标，相对于切片的
+		"""
+
+		self._diagonal_distance = self.get_diagonal_distance()
+		"""
+		图像切片的对角线长度
+		"""
+
+		self._rpetro_circ_centroid = self.get_rpetro_circ_centroid()
+		"""
+		以光度质心为中心的Petrosian圆形孔径半径
+		"""
+
+
+	cdef int get_nx_stamp(self):
+		"""
+		Number of pixels in the 'postage stamp' along the ``x`` direction.
+		"""
+		return self._cutout_stamp.shape[1]
+
+	cdef int get_ny_stamp(self):
+		"""
+		Number of pixels in the 'postage stamp' along the ``y`` direction.
+		"""
+		return self._cutout_stamp.shape[0]
+
+
 
 cdef class CASInfo(MorphInfo):
 	def __init__(self):

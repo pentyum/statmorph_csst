@@ -89,6 +89,12 @@ class MorphProvider(abc.ABC):
 
 class StatmorphVanilla(MorphProvider):
 
+	def measure_individual(self, fits_file_name: str, fits_file_hdu_index: int, fits_noise_file_name: Optional[str],
+						   fits_noise_file_hdu_index: Optional[int], label: int, fits_cmp_file_name: Optional[str],
+						   fits_cmp_file_hdu_index: Optional[int], output_image_dir: str,
+						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		pass
+
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
 					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
@@ -119,6 +125,12 @@ class StatmorphVanilla(MorphProvider):
 
 
 class StatmorphCython(MorphProvider):
+	def measure_individual(self, fits_file_name: str, fits_file_hdu_index: int, fits_noise_file_name: Optional[str],
+						   fits_noise_file_hdu_index: Optional[int], label: int, fits_cmp_file_name: Optional[str],
+						   fits_cmp_file_hdu_index: Optional[int], output_image_dir: str,
+						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		pass
+
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
 					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:

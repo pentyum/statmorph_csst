@@ -30,7 +30,9 @@ cdef class BaseInfo(MorphInfo):
 	cdef tuple _slice_stamp
 	cdef cnp.ndarray _cutout_stamp
 	cdef cnp.ndarray _segmap_stamp
+	cdef cnp.ndarray _weightmap_stamp_old
 	cdef cnp.ndarray _weightmap_stamp
+	cdef cnp.ndarray _mask_stamp_old
 	cdef cnp.ndarray _mask_stamp_nan
 	cdef int xmin_stamp
 	cdef int ymin_stamp
@@ -123,6 +125,12 @@ cdef class BaseInfo(MorphInfo):
 	cdef void _abort_calculations(self)
 
 	cdef void save_image(self)
+
+cdef class IndividualBaseInfo(BaseInfo):
+	cdef _image_fits
+	cdef _mask_fits
+	cdef _weightmap_fits
+	cdef _image_compare_fits
 
 cdef class CASInfo(MorphInfo):
 	cdef tuple _slice_skybox
