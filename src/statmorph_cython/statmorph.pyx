@@ -3,7 +3,7 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
-import multiprocessing
+
 import warnings
 
 from astropy.utils.exceptions import AstropyUserWarning
