@@ -36,6 +36,7 @@ def read_properties(path) -> Dict[str, str]:
 		item_dict[key] = value
 	return item_dict
 
+
 def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_name: Optional[str], segm_slice,
 							label: int, shape, shm_img_cmp_name: Optional[str],
 							output_image_dir: str, set_centroid: Tuple[float, float],
@@ -134,12 +135,9 @@ def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: 
 	return sextractor
 
 
-def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_file: Optional[str], save_file: str,
-				  threads: int, run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
-				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
-				  calc_mid: bool = False, calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
-				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
-				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
+def run_statmorph_init_calc_para_str_list(threads: int, calc_cas: bool = True, calc_g_m20: bool = True,
+										  calc_mid: bool = False, calc_multiplicity: bool = False,
+										  calc_color_dispersion: bool = False, calc_g2: bool = False) -> List[str]:
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 
 	calc_para_str_list = []
@@ -157,6 +155,18 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		calc_para_str_list.append("G2")
 
 	logger.info("计算参数: " + ", ".join(calc_para_str_list))
+	return calc_para_str_list
+
+
+def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_file: Optional[str], save_file: str,
+				  threads: int, run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
+				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
+				  calc_mid: bool = False, calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
+				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
+				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
+	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_mid,
+															   calc_multiplicity, calc_color_dispersion, calc_g2)
+
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
 	if center_file is not None:
@@ -315,8 +325,69 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 	logger.info("文件已保存至" + save_file)
 
 
-def run_statmorph_stamp():
-	pass
+def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_percentage: int, run_specified_label: int,
+						calc_cas: bool = True, calc_g_m20: bool = True, calc_mid: bool = False,
+						calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
+						calc_g2: bool = False, output_image_dir: Optional[str] = None,
+						center_file: Optional[str] = None, use_vanilla: bool = False):
+	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_mid,
+															   calc_multiplicity, calc_color_dispersion, calc_g2)
+	catalog_table = Table.read(catalog_file, format="ascii")
+	center_table: Optional[Table] = None
+	if center_file is not None:
+		logger.info("使用预定义的中心位置文件" + center_file)
+		center_table = Table.read(center_file, format="ascii")
+
+	if output_image_dir is not None:
+		if not os.path.exists(output_image_dir):
+			os.mkdir(output_image_dir)
+
+	logger.info("图像数量%d" % len(catalog_table))
+	if run_specified_label <= 0:
+		run_rows = catalog_table[0:len(catalog_table) * run_percentage // 100]
+		logger.info("实际运行%d%%，共%d" % (run_percentage, len(catalog_table)))
+	else:
+		run_rows = catalog_table[catalog_table["label"] == run_specified_label]
+		logger.info("只运行label=%d" % run_specified_label)
+
+	if use_vanilla:
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
+														 calc_color_dispersion, calc_g2)
+	else:
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
+														calc_color_dispersion, calc_g2)
+	logger.info("使用" + morph_provider.__class__.__qualname__)
+
+	result_format = morph_provider.get_result_format()
+	result_all = [" ".join(morph_provider.get_result_header()) + "\n"]
+
+	start_time = time.time()
+
+	with ProcessPoolExecutor(threads) as exe:
+		fs = []
+		for rows in run_rows:
+			if center_table is not None:
+				pass
+			fs.append(
+				exe.submit(work_with_individual_file))
+		for result in as_completed(fs):
+			line = result_format % result.result()
+			result_all.append(line)
+
+	logger.info(f'用时: {time.time() - start_time:.2f}s')
+
+	logger.info("开始写入文件")
+
+	with open(save_file, "w") as f:
+		f.writelines(result_all)
+
+	result_table: Table = Table.read(save_file, format="ascii")
+	# result_table.sort("label")
+	result_table["NUMBER"] = result_table["label"]
+	# result_table = join(sextractor_table, result_table)
+	result_table.write(save_file, format="ascii", overwrite=True)
+
+	logger.info("文件已保存至" + save_file)
 
 
 def opts_to_dict(opts: List[Tuple[str, str]], arg_short_dict: Dict[str, Tuple[str, bool]],
@@ -381,8 +452,7 @@ help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
 	-S, --sextractor_back_size
 	-F, --sextractor_back_filtersize
 	-P, --sextractor_backphoto_thick
-	-r, --stamp_dir 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建
-	-q, --stamp_hdu_index 在stamp模式下，读取fits文件的第几个hdu
+	-r, --stamp_catalog 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建，stamp_catalog文件必须包含id，image_file_name，image_hdu_index，(noise_file_name，noise_hdu_index，cmp_file_name，cmp_hdu_index)列。
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源
@@ -424,8 +494,7 @@ def main(argv) -> int:
 		"S": ("sextractor_back_size", True),
 		"F": ("sextractor_back_filtersize", True),
 		"P": ("sextractor_backphoto_thick", True),
-		"r": ("stamp_dir", True),
-		"q": ("stamp_hdu_index", True),
+		"r": ("stamp_catalog", True),
 		"a": ("output_image_dir", True),
 		"f": ("ignore_mag_fainter_than", True),
 		"t": ("ignore_class_star_greater_than", True),
@@ -474,8 +543,7 @@ def main(argv) -> int:
 	my_sextractor_config["back_filtersize"] = int(config["sextractor_back_filtersize"])
 	my_sextractor_config["backphoto_thick"] = int(config["sextractor_backphoto_thick"])
 
-	stamp_dir: Optional[str] = config["stamp_dir"]
-	stamp_hdu_index: int = int(config["stamp_hdu_index"])
+	stamp_catalog: Optional[str] = config["stamp_catalog"]
 
 	output_image_dir: Optional[str] = config["output_image_dir"]
 	ignore_mag_fainter_than: float = float(config["ignore_mag_fainter_than"])
@@ -498,8 +566,8 @@ def main(argv) -> int:
 		image_compare_file = None
 	if not check_not_null(center_file):
 		center_file = None
-	if not check_not_null(stamp_dir):
-		stamp_dir = None
+	if not check_not_null(stamp_catalog):
+		stamp_catalog = None
 
 	run_name = get_basename_without_end(detect_file)
 	if measure_file is not None:
@@ -515,7 +583,7 @@ def main(argv) -> int:
 
 	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
 								my_sextractor_config)
-	if stamp_dir is None:
+	if stamp_catalog is None:
 		run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
 					  sextractor.noise_file,
 					  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
@@ -524,7 +592,10 @@ def main(argv) -> int:
 					  center_file,
 					  use_vanilla)
 	else:
-		run_statmorph_stamp()
+		run_statmorph_stamp(stamp_catalog, save_file, threads, run_percentage, run_specified_label, calc_cas,
+							calc_g_m20, calc_mid,
+							calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir,
+							center_file, use_vanilla)
 
 	return 0
 
