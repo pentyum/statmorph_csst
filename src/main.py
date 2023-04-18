@@ -166,7 +166,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
 	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
-
+	logger.info("进入大图模式")
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
 	if center_file is not None:
@@ -332,6 +332,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 						center_file: Optional[str] = None, use_vanilla: bool = False):
 	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
+	logger.info("进入独立stamp模式")
 	catalog_table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
 	if center_file is not None:
@@ -365,11 +366,29 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 
 	with ProcessPoolExecutor(threads) as exe:
 		fs = []
-		for rows in run_rows:
+		for row in run_rows:
+			label = row["label"]
 			if center_table is not None:
-				pass
+				center_info = center_table[center_table["label"] == label]
+				if len(center_info) > 0:
+					center_info = center_info[0]
+					if center_info["size"] > 0:
+						set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
+						if calc_cas:
+							set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
+					else:
+						logger.warning("size of label %d in center_file is zero" % label)
+				else:
+					logger.warning("label %d not existed in center_file" % label)
 			fs.append(
-				exe.submit(work_with_individual_file))
+				exe.submit(work_with_individual_file,
+						   row["image_file_name"], row["image_hdu_index"],
+						   row["noise_hdu_index"], row["noise_hdu_index"], label,
+						   row["cmp_hdu_index"], row["cmp_hdu_index"],
+						   output_image_dir, set_centroid,
+						   set_asym_center, morph_provider
+						   )
+			)
 		for result in as_completed(fs):
 			line = result_format % result.result()
 			result_all.append(line)
@@ -593,8 +612,7 @@ def main(argv) -> int:
 					  use_vanilla)
 	else:
 		run_statmorph_stamp(stamp_catalog, save_file, threads, run_percentage, run_specified_label, calc_cas,
-							calc_g_m20, calc_mid,
-							calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir,
+							calc_g_m20, calc_mid, calc_multiplicity, calc_color_dispersion, calc_g2, output_image_dir,
 							center_file, use_vanilla)
 
 	return 0
