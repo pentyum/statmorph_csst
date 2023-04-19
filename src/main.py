@@ -423,8 +423,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 
 	result_table: Table = Table.read(save_file, format="ascii")
 	# result_table.sort("label")
-	result_table["NUMBER"] = result_table["label"]
-	# result_table = join(sextractor_table, result_table)
+	result_table = join(catalog_table, result_table)
 	result_table.write(save_file, format="ascii", overwrite=True)
 
 	logger.info("文件已保存至" + save_file)
