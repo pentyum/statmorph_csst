@@ -35,7 +35,7 @@ cdef void check_rp_beyond_edge(double xc_centroid, double yc_centroid, double _r
 		warnings.warn('[CAS] _petro_extent_cas*_rpetro_circ_centroid is out of the image', AstropyUserWarning)
 		flags.set_flag_true(0)
 
-cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] _segmap, tuple _slice_stamp, int nx_stamp, int ny_stamp, _mask, Flags flags, ConstantsSetting constants):
+cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] segmap, int nx_stamp, int ny_stamp, cnp.ndarray[cnp.npy_bool,ndim=2] mask, Flags flags, ConstantsSetting constants):
 	"""
 	Try to find a region of the sky that only contains background.
 
@@ -43,13 +43,13 @@ cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] _segmap, tuple _slice_stamp,
 	(e.g. Shi et al. 2009, ApJ, 697, 1764).
 	可能产生CAS警告1,2
 	"""
-	cdef cnp.ndarray segmap = _segmap[_slice_stamp]
+	# cdef cnp.ndarray segmap = _segmap[_slice_stamp]
 	cdef int ny = ny_stamp
 	cdef int nx = nx_stamp
 	# cdef cnp.ndarray mask = np.zeros((ny, nx), dtype=np.bool8)
 	cdef cnp.ndarray mask = cnp.PyArray_ZEROS(2, [ny, nx], cnp.NPY_BOOL, 0)
-	if _mask is not None:
-		mask = _mask[_slice_stamp]
+	#if _mask is not None:
+	#	mask = _mask[_slice_stamp]
 
 	assert constants.skybox_size >= 2
 	cdef int cur_skybox_size = constants.skybox_size
@@ -415,7 +415,7 @@ cdef CASInfo calc_cas(BaseInfo base_info, (double, double) set_asym_center):
 	检查1.5倍rp是否超出图像边缘
 	"""
 
-	cas_info._slice_skybox = get_slice_skybox(base_info._segmap, base_info._slice_stamp, base_info.nx_stamp, base_info.ny_stamp, base_info._mask, cas_info.flags, base_info.constants)
+	cas_info._slice_skybox = get_slice_skybox(base_info._segmap_stamp, base_info.nx_stamp, base_info.ny_stamp, base_info._mask_stamp_old, cas_info.flags, base_info.constants)
 	"""
 	背景区域切片下标，依次为y和x，相对于图像切片
 	"""
