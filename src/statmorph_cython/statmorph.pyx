@@ -800,7 +800,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		是否用光度分布平均值而不是不对称中心，如果不计算cas则用光度分布平均值
 		"""
 
-		self._cutout_stamp = self._image_fits[fits_hdu_index].data
+		self._cutout_stamp = cnp.PyArray_Cast(self._image_fits[fits_hdu_index].data, cnp.NPY_DOUBLE)
 		"""
 		原始图像在该星系处的切片
 		"""
@@ -811,7 +811,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 
 		if self._weightmap_fits is not None:
-			self._weightmap_stamp_old = self._weightmap_fits[weightmap_hdu_index].data
+			self._weightmap_stamp_old = cnp.PyArray_Cast(self._weightmap_fits[weightmap_hdu_index].data, cnp.NPY_DOUBLE)
 		else:
 			self._weightmap_stamp_old = None
 		"""
