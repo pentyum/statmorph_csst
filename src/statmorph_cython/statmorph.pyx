@@ -746,7 +746,7 @@ cdef class BaseInfo(MorphInfo):
 		plt.close()
 
 	cdef void dump_stamps(self):
-		stamps = [
+		cdef stamps = [
 			self._cutout_stamp,
 			self._cutout_stamp_maskzeroed,
 			self._cutout_stamp_maskzeroed_no_bg,
@@ -760,11 +760,9 @@ cdef class BaseInfo(MorphInfo):
 		plt.figure(figsize=(12, 12))
 		cdef int i = 0
 		for i in range(9):
-			print(stamps[i].dtype)
-
-		for i in range(9):
 			plt.subplot(3, 3, i+1)
 			plt.imshow(stamps[i], origin="lower")
+			plt.colorbar()
 
 		plt.tight_layout()
 		plt.savefig("./dump_stamps_%d.pdf"%self.label)
@@ -1000,7 +998,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 		return self._cutout_stamp.shape[0]
 
 	cpdef void close_all(self):
-		self.dump_stamps()
 		self._image_fits.close()
 		if self._mask_fits is not None:
 			self._mask_fits.close()
