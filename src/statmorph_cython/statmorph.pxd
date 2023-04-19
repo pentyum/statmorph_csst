@@ -81,7 +81,7 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef void _check_segmaps(self)
 
-	cdef void _check_stamp_size(self):
+	cdef void _check_stamp_size(self)
 
 	cdef tuple get_slice_stamp(self)
 
