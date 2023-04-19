@@ -816,7 +816,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 
 		if self._mask_fits is not None:
-			self._mask_stamp_old = self._mask_fits[mask_hdu_index].data
+			self._mask_stamp_old = self._mask_fits[mask_hdu_index].data > 0
 		else:
 			self._mask_stamp_old = None
 		"""
