@@ -165,7 +165,6 @@ class StatmorphCython(MorphProvider):
 											 image_compare_hdu_index=cmp_hdu_index,
 											 output_image_dir=output_image_dir, set_centroid=set_centroid)
 		result = self._calc(morph, set_asym_center)
-		morph.dump_stamps()
 		morph.close_all()
 		return result
 

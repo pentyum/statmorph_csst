@@ -1002,6 +1002,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		return self._cutout_stamp.shape[0]
 
 	cpdef void close_all(self):
+		self.dump_stamps()
 		self._image_fits.close()
 		if self._mask_fits is not None:
 			self._mask_fits.close()
