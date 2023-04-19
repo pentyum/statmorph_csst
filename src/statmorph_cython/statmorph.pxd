@@ -17,7 +17,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef cnp.ndarray _image
 	cdef cnp.ndarray _segmap
 	cdef tuple _segmap_slice
-	cdef int label
+	cdef readonly int label
 	cdef cnp.ndarray _mask
 	cdef cnp.ndarray _weightmap
 	cdef double _gain
