@@ -70,6 +70,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly MIDInfo mid
 	cdef readonly double multiplicity
 	cdef cnp.ndarray image_compare
+	cdef cnp.ndarray image_compare_stamp
 	cdef readonly CompareInfo compare_info
 	cdef readonly G2Info g2
 	cdef readonly long global_start
@@ -79,6 +80,8 @@ cdef class BaseInfo(MorphInfo):
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center)
 
 	cdef void _check_segmaps(self)
+
+	cdef void _check_stamp_size(self):
 
 	cdef tuple get_slice_stamp(self)
 
@@ -170,7 +173,7 @@ cdef class G2Info(MorphInfo):
 	cdef get_asymmetry_gradient_plot(self)
 
 cdef class CompareInfo(MorphInfo):
-	cdef cnp.ndarray _image_compare
+	cdef cnp.ndarray _image_compare_stamp
 	cdef BaseInfo base_info
 	cdef int num_badpixels
 

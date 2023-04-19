@@ -491,7 +491,7 @@ help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
 	-S, --sextractor_back_size
 	-F, --sextractor_back_filtersize
 	-P, --sextractor_backphoto_thick
-	-r, --stamp_catalog 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建，stamp_catalog文件必须包含id，image_file_name，image_hdu_index，(noise_file_name，noise_hdu_index，cmp_file_name，cmp_hdu_index)列，如果不指定hdu_index，则默认为0。
+	-r, --stamp_catalog 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建，stamp_catalog文件必须包含id，image_file_name，image_hdu_index，(noise_file_name，noise_hdu_index，cmp_file_name，cmp_hdu_index)列，如果不指定hdu_index，则默认为0。指定该项后，image_file、measure_file、wht_file、sextractor_work_dir、skip_sextractor将全部失效。
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
 	-t, --ignore_class_star_greater_than=忽略测量像恒星指数大于该值的源

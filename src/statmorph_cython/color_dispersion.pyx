@@ -93,10 +93,10 @@ cdef double get_color_dispersion(CompareInfo compare_info):
 
 	return color_dispersion
 
-cdef CompareInfo calc_color_dispersion(BaseInfo base_info, cnp.ndarray[double, ndim=2] image_compare):
+cdef CompareInfo calc_color_dispersion(BaseInfo base_info, cnp.ndarray[double, ndim=2] image_compare_stamp):
 	cdef CompareInfo compare_info = CompareInfo()
 
-	compare_info._image_compare = image_compare
+	compare_info._image_compare_stamp = image_compare_stamp
 	compare_info.base_info = base_info
 	compare_info.num_badpixels = -1
 

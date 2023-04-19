@@ -307,7 +307,8 @@ cdef class BaseInfo(MorphInfo):
 		if calc_color_dispersion:
 			if self.image_compare is not None:
 				start = clock()
-				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, self.image_compare)
+				self.image_compare_stamp = self.image_compare[self._slice_stamp]
+				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, self.image_compare_stamp)
 				self.compare_info.calc_runtime(start)
 			else:
 				warnings.warn("%d: [Color dispersion] compare image not defined"%self.label)
@@ -357,6 +358,14 @@ cdef class BaseInfo(MorphInfo):
 			warnings.warn('%d: Segmaps are empty!'%self.label, AstropyUserWarning)
 			self.flags.set_flag_true(14)  # bad
 			return
+
+	cdef void _check_stamp_size(self):
+		assert cnp.PyArray_SAMESHAPE(self._segmap_stamp, self._cutout_stamp)
+		if self._mask_stamp_old is not None:
+			assert cnp.PyArray_SAMESHAPE(self._mask_stamp_old, self._cutout_stamp)
+			assert cnp.PyArray_ISBOOL(self._mask_stamp_old)
+		if self._weightmap_stamp_old is not None:
+			assert cnp.PyArray_SAMESHAPE(self._weightmap_stamp_old, self._cutout_stamp)
 
 	cdef tuple get_slice_stamp(self):
 		"""
@@ -826,13 +835,10 @@ cdef class IndividualBaseInfo(BaseInfo):
 		mask在该星系处的切片，原始值
 		"""
 
-		assert cnp.PyArray_SAMESHAPE(self._segmap_stamp, self._cutout_stamp)
-		if self._mask_stamp_old is not None:
-			assert cnp.PyArray_SAMESHAPE(self._mask_stamp_old, self._cutout_stamp)
-			assert cnp.PyArray_ISBOOL(self._mask_stamp_old)
-		if self._weightmap_stamp_old is not None:
-			assert cnp.PyArray_SAMESHAPE(self._weightmap_stamp_old, self._cutout_stamp)
+		if self._image_compare_fits is not None:
+			self.image_compare_stamp = cnp.PyArray_Cast(self._image_compare_fits[image_compare_hdu_index].data, cnp.NPY_DOUBLE)
 
+		self._check_stamp_size()
 
 		self.nx_stamp = self.get_nx_stamp()
 		"""
@@ -1025,7 +1031,7 @@ cdef class CompareInfo(MorphInfo):
 		"""
 		Flag any NaN or inf values within the postage stamp.
 		"""
-		cdef cnp.ndarray locs_invalid = ~np.isfinite(self._image_compare[self.base_info._slice_stamp])
+		cdef cnp.ndarray locs_invalid = ~np.isfinite(self._image_compare_stamp)
 		return locs_invalid
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_badpixels_compare(self):
@@ -1035,7 +1041,7 @@ cdef class CompareInfo(MorphInfo):
 		cdef cnp.ndarray badpixels = cnp.PyArray_ZEROS(2, [self.base_info.ny_stamp, self.base_info.nx_stamp],
 													   cnp.NPY_BOOL, 0)
 		if self.base_info.constants.n_sigma_outlier > 0:
-			badpixels = self.base_info._get_badpixels(self._image_compare[self.base_info._slice_stamp])
+			badpixels = self.base_info._get_badpixels(self._image_compare_stamp)
 			self.num_badpixels = np.sum(badpixels)
 		return badpixels
 
@@ -1071,7 +1077,7 @@ cdef class CompareInfo(MorphInfo):
 		as well as badpixels (outliers).
 		"""
 		return cnp.PyArray_Where(~self._mask_stamp_compare,
-								 self._image_compare[self.base_info._slice_stamp], 0.0)
+								 self._image_compare_stamp, 0.0)
 
 	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed_no_bg_compare(self):
 		"""
@@ -1079,7 +1085,7 @@ cdef class CompareInfo(MorphInfo):
 		background.
 		"""
 		return cnp.PyArray_Where(~self._mask_stamp_no_bg_compare,
-								 self._image_compare[self.base_info._slice_stamp], 0.0)
+								 self._image_compare_stamp, 0.0)
 
 	def get_values(self):
 		return [self.color_dispersion, self.runtime]
