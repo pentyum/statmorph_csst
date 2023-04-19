@@ -129,6 +129,8 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef void save_image(self)
 
+	cdef void dump_stamps(self)
+
 cdef class IndividualBaseInfo(BaseInfo):
 	cdef _image_fits
 	cdef _mask_fits

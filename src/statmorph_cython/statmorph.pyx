@@ -270,7 +270,6 @@ cdef class BaseInfo(MorphInfo):
 		"""
 
 
-
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiplicity,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center):
 		cdef (double, double) center_used
@@ -738,6 +737,39 @@ cdef class BaseInfo(MorphInfo):
 		plt.legend()
 
 		plt.savefig("%s/%d.png" % (self.output_image_dir, self.label))
+		plt.close()
+
+	cdef void dump_stamps(self):
+		plt.figure(figsize=(12,12))
+		plt.subplot(3, 3, 1)
+		plt.imshow(self._cutout_stamp, origin="lower")
+		plt.title("_cutout_stamp")
+		plt.subplot(3, 3, 2)
+		plt.imshow(self._cutout_stamp_maskzeroed, origin="lower")
+		plt.title("_cutout_stamp_maskzeroed")
+		plt.subplot(3, 3, 3)
+		plt.imshow(self._cutout_stamp_maskzeroed_no_bg, origin="lower")
+		plt.title("_cutout_stamp_maskzeroed_no_bg")
+		plt.subplot(3, 3, 4)
+		plt.imshow(self._weightmap_stamp, origin="lower")
+		plt.title("_weightmap_stamp")
+		plt.subplot(3, 3, 5)
+		plt.imshow(self._segmap_stamp, origin="lower")
+		plt.title("_segmap_stamp")
+		plt.subplot(3, 3, 6)
+		plt.imshow(self._weightmap_stamp_old, origin="lower")
+		plt.title("_weightmap_stamp_old")
+		plt.subplot(3, 3, 7)
+		plt.imshow(self._weightmap_stamp, origin="lower")
+		plt.title("_weightmap_stamp")
+		plt.subplot(3, 3, 8)
+		plt.imshow(self._mask_stamp, origin="lower")
+		plt.title("_mask_stamp")
+		plt.subplot(3, 3, 9)
+		plt.imshow(self._mask_stamp_old, origin="lower")
+		plt.title("_mask_stamp_old")
+		plt.tight_layout()
+		plt.savefig("./dump_stamps_%d.pdf"%self.label)
 		plt.close()
 
 cdef class IndividualBaseInfo(BaseInfo):
