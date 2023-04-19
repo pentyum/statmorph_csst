@@ -739,35 +739,27 @@ cdef class BaseInfo(MorphInfo):
 		plt.savefig("%s/%d.png" % (self.output_image_dir, self.label))
 		plt.close()
 
-	def dump_stamps(self):
-		plt.figure(figsize=(12,12))
-		plt.subplot(3, 3, 1)
-		plt.imshow(self._cutout_stamp, origin="lower")
-		plt.title("_cutout_stamp")
-		plt.subplot(3, 3, 2)
-		plt.imshow(self._cutout_stamp_maskzeroed, origin="lower")
-		plt.title("_cutout_stamp_maskzeroed")
-		plt.subplot(3, 3, 3)
-		plt.imshow(self._cutout_stamp_maskzeroed_no_bg, origin="lower")
-		plt.title("_cutout_stamp_maskzeroed_no_bg")
-		plt.subplot(3, 3, 4)
-		plt.imshow(self._weightmap_stamp, origin="lower")
-		plt.title("_weightmap_stamp")
-		plt.subplot(3, 3, 5)
-		plt.imshow(self._segmap_stamp, origin="lower")
-		plt.title("_segmap_stamp")
-		plt.subplot(3, 3, 6)
-		plt.imshow(self._weightmap_stamp_old, origin="lower")
-		plt.title("_weightmap_stamp_old")
-		plt.subplot(3, 3, 7)
-		plt.imshow(self._weightmap_stamp, origin="lower")
-		plt.title("_weightmap_stamp")
-		plt.subplot(3, 3, 8)
-		plt.imshow(self._mask_stamp, origin="lower")
-		plt.title("_mask_stamp")
-		plt.subplot(3, 3, 9)
-		plt.imshow(self._mask_stamp_old, origin="lower")
-		plt.title("_mask_stamp_old")
+	cdef void dump_stamps(self):
+		stamps = [
+			self._cutout_stamp,
+			self._cutout_stamp_maskzeroed,
+			self._cutout_stamp_maskzeroed_no_bg,
+			self._weightmap_stamp_old,
+			self._weightmap_stamp,
+			self._segmap_stamp,
+			self._mask_stamp_old,
+			self._mask_stamp_badpixels,
+			self._mask_stamp,
+		]
+		plt.figure(figsize=(12, 12))
+		cdef int i = 0
+		for i in range(9):
+			print(stamps[i].dtype)
+
+		for i in range(9):
+			plt.subplot(3, 3, i+1)
+			plt.imshow(stamps[i], origin="lower")
+
 		plt.tight_layout()
 		plt.savefig("./dump_stamps_%d.pdf"%self.label)
 		plt.close()
