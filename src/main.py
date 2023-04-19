@@ -619,9 +619,10 @@ def main(argv) -> int:
 	if threads <= 0:
 		threads = min(multiprocessing.cpu_count() - 1, 1)
 
-	sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
-								my_sextractor_config)
+
 	if stamp_catalog is None:
+		sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
+									my_sextractor_config)
 		run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
 					  sextractor.noise_file,
 					  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
