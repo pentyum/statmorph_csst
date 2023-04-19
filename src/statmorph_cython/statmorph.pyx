@@ -124,12 +124,18 @@ cdef class BaseInfo(MorphInfo):
 		segmap在该星系处的切片
 		"""
 
-		self._weightmap_stamp_old = self._weightmap[self._slice_stamp]
+		if self._weightmap is not None:
+			self._weightmap_stamp_old = self._weightmap[self._slice_stamp]
+		else:
+			self._weightmap_stamp_old = None
 		"""
 		weightmap在该星系处的切片，原始值
 		"""
 
-		self._mask_stamp_old = self._mask[self._slice_stamp]
+		if self._mask is not None:
+			self._mask_stamp_old = self._mask[self._slice_stamp]
+		else:
+			self._mask_stamp_old = None
 		"""
 		mask在该星系处的切片，原始值
 		"""
@@ -496,7 +502,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		# cdef cnp.ndarray segmap_stamp = self._segmap[self._slice_stamp]
 		cdef cnp.ndarray mask_stamp = (self._segmap_stamp != 0) & (self._segmap_stamp != self.label)
-		if self._mask is not None:
+		if self._mask_stamp_old is not None:
 			mask_stamp |= self._mask_stamp_old
 		mask_stamp |= self._mask_stamp_nan
 		mask_stamp |= self._mask_stamp_badpixels
@@ -600,7 +606,7 @@ cdef class BaseInfo(MorphInfo):
 		If a weightmap is not provided as input, it is created using the
 		``gain`` argument.
 		"""
-		if self._weightmap is None:
+		if self._weightmap_stamp_old is None:
 			# Already checked that gain is not None:
 			"""
 			assert self._gain > 0
@@ -992,16 +998,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 		Number of pixels in the 'postage stamp' along the ``y`` direction.
 		"""
 		return self._cutout_stamp.shape[0]
-
-	cdef cnp.ndarray get_weightmap_stamp(self):
-		"""
-		Return a cutout of the weight map over the "postage stamp" region.
-		If a weightmap is not provided as input, it is created using the
-		``gain`` argument.
-		"""
-		weightmap_stamp = self._weightmap_stamp_old.copy()
-		weightmap_stamp[self._mask_stamp_nan] = 0.0
-		return weightmap_stamp
 
 	cpdef void close_all(self):
 		self.dump_stamps()
