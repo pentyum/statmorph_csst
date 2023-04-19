@@ -128,26 +128,13 @@ class StatmorphVanilla(MorphProvider):
 
 
 class StatmorphCython(MorphProvider):
-	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
-						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
-						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
-						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
-						   output_image_dir: str,
-						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
-		pass
-
-	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
-					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
-					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
-		morph = statmorph.BaseInfo(
-			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
-			output_image_dir=output_image_dir, set_centroid=set_centroid)
+	def _calc(self, morph: statmorph.BaseInfo, set_asym_center: Tuple[float, float]):
 		if not morph.flag_catastrophic:
 			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiplicity,
 									   self.calc_color_dispersion, self.calc_g2,
 									   set_asym_center)
 
-		return_list = [label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
+		return_list = [morph.label, morph.size, morph.surface_brightness, morph._centroid[0], morph._centroid[1],
 					   morph._rpetro_circ_centroid, morph.sn_per_pixel]
 		if self.calc_cas:
 			return_list.extend(morph.cas.get_values())
@@ -164,3 +151,24 @@ class StatmorphCython(MorphProvider):
 
 		return_list.extend([morph.runtime, morph.flags.value()])
 		return return_list
+
+	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
+						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
+						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
+						   output_image_dir: str,
+						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		morph = statmorph.IndividualBaseInfo(label, flux_file_name, flux_hdu_index,
+											 mask_file_name, mask_hdu_index,
+											 noise_file_name, noise_hdu_index,
+											 image_compare_file_name=cmp_file_name, image_compare_hdu_index=cmp_hdu_index,
+											 output_image_dir=output_image_dir, set_centroid=set_centroid)
+		return self._calc(morph, set_asym_center)
+
+	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
+		morph = statmorph.BaseInfo(
+			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
+			output_image_dir=output_image_dir, set_centroid=set_centroid)
+		return self._calc(morph, set_asym_center)
