@@ -773,7 +773,10 @@ cdef class IndividualBaseInfo(BaseInfo):
 		增益
 		"""
 
-		self._image_compare_fits = fits.open(image_compare_file_name)
+		if image_compare_file_name is not None:
+			self._image_compare_fits = fits.open(image_compare_file_name)
+		else:
+			self._image_compare_fits = None
 
 		# Measure runtime
 		self.global_start = clock()
