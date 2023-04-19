@@ -773,7 +773,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		增益
 		"""
 
-		if image_compare_file_name == "None":
+		if image_compare_file_name != "None":
 			self._image_compare_fits = fits.open(image_compare_file_name)
 		else:
 			self._image_compare_fits = None
