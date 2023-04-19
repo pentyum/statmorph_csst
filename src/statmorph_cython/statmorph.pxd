@@ -132,6 +132,8 @@ cdef class IndividualBaseInfo(BaseInfo):
 	cdef _weightmap_fits
 	cdef _image_compare_fits
 
+	cpdef void close_all(self)
+
 cdef class CASInfo(MorphInfo):
 	cdef tuple _slice_skybox
 	cdef cnp.ndarray _bkg

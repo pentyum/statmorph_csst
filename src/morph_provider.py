@@ -161,9 +161,12 @@ class StatmorphCython(MorphProvider):
 		morph = statmorph.IndividualBaseInfo(label, str(flux_file_name), flux_hdu_index,
 											 str(mask_file_name), mask_hdu_index,
 											 str(noise_file_name), noise_hdu_index,
-											 image_compare_file_name=str(cmp_file_name), image_compare_hdu_index=cmp_hdu_index,
+											 image_compare_file_name=str(cmp_file_name),
+											 image_compare_hdu_index=cmp_hdu_index,
 											 output_image_dir=output_image_dir, set_centroid=set_centroid)
-		return self._calc(morph, set_asym_center)
+		result = self._calc(morph, set_asym_center)
+		morph.close_all()
+		return result
 
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
 					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
