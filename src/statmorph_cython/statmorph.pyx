@@ -805,7 +805,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		原始图像在该星系处的切片
 		"""
 
-		self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=int)
+		self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=np.int32)
 		"""
 		segmap在该星系处的切片
 		"""
