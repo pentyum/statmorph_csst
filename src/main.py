@@ -347,7 +347,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 
 	logger.info("图像数量%d" % len(catalog_table))
 	if run_specified_label <= 0:
-		run_rows = catalog_table[0:len(catalog_table) * run_percentage // 100]
+		run_rows: Table = catalog_table[0:len(catalog_table) * run_percentage // 100]
 		logger.info("实际运行%d%%，共%d" % (run_percentage, len(catalog_table)))
 	else:
 		run_rows = catalog_table[catalog_table["label"] == run_specified_label]
@@ -365,6 +365,22 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 	result_all = [" ".join(morph_provider.get_result_header()) + "\n"]
 
 	start_time = time.time()
+
+	if "image_hdu_index" not in run_rows.colnames:
+		run_rows["image_hdu_index"] = 0
+	if "noise_hdu_index" not in run_rows.colnames:
+		run_rows["noise_hdu_index"] = 0
+	if "mask_hdu_index" not in run_rows.colnames:
+		run_rows["mask_hdu_index"] = 0
+	if "cmp_hdu_index" not in run_rows.colnames:
+		run_rows["cmp_hdu_index"] = 0
+
+	if "noise_file_name" not in run_rows.colnames:
+		run_rows["noise_file_name"] = None
+	if "mask_file_name" not in run_rows.colnames:
+		run_rows["mask_file_name"] = None
+	if "cmp_file_name" not in run_rows.colnames:
+		run_rows["cmp_file_name"] = None
 
 	with ProcessPoolExecutor(threads) as exe:
 		fs = []
@@ -385,9 +401,9 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 			fs.append(
 				exe.submit(work_with_individual_file, label,
 						   row["image_file_name"], row["image_hdu_index"],
-						   row["noise_hdu_index"], row["noise_hdu_index"],
-						   row["mask_hdu_index"], row["mask_hdu_index"],
-						   row["cmp_hdu_index"], row["cmp_hdu_index"],
+						   row["noise_file_name"], row["noise_hdu_index"],
+						   row["mask_file_name"], row["mask_hdu_index"],
+						   row["cmp_file_name"], row["cmp_hdu_index"],
 						   output_image_dir, set_centroid,
 						   set_asym_center, morph_provider
 						   )
