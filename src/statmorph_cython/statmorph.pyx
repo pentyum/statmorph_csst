@@ -739,7 +739,7 @@ cdef class BaseInfo(MorphInfo):
 		plt.savefig("%s/%d.png" % (self.output_image_dir, self.label))
 		plt.close()
 
-	cdef void dump_stamps(self):
+	def dump_stamps(self):
 		plt.figure(figsize=(12,12))
 		plt.subplot(3, 3, 1)
 		plt.imshow(self._cutout_stamp, origin="lower")
