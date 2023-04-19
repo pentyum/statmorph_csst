@@ -74,9 +74,10 @@ class MorphProvider(abc.ABC):
 		pass
 
 	@abc.abstractmethod
-	def measure_individual(self, fits_file_name: str, fits_file_hdu_index: int, fits_noise_file_name: Optional[str],
-						   fits_noise_file_hdu_index: Optional[int], label: int,
-						   fits_cmp_file_name: Optional[str], fits_cmp_file_hdu_index: Optional[int],
+	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
+						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
+						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 						   output_image_dir: str,
 						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		pass
@@ -89,9 +90,11 @@ class MorphProvider(abc.ABC):
 
 class StatmorphVanilla(MorphProvider):
 
-	def measure_individual(self, fits_file_name: str, fits_file_hdu_index: int, fits_noise_file_name: Optional[str],
-						   fits_noise_file_hdu_index: Optional[int], label: int, fits_cmp_file_name: Optional[str],
-						   fits_cmp_file_hdu_index: Optional[int], output_image_dir: str,
+	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
+						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
+						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
+						   output_image_dir: str,
 						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		pass
 
@@ -125,9 +128,11 @@ class StatmorphVanilla(MorphProvider):
 
 
 class StatmorphCython(MorphProvider):
-	def measure_individual(self, fits_file_name: str, fits_file_hdu_index: int, fits_noise_file_name: Optional[str],
-						   fits_noise_file_hdu_index: Optional[int], label: int, fits_cmp_file_name: Optional[str],
-						   fits_cmp_file_hdu_index: Optional[int], output_image_dir: str,
+	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
+						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
+						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
+						   output_image_dir: str,
 						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		pass
 

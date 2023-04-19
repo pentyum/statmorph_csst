@@ -88,9 +88,10 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 	return tuple(return_list)
 
 
-def work_with_individual_file(fits_file_name: str, fits_file_hdu_index: int,
-							  fits_noise_file_name: Optional[str], fits_noise_file_hdu_index: Optional[int], label: int,
-							  fits_cmp_file_name: Optional[str], fits_cmp_file_hdu_index: Optional[int],
+def work_with_individual_file(label: int, flux_file_name: str, flux_hdu_index: int,
+							  noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+							  mask_file_name: Optional[str], mask_hdu_index: Optional[int],
+							  cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 							  output_image_dir: str, set_centroid: Tuple[float, float],
 							  set_asym_center: Tuple[float, float], morph_provider: MorphProvider) -> Tuple:
 	"""
@@ -113,9 +114,10 @@ def work_with_individual_file(fits_file_name: str, fits_file_hdu_index: int,
 	# Locate the shared memory by its name
 
 	try:
-		return_list = morph_provider.measure_individual(fits_file_name, fits_file_hdu_index, fits_noise_file_name,
-														fits_noise_file_hdu_index, label,
-														fits_cmp_file_name, fits_cmp_file_hdu_index, output_image_dir,
+		return_list = morph_provider.measure_individual(label, flux_file_name, flux_hdu_index,
+														noise_file_name, noise_hdu_index,
+														mask_file_name, mask_hdu_index,
+														cmp_file_name, cmp_hdu_index, output_image_dir,
 														set_centroid, set_asym_center)
 	except:
 		logger.error(str(label) + ": " + traceback.format_exc())
@@ -381,9 +383,10 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 				else:
 					logger.warning("label %d not existed in center_file" % label)
 			fs.append(
-				exe.submit(work_with_individual_file,
+				exe.submit(work_with_individual_file, label,
 						   row["image_file_name"], row["image_hdu_index"],
-						   row["noise_hdu_index"], row["noise_hdu_index"], label,
+						   row["noise_hdu_index"], row["noise_hdu_index"],
+						   row["mask_hdu_index"], row["mask_hdu_index"],
 						   row["cmp_hdu_index"], row["cmp_hdu_index"],
 						   output_image_dir, set_centroid,
 						   set_asym_center, morph_provider
