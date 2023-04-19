@@ -47,7 +47,8 @@ cdef tuple get_slice_skybox(cnp.ndarray[int,ndim=2] segmap, int nx_stamp, int ny
 	cdef int ny = ny_stamp
 	cdef int nx = nx_stamp
 	# cdef cnp.ndarray mask = np.zeros((ny, nx), dtype=np.bool8)
-	cdef cnp.ndarray mask = cnp.PyArray_ZEROS(2, [ny, nx], cnp.NPY_BOOL, 0)
+	if mask is None:
+		mask = cnp.PyArray_ZEROS(2, [ny, nx], cnp.NPY_BOOL, 0)
 	#if _mask is not None:
 	#	mask = _mask[_slice_stamp]
 
