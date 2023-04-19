@@ -158,10 +158,10 @@ class StatmorphCython(MorphProvider):
 						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 						   output_image_dir: str,
 						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
-		morph = statmorph.IndividualBaseInfo(label, flux_file_name, flux_hdu_index,
-											 mask_file_name, mask_hdu_index,
-											 noise_file_name, noise_hdu_index,
-											 image_compare_file_name=cmp_file_name, image_compare_hdu_index=cmp_hdu_index,
+		morph = statmorph.IndividualBaseInfo(label, str(flux_file_name), flux_hdu_index,
+											 str(mask_file_name), mask_hdu_index,
+											 str(noise_file_name), noise_hdu_index,
+											 image_compare_file_name=str(cmp_file_name), image_compare_hdu_index=cmp_hdu_index,
 											 output_image_dir=output_image_dir, set_centroid=set_centroid)
 		return self._calc(morph, set_asym_center)
 
