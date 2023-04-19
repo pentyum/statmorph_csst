@@ -993,6 +993,16 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		return self._cutout_stamp.shape[0]
 
+	cdef cnp.ndarray get_weightmap_stamp(self):
+		"""
+		Return a cutout of the weight map over the "postage stamp" region.
+		If a weightmap is not provided as input, it is created using the
+		``gain`` argument.
+		"""
+		weightmap_stamp = self._weightmap_stamp_old.copy()
+		weightmap_stamp[self._mask_stamp_nan] = 0.0
+		return weightmap_stamp
+
 	cpdef void close_all(self):
 		self.dump_stamps()
 		self._image_fits.close()
