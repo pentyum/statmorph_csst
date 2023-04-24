@@ -565,6 +565,7 @@ cdef class BaseInfo(MorphInfo):
 		# Print warning if centroid is masked:
 		cdef int ic = int(round(self._yc_stamp))
 		cdef int jc = int(round(self._xc_stamp))
+		print(ic, jc)
 		if self._cutout_stamp_maskzeroed[ic][jc] == 0.0:
 			warnings.warn('%d: Centroid is masked.'%self.label, AstropyUserWarning)
 			self.flags.set_flag_true(1)
@@ -998,7 +999,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		return self._cutout_stamp.shape[0]
 
 	cpdef void close_all(self):
-		self.dump_stamps()
+		# self.dump_stamps()
 		self._image_fits.close()
 		if self._mask_fits is not None:
 			self._mask_fits.close()
