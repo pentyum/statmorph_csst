@@ -667,6 +667,7 @@ cdef class BaseInfo(MorphInfo):
 		# 图像切片总和不是正数，或者图片过大，直接终止全部计算
 		self.runtime = -99.0
 
+		print("calc_cas", self.calc_cas)
 		if self.calc_cas:
 			self.cas = CASInfo()
 			print("CAS", self.cas)
