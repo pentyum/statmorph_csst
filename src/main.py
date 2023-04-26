@@ -20,8 +20,6 @@ from astropy.table import Table, Column, join
 from morph_provider import MorphProvider, StatmorphVanilla, StatmorphCython
 from sextractor import SExtractor
 
-multiprocessing.set_start_method("spawn")
-
 logging.basicConfig(level=logging.INFO,
 					format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
 logger = logging.getLogger("Statmorph")
@@ -392,7 +390,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 		run_rows["cmp_file_name"] = None
 
 	if threads > 1:
-		with ProcessPoolExecutor(threads) as exe:
+		with ProcessPoolExecutor(threads, mp_context=multiprocessing.get_context("spawn")) as exe:
 			fs = []
 			for row in run_rows:
 				label = row["label"]
