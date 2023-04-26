@@ -404,7 +404,9 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 							   output_image_dir, set_centroid,
 							   set_asym_center, morph_provider
 							   )
+
 				)
+				logger.info("已提交%d" % label)
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)
@@ -413,13 +415,13 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 			label = row["label"]
 			set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
 			result = work_with_individual_file(label,
-						   row["image_file_name"], row["image_hdu_index"],
-						   row["noise_file_name"], row["noise_hdu_index"],
-						   row["mask_file_name"], row["mask_hdu_index"],
-						   row["cmp_file_name"], row["cmp_hdu_index"],
-						   output_image_dir, set_centroid,
-						   set_asym_center, morph_provider
-						   )
+											   row["image_file_name"], row["image_hdu_index"],
+											   row["noise_file_name"], row["noise_hdu_index"],
+											   row["mask_file_name"], row["mask_hdu_index"],
+											   row["cmp_file_name"], row["cmp_hdu_index"],
+											   output_image_dir, set_centroid,
+											   set_asym_center, morph_provider
+											   )
 			result_all.append(result)
 
 	logger.info(f'用时: {time.time() - start_time:.2f}s')
