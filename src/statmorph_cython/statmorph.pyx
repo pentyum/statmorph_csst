@@ -218,10 +218,7 @@ cdef class BaseInfo(MorphInfo):
 		# Check that the labeled galaxy segment has a positive flux sum.
 		# If not, this is bad enough to abort all calculations and return
 		# an empty object.
-		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
-			warnings.warn('%d: Total flux is nonpositive. Returning empty object.'%self.label,
-						  AstropyUserWarning)
-			self._abort_calculations()
+		if self.check_total_flux_nonpositive():
 			return
 
 		cdef cnp.ndarray[double,ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
@@ -275,6 +272,13 @@ cdef class BaseInfo(MorphInfo):
 		以光度质心为中心的Petrosian圆形孔径半径
 		"""
 
+	cdef bint check_total_flux_nonpositive(self):
+		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
+			warnings.warn('%d: Total flux is nonpositive. Returning empty object.'%self.label,
+						  AstropyUserWarning)
+			self._abort_calculations()
+			return True
+		return False
 
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiplicity,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center):
@@ -282,7 +286,6 @@ cdef class BaseInfo(MorphInfo):
 		cdef long start
 
 		self.calc_cas = calc_cas
-		print("calc_cas1", self.calc_cas)
 		self.calc_g_m20 = calc_g_m20
 		self.calc_mid = calc_mid
 		self.calc_multiplicity = calc_multiplicity
@@ -668,20 +671,12 @@ cdef class BaseInfo(MorphInfo):
 		# 图像切片总和不是正数，或者图片过大，直接终止全部计算
 		self.runtime = -99.0
 
-		print("calc_cas", self.calc_cas)
-		if self.calc_cas:
-			self.cas = CASInfo()
-			print("CAS", self.cas)
-		if self.calc_g_m20:
-			self.g_m20 = GiniM20Info()
-		if self.calc_mid:
-			self.mid = MIDInfo()
-			if self.calc_multiplicity:
-				self.multiplicity = -99
-		if self.calc_color_dispersion:
-			self.compare_info = CompareInfo()
-		if self.calc_g2:
-			self.g2 = G2Info()
+		self.cas = CASInfo()
+		self.g_m20 = GiniM20Info()
+		self.mid = MIDInfo()
+		self.multiplicity = -99
+		self.compare_info = CompareInfo()
+		self.g2 = G2Info()
 
 
 	cdef void save_image(self):
@@ -931,10 +926,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		# Check that the labeled galaxy segment has a positive flux sum.
 		# If not, this is bad enough to abort all calculations and return
 		# an empty object.
-		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
-			warnings.warn('%d: Total flux is nonpositive. Returning empty object.' % self.label,
-						  AstropyUserWarning)
-			self._abort_calculations()
+		if self.check_total_flux_nonpositive():
 			return
 
 		cdef cnp.ndarray[double, ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]

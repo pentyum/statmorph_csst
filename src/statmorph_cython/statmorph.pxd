@@ -76,6 +76,8 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly long global_start
 	cdef readonly logger
 
+	cdef bint check_total_flux_nonpositive(self)
+
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiply,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center)
 
