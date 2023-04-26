@@ -669,6 +669,7 @@ cdef class BaseInfo(MorphInfo):
 
 		if self.calc_cas:
 			self.cas = CASInfo()
+			print("CAS", self.cas)
 		if self.calc_g_m20:
 			self.g_m20 = GiniM20Info()
 		if self.calc_mid:
