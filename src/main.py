@@ -19,8 +19,8 @@ from astropy.table import Table, Column, join
 
 from morph_provider import MorphProvider, StatmorphVanilla, StatmorphCython
 from sextractor import SExtractor
-from multiprocessing import set_start_method
-set_start_method("spawn")
+
+multiprocessing.set_start_method("spawn")
 
 logging.basicConfig(level=logging.INFO,
 					format="[%(asctime)s][%(name)s - %(processName)s/%(levelname)s]: %(message)s")
