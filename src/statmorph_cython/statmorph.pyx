@@ -282,6 +282,7 @@ cdef class BaseInfo(MorphInfo):
 		cdef long start
 
 		self.calc_cas = calc_cas
+		print("calc_cas1", self.calc_cas)
 		self.calc_g_m20 = calc_g_m20
 		self.calc_mid = calc_mid
 		self.calc_multiplicity = calc_multiplicity
