@@ -399,6 +399,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 				set_asym_center_list.append(set_asym_center)
 
 			output_image_dir_list = np.repeat(output_image_dir, len(run_rows))
+			morph_provider_list = np.repeat(morph_provider, len(run_rows))
 
 			result_iter = executor.map(work_with_individual_file, run_rows["label"],
 									  run_rows["image_file_name"], run_rows["image_hdu_index"],
@@ -406,7 +407,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 									  run_rows["mask_file_name"], run_rows["mask_hdu_index"],
 									  run_rows["cmp_file_name"], run_rows["cmp_hdu_index"],
 									  output_image_dir_list, set_centroid_list,
-									  set_asym_center_list, output_image_dir_list
+									  set_asym_center_list, morph_provider_list
 									  )
 			result_all = list(result_iter)
 			"""
