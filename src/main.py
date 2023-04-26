@@ -160,6 +160,26 @@ def run_statmorph_init_calc_para_str_list(threads: int, calc_cas: bool = True, c
 	return calc_para_str_list
 
 
+def get_center_in_center_table(center_table: Table, label: int, calc_cas: bool) -> Tuple[
+	Tuple[float, float], Tuple[float, float]]:
+	set_centroid: Tuple[float, float] = (-1, -1)
+	set_asym_center: Tuple[float, float] = (-1, -1)
+	if center_table is not None:
+		center_info = center_table[center_table["label"] == label]
+		if len(center_info) > 0:
+			center_info = center_info[0]
+			if center_info["size"] > 0:
+				set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
+				if calc_cas:
+					set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
+			else:
+				logger.warning("size of label %d in center_file is zero" % label)
+		else:
+			logger.warning("label %d not existed in center_file" % label)
+
+	return set_centroid, set_asym_center
+
+
 def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_file: Optional[str], save_file: str,
 				  threads: int, run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
@@ -281,8 +301,6 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		with ProcessPoolExecutor(threads) as exe:
 			fs = []
 			for label in run_labels:
-				set_centroid: Tuple[float, float] = (-1, -1)
-				set_asym_center: Tuple[float, float] = (-1, -1)
 				try:
 					label_index = segm_image.get_index(label)
 				except ValueError as e:
@@ -290,18 +308,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 					continue
 				segm_slice = segm_image.slices[label_index]
 
-				if center_table is not None:
-					center_info = center_table[center_table["label"] == label]
-					if len(center_info) > 0:
-						center_info = center_info[0]
-						if center_info["size"] > 0:
-							set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
-							if calc_cas:
-								set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
-						else:
-							logger.warning("size of label %d in center_file is zero" % label)
-					else:
-						logger.warning("label %d not existed in center_file" % label)
+				set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
 
 				fs.append(
 					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
@@ -382,26 +389,30 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 	if "cmp_file_name" not in run_rows.colnames:
 		run_rows["cmp_file_name"] = None
 
-	with ProcessPoolExecutor(threads) as exe:
-		fs = []
+	if threads > 1:
+		with ProcessPoolExecutor(threads) as exe:
+			fs = []
+			for row in run_rows:
+				label = row["label"]
+				set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
+				fs.append(
+					exe.submit(work_with_individual_file, label,
+							   row["image_file_name"], row["image_hdu_index"],
+							   row["noise_file_name"], row["noise_hdu_index"],
+							   row["mask_file_name"], row["mask_hdu_index"],
+							   row["cmp_file_name"], row["cmp_hdu_index"],
+							   output_image_dir, set_centroid,
+							   set_asym_center, morph_provider
+							   )
+				)
+			for result in as_completed(fs):
+				line = result_format % result.result()
+				result_all.append(line)
+	else:
 		for row in run_rows:
 			label = row["label"]
-			set_centroid: Tuple[float, float] = (-1, -1)
-			set_asym_center: Tuple[float, float] = (-1, -1)
-			if center_table is not None:
-				center_info = center_table[center_table["label"] == label]
-				if len(center_info) > 0:
-					center_info = center_info[0]
-					if center_info["size"] > 0:
-						set_centroid = (center_info["centroid_x"], center_info["centroid_y"])
-						if calc_cas:
-							set_asym_center = (center_info["asymmetry_center_x"], center_info["asymmetry_center_y"])
-					else:
-						logger.warning("size of label %d in center_file is zero" % label)
-				else:
-					logger.warning("label %d not existed in center_file" % label)
-			fs.append(
-				exe.submit(work_with_individual_file, label,
+			set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
+			result = work_with_individual_file(label,
 						   row["image_file_name"], row["image_hdu_index"],
 						   row["noise_file_name"], row["noise_hdu_index"],
 						   row["mask_file_name"], row["mask_hdu_index"],
@@ -409,10 +420,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 						   output_image_dir, set_centroid,
 						   set_asym_center, morph_provider
 						   )
-			)
-		for result in as_completed(fs):
-			line = result_format % result.result()
-			result_all.append(line)
+			result_all.append(result)
 
 	logger.info(f'用时: {time.time() - start_time:.2f}s')
 
@@ -619,7 +627,6 @@ def main(argv) -> int:
 
 	if threads <= 0:
 		threads = min(multiprocessing.cpu_count() - 1, 1)
-
 
 	if stamp_catalog is None:
 		sextractor = run_sextractor(sextractor_work_dir, detect_file, wht_file, skip_sextractor, measure_file,
