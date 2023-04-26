@@ -676,7 +676,7 @@ cdef class BaseInfo(MorphInfo):
 		self.mid = MIDInfo()
 		self.multiplicity = -99
 		self.compare_info = CompareInfo()
-		self.g2 = G2Info(np.array([[0.0]]), self.constants)
+		self.g2 = G2Info(cnp.PyArray_ZEROS(2, [1,1], cnp.NPY_DOUBLE, 0), self.constants)
 
 
 	cdef void save_image(self):
