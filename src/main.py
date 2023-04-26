@@ -406,7 +406,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 							   )
 
 				)
-				logger.info("已提交%d" % label)
+				# logger.info("已提交%d" % label)
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)
