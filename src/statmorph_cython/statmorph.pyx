@@ -660,6 +660,7 @@ cdef class BaseInfo(MorphInfo):
 		deal with these cases by creating an "empty" object and
 		interrupting the constructor.
 		"""
+		warnings.warn("%d: 强制停止计算，返回空的对象"%self.label, AstropyUserWarning)
 		self.nx_stamp = -99
 		self.ny_stamp = -99
 		self.flag_catastrophic = True
