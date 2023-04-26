@@ -334,6 +334,14 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 	logger.info("文件已保存至" + save_file)
 
 
+def table_split(table: Table, max_rows: int) -> List[Table]:
+	split_num = int(np.ceil(len(table) / max_rows))
+	table_list = []
+	for i in range(split_num):
+		table_list.append(table[i * max_rows:(i + 1) * max_rows])
+	return table_list
+
+
 def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_percentage: int, run_specified_label: int,
 						calc_cas: bool = True, calc_g_m20: bool = True, calc_mid: bool = False,
 						calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
@@ -390,47 +398,30 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 		run_rows["cmp_file_name"] = None
 
 	if threads > 1:
-		with ProcessPoolExecutor(threads) as executor:
-			set_centroid_list = []
-			set_asym_center_list = []
-			for row in run_rows:
-				set_centroid, set_asym_center = get_center_in_center_table(center_table, row["label"], calc_cas)
-				set_centroid_list.append(set_centroid)
-				set_asym_center_list.append(set_asym_center)
+		run_rows_list = table_split(run_rows, 50000)
+		for block_i in range(len(run_rows_list)):
+			run_rows_block = run_rows_list[block_i]
+			logger.info("表过长(%d>50000)，分段运行，当前段数%d/%d" % (len(run_rows), block_i + 1, len(run_rows_list)))
+			with ProcessPoolExecutor(threads) as executor:
+				set_centroid_list = []
+				set_asym_center_list = []
+				for row in run_rows_block:
+					set_centroid, set_asym_center = get_center_in_center_table(center_table, row["label"], calc_cas)
+					set_centroid_list.append(set_centroid)
+					set_asym_center_list.append(set_asym_center)
 
-			output_image_dir_list = np.repeat(output_image_dir, len(run_rows))
-			morph_provider_list = np.repeat(morph_provider, len(run_rows))
+				output_image_dir_list = np.repeat(output_image_dir, len(run_rows_block))
+				morph_provider_list = np.repeat(morph_provider, len(run_rows_block))
 
-			result_iter = executor.map(work_with_individual_file, run_rows["label"],
-									   run_rows["image_file_name"], run_rows["image_hdu_index"],
-									   run_rows["noise_file_name"], run_rows["noise_hdu_index"],
-									   run_rows["mask_file_name"], run_rows["mask_hdu_index"],
-									   run_rows["cmp_file_name"], run_rows["cmp_hdu_index"],
-									   output_image_dir_list, set_centroid_list,
-									   set_asym_center_list, morph_provider_list
-									   )
-			result_all = result_all + [result_format % r for r in result_iter]
-			"""
-			fs = []
-			for row in run_rows:
-				label = row["label"]
-				set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
-				fs.append(
-					exe.submit(work_with_individual_file, label,
-							   row["image_file_name"], row["image_hdu_index"],
-							   row["noise_file_name"], row["noise_hdu_index"],
-							   row["mask_file_name"], row["mask_hdu_index"],
-							   row["cmp_file_name"], row["cmp_hdu_index"],
-							   output_image_dir, set_centroid,
-							   set_asym_center, morph_provider
-							   )
-
-				)
-				# logger.info("已提交%d" % label)
-			for result in as_completed(fs):
-				line = result_format % result.result()
-				result_all.append(line)
-			"""
+				result_iter = executor.map(work_with_individual_file, run_rows_block["label"],
+										   run_rows_block["image_file_name"], run_rows_block["image_hdu_index"],
+										   run_rows_block["noise_file_name"], run_rows_block["noise_hdu_index"],
+										   run_rows_block["mask_file_name"], run_rows_block["mask_hdu_index"],
+										   run_rows_block["cmp_file_name"], run_rows_block["cmp_hdu_index"],
+										   output_image_dir_list, set_centroid_list,
+										   set_asym_center_list, morph_provider_list
+										   )
+				result_all = result_all + [result_format % r for r in result_iter]
 
 	else:
 		for row in run_rows:
