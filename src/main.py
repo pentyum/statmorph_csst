@@ -390,7 +390,26 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 		run_rows["cmp_file_name"] = None
 
 	if threads > 1:
-		with ProcessPoolExecutor(threads, mp_context=multiprocessing.get_context("spawn")) as exe:
+		with ProcessPoolExecutor(threads) as executor:
+			set_centroid_list = []
+			set_asym_center_list = []
+			for row in run_rows:
+				set_centroid, set_asym_center = get_center_in_center_table(center_table, row["label"], calc_cas)
+				set_centroid_list.append(set_centroid)
+				set_asym_center_list.append(set_asym_center)
+
+			output_image_dir_list = np.repeat(output_image_dir, len(run_rows))
+
+			result_iter = executor.map(work_with_individual_file, run_rows["label"],
+									  run_rows["image_file_name"], run_rows["image_hdu_index"],
+									  run_rows["noise_file_name"], run_rows["noise_hdu_index"],
+									  run_rows["mask_file_name"], run_rows["mask_hdu_index"],
+									  run_rows["cmp_file_name"], run_rows["cmp_hdu_index"],
+									  output_image_dir_list, set_centroid_list,
+									  set_asym_center_list, output_image_dir_list
+									  )
+			result_all = list(result_iter)
+			"""
 			fs = []
 			for row in run_rows:
 				label = row["label"]
@@ -410,6 +429,8 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 			for result in as_completed(fs):
 				line = result_format % result.result()
 				result_all.append(line)
+			"""
+
 	else:
 		for row in run_rows:
 			label = row["label"]
