@@ -402,14 +402,14 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 			morph_provider_list = np.repeat(morph_provider, len(run_rows))
 
 			result_iter = executor.map(work_with_individual_file, run_rows["label"],
-									  run_rows["image_file_name"], run_rows["image_hdu_index"],
-									  run_rows["noise_file_name"], run_rows["noise_hdu_index"],
-									  run_rows["mask_file_name"], run_rows["mask_hdu_index"],
-									  run_rows["cmp_file_name"], run_rows["cmp_hdu_index"],
-									  output_image_dir_list, set_centroid_list,
-									  set_asym_center_list, morph_provider_list
-									  )
-			result_all = list(result_iter)
+									   run_rows["image_file_name"], run_rows["image_hdu_index"],
+									   run_rows["noise_file_name"], run_rows["noise_hdu_index"],
+									   run_rows["mask_file_name"], run_rows["mask_hdu_index"],
+									   run_rows["cmp_file_name"], run_rows["cmp_hdu_index"],
+									   output_image_dir_list, set_centroid_list,
+									   set_asym_center_list, morph_provider_list
+									   )
+			result_all = [result_format % r for r in result_iter]
 			"""
 			fs = []
 			for row in run_rows:
