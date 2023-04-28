@@ -421,7 +421,8 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 										   output_image_dir_list, set_centroid_list,
 										   set_asym_center_list, morph_provider_list
 										   )
-				result_all = result_all + [result_format % r for r in result_iter]
+				result_all_block = [result_format % r for r in result_iter]
+			result_all = result_all + result_all_block
 
 	else:
 		for row in run_rows:

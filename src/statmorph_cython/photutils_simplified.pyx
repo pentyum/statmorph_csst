@@ -69,7 +69,7 @@ cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2]
 	cdef CircularAperture ap_total = CircularAperture(center, r_total)
 
 	cdef double total_sum = do_photometry(ap_total, image)
-	assert total_sum != 0
+	assert total_sum != 0, "total=%f，不为0" % total_sum
 	if total_sum < 0:
 		warnings.warn('[r_circ] Total flux sum is negative.', AstropyUserWarning)
 		flag = True
@@ -82,7 +82,7 @@ cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2]
 	cdef double r, r_min, r_max, curval
 
 	while True:
-		assert i < npoints, 'Root not found within range.'
+		assert i < npoints, 'Root not found within range. i=%d>=%d'%(i,npoints)
 		r = r_grid[i]
 		curval = _fraction_of_total_function_circ(
 			r, image, center, fraction, total_sum)
