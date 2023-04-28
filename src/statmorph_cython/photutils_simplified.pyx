@@ -43,7 +43,10 @@ cpdef double _fraction_of_total_function_circ(double r, cnp.ndarray[double,ndim=
 	"""
 	Helper function to calculate ``_radius_at_fraction_of_total_circ``.
 	"""
-	assert (r >= 0) & (fraction >= 0) & (fraction <= 1) & (total_sum > 0)
+	assert (r >= 0), "需要r>=0，r=%f"%r
+	assert (fraction >= 0) & (fraction <= 1), "需要0<=fraction<=1，fraction=%f"%fraction
+	assert (total_sum > 0), "需要total_sum>0，需要total_sum=%f"%total_sum
+
 	cdef double cur_fraction, ap_sum
 	cdef CircularAperture ap
 	if r == 0:
