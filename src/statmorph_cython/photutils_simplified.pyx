@@ -8,7 +8,7 @@ import warnings
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 cimport numpy as cnp
-from libc.math cimport sqrt, floor, ceil, pi, cos, sin, asin, fabs
+from libc.math cimport sqrt, floor, ceil, pi, cos, sin, asin, fabs, isnan
 from photutils.geometry import elliptical_overlap_grid
 import scipy.optimize as opt
 from numpy.math cimport NAN
@@ -69,7 +69,8 @@ cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2]
 	cdef CircularAperture ap_total = CircularAperture(center, r_total)
 
 	cdef double total_sum = do_photometry(ap_total, image)
-	assert total_sum != 0, "total=%f，为0" % total_sum
+	assert not isnan(total_sum), "total_sum为nan"
+	assert total_sum != 0, "total_sum=%f，为0" % total_sum
 	if total_sum < 0:
 		warnings.warn('[r_circ] Total flux sum is negative.', AstropyUserWarning)
 		flag = True
