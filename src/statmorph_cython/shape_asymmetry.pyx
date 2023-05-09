@@ -3,8 +3,8 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
-import warnings
 
+import warnings
 cimport numpy as cnp
 import photutils
 from astropy.stats import sigma_clipped_stats
@@ -13,6 +13,7 @@ from libc.math cimport cos, sin
 import numpy as np
 import scipy.ndimage as ndi
 
+from .statmorph cimport BaseInfo, CASInfo
 from .photutils_simplified import _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask
 from .constants_setting cimport ConstantsSetting
 from .flags import Flags
