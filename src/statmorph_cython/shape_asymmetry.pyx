@@ -7,17 +7,78 @@
 import warnings
 cimport numpy as cnp
 import photutils
+import skimage
 from astropy.stats import sigma_clipped_stats
 from astropy.utils.exceptions import AstropyUserWarning
 from libc.math cimport cos, sin
+from numpy.math cimport isnan
 import numpy as np
 import scipy.ndimage as ndi
 
+from .cas cimport simplified_rot180
 from .constants_setting cimport ConstantsSetting
-from .photutils_simplified cimport _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask
+from .photutils_simplified cimport _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask, do_photometry, CircularAperture
 from .flags cimport Flags
+from .statmorph cimport BaseInfo, ShapeAsymmetryInfo, CASInfo, GiniM20Info
 
 cnp.import_array()
+
+cdef double _shape_asymmetry_function((double, double) center, cnp.ndarray[double,ndim=2] image, cnp.ndarray[cnp.npy_bool,ndim=2] _mask_stamp, double rmax_circ, Flags flags, ConstantsSetting constants):
+	cdef int ny = image.shape[0]
+	cdef int nx = image.shape[1]
+	cdef double xc = center[0]
+	cdef double yc = center[1]
+	cdef int image_size = nx * ny
+
+	if xc < 0 or xc >= nx or yc < 0 or yc >= ny:
+		warnings.warn('[asym_center] Minimizer tried to exit bounds.',
+					  AstropyUserWarning)
+		flags.set_flag_true(6)
+		# Return high value to keep minimizer within range:
+		return 100.0
+
+	# Rotate around given center
+	cdef cnp.ndarray[cnp.npy_bool,ndim=2] image_180
+	# cdef cnp.ndarray image_180 = skimage.transform.rotate(image, 180.0, center=center)
+	if 0 <= constants.simplified_rot_threshold < image_size:
+		image_180 = simplified_rot180(image, center)
+	else:
+		image_180 = skimage.transform.rotate(image, 180.0, center=center)
+
+	# Apply symmetric mask
+	cdef cnp.ndarray[cnp.npy_bool, ndim=2] mask = _mask_stamp
+	cdef cnp.ndarray[cnp.npy_bool, ndim=2] mask_180
+	if 0 <= constants.simplified_rot_threshold < image_size:
+		mask_180 = simplified_rot180(mask, center)
+	else:
+		mask_180 = skimage.transform.rotate(mask, 180.0, center=center) >= 0.5
+
+	cdef cnp.ndarray[cnp.npy_bool, ndim=2] mask_symmetric = mask | mask_180
+	image = cnp.PyArray_Where(~mask_symmetric, image, 0.0)
+	image_180 = cnp.PyArray_Where(~mask_symmetric, image_180, 0.0)
+
+	# Create aperture for the chosen kind of asymmetry
+	if isnan(rmax_circ) or (rmax_circ <= 0):
+		warnings.warn('[shape_asym] Invalid rmax_circ value.',
+					  AstropyUserWarning)
+		flags.set_flag_true(7)
+		return -99.0  # invalid
+	cdef CircularAperture ap = CircularAperture(center, rmax_circ)
+
+	# Apply eq. 10 from Lotz et al. (2004)
+	cdef double ap_abs_sum = do_photometry(ap, np.abs(image))
+	cdef double ap_abs_diff = do_photometry(ap, np.abs(image_180 - image))
+
+	if ap_abs_sum == 0.0:
+		warnings.warn('[shape_asymmetry_function] Zero flux sum.',
+					  AstropyUserWarning)
+		flags.set_flag_true(8)  # unusual
+		return -99.0  # invalid
+
+	# The shape asymmetry of the background is zero
+	cdef double asym = ap_abs_diff / ap_abs_sum
+
+	return asym
 
 cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, (double,double) asymmetry_center, double rpetro_ellip, cnp.ndarray mask_stamp, tuple slice_skybox, cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_no_bg, Flags flags, ConstantsSetting constants):
 
@@ -91,7 +152,7 @@ cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=
 
 	return labeled_array == labeled_array[ic, jc]
 
-cdef double rmax_circ(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, cnp.ndarray segmap_shape_asym, Flags flags):
+cdef double get_rmax_circ(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, cnp.ndarray segmap_shape_asym, Flags flags):
 	"""
 	Return the distance (in pixels) from the pixel that minimizes
 	the asymmetry to the edge of the main source segment, similar
@@ -118,7 +179,7 @@ cdef double rmax_circ(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asym
 
 	return rmax_circ
 
-cdef double rmax_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, double orientation_asymmetry, double elongation_asymmetry, cnp.ndarray segmap_shape_asym, Flags flags):
+cdef double get_rmax_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, double orientation_asymmetry, double elongation_asymmetry, cnp.ndarray segmap_shape_asym, Flags flags):
 	"""
 	Return the semimajor axis of the minimal ellipse (with fixed
 	center, elongation and orientation) that contains all of
@@ -149,7 +210,7 @@ cdef double rmax_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asy
 
 	return rmax_ellip
 
-cdef double rhalf_circ(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, double rmax_circ, Flags flags):
+cdef double get_rhalf_circ(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, double rmax_circ, Flags flags):
 	"""
 	The radius of a circular aperture containing 50% of the light,
 	assuming that the center is the point that minimizes the
@@ -172,7 +233,7 @@ cdef double rhalf_circ(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asy
 	return r
 
 
-cdef double rhalf_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, double rmax_ellip, double elongation_asymmetry, double orientation_asymmetry, Flags flags):
+cdef double get_rhalf_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double) asymmetry_center, double rmax_ellip, double elongation_asymmetry, double orientation_asymmetry, Flags flags):
 	"""
 	The semimajor axis of an elliptical aperture containing 50% of
 	the light, assuming that the center is the point that minimizes
@@ -194,3 +255,26 @@ cdef double rhalf_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double) as
 
 	# In theory, this return value can also be NaN
 	return r
+
+cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym, (double, double) asymmetry_center, Flags flags, ConstantsSetting constants):
+	"""
+	Calculate shape asymmetry as described in Pawlik et al. (2016).
+	Note that the center is the one used for the standard asymmetry.
+	"""
+	cdef cnp.ndarray[double,ndim=2] image = cnp.PyArray_Where(segmap_shape_asym, 1.0, 0.0)
+	cdef double asym = _shape_asymmetry_function(asymmetry_center, image)
+
+	return asym
+
+cdef ShapeAsymmetryInfo calc_shape_asymmetry(BaseInfo base_info, CASInfo cas, GiniM20Info g_m20):
+	cdef ShapeAsymmetryInfo shape_asym_info = ShapeAsymmetryInfo()
+
+	cdef cnp.ndarray segmap = segmap_shape_asym(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.rpetro_ellip, base_info._mask_stamp, cas._slice_skybox, base_info._mask_stamp_no_bg, shape_asym_info.flags, base_info.constants)
+
+	cdef rmax_circ = get_rmax_circ(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, segmap, shape_asym_info.flags)
+	cdef rmax_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)
+	shape_asym_info.rhalf_circ = get_rhalf_circ(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, rmax_circ, shape_asym_info.flags)
+	shape_asym_info.rhalf_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)
+	shape_asym_info.shape_asymmetry = get_shape_asymmetry(segmap, cas._asymmetry_center, base_info.constants)
+
+	return shape_asym_info

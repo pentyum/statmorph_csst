@@ -197,3 +197,8 @@ cdef class CompareInfo(MorphInfo):
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_no_bg_compare(self)
 	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed_compare(self)
 	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed_no_bg_compare(self)
+
+cdef class ShapeAsymmetryInfo(MorphInfo):
+	cdef double rhalf_circ
+	cdef double rhalf_ellip
+	cdef double shape_asymmetry

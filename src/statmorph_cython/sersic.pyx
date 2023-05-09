@@ -6,9 +6,12 @@
 import warnings
 
 cimport numpy as cnp
+from astropy.modeling import models
 from astropy.utils.exceptions import AstropyUserWarning
-from libc.math cimport isnan, pow, sqrt, pi, floor
+from libc.math cimport fabs, pow, sqrt, pi, floor
 
+from .flags cimport Flags
+from .photutils_simplified cimport EllipticalAnnulus, _aperture_mean_nomask
 from .statmorph cimport BaseInfo, SersicInfo, CASInfo, GiniM20Info
 from .constants_setting cimport ConstantsSetting
 
@@ -16,55 +19,58 @@ import numpy as np
 
 cnp.import_array()
 
-def _sersic_model(cnp.ndarray _cutout_stamp_maskzeroed, CASInfo cas, GiniM20Info g_m20, ConstantsSetting constants):
+def _sersic_model(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, cnp.ndarray[double,ndim=2] weightmap_stamp, psf,
+				  double orientation_asymmetry, double elongation_asymmetry, double rhalf_ellip, CASInfo cas, Flags flags, ConstantsSetting constants):
 	"""
 	Fit a 2D Sersic profile using Astropy's model fitting library.
 	Return the fitted model object.
 	"""
-	image = _cutout_stamp_maskzeroed
-	ny, nx = image.shape
-	center = cas._asymmetry_center
-	theta = g_m20.orientation_asymmetry
+	cdef cnp.ndarray[double,ndim=2] image = _cutout_stamp_maskzeroed
+	cdef int ny = image.shape[0]
+	cdef int nx = image.shape[1]
+	cdef (double,double) center = cas._asymmetry_center
+	cdef double theta = orientation_asymmetry
 
 	# Get flux at the "effective radius"
-	a_in = self.rhalf_ellip - 0.5 * constants.annulus_width
-	a_out = self.rhalf_ellip + 0.5 * constants.annulus_width
+	cdef double a_in = rhalf_ellip - 0.5 * constants.annulus_width
+	cdef double a_out = rhalf_ellip + 0.5 * constants.annulus_width
 	if a_in < 0:
 		warnings.warn('[sersic] rhalf_ellip < annulus_width.',
 					  AstropyUserWarning)
-		self.flag_sersic = 1
-		a_in = self.rhalf_ellip
-	b_out = a_out / self.elongation_asymmetry
-	ellip_annulus = photutils.aperture.EllipticalAnnulus(
+		flags.set_flag_true(0)
+		a_in = rhalf_ellip
+	cdef double b_out = a_out / elongation_asymmetry
+	cdef EllipticalAnnulus ellip_annulus = EllipticalAnnulus(
 		center, a_in, a_out, b_out, theta=theta)
-	ellip_annulus_mean_flux = _aperture_mean_nomask(
-		ellip_annulus, image, method='exact')
+	cdef double ellip_annulus_mean_flux = _aperture_mean_nomask(ellip_annulus, image)
 	if ellip_annulus_mean_flux <= 0.0:
 		warnings.warn('[sersic] Nonpositive flux at r_e.', AstropyUserWarning)
-		self.flag_sersic = 1
-		ellip_annulus_mean_flux = np.abs(ellip_annulus_mean_flux)
+		flags.set_flag_true(1)
+		ellip_annulus_mean_flux = fabs(ellip_annulus_mean_flux)
 
 	# Prepare data for fitting
-	z = image.copy()
+	cdef cnp.ndarray[double,ndim=2] z = image.copy()
 	y, x = np.mgrid[0:ny, 0:nx]
-	weightmap = self._weightmap_stamp
+	cdef cnp.ndarray weightmap = weightmap_stamp
 	# Exclude pixels with image == 0 or weightmap == 0 from the fit.
-	fit_weights = np.zeros_like(z)
-	locs = (image != 0) & (weightmap != 0)
+	cdef cnp.ndarray[double,ndim=2] fit_weights = np.zeros_like(z)
+	cdef cnp.ndarray[cnp.npy_bool,ndim=2] locs = (image != 0) & (weightmap != 0)
 	# The sky background noise is already included in the weightmap:
 	fit_weights[locs] = 1.0 / weightmap[locs]
 
 	# Initial guess
-	guess_n = 10.0 ** (-1.5) * self.concentration ** 3.5  # empirical
+	guess_n = 10.0 ** (-1.5) * cas.concentration ** 3.5  # empirical
 	guess_n = min(max(guess_n, 1.0), 3.5)  # limit to range [1.0, 3.5]
-	xc, yc = self._asymmetry_center
-	if self._psf is None:
+	cdef double xc = cas._asymmetry_center[0]
+	cdef double yc = cas._asymmetry_center[1]
+
+	if psf is None:
 		sersic_init = models.Sersic2D(
-			amplitude=ellip_annulus_mean_flux, r_eff=self.rhalf_ellip,
+			amplitude=ellip_annulus_mean_flux, r_eff=rhalf_ellip,
 			n=guess_n, x_0=xc, y_0=yc, ellip=self.ellipticity_asymmetry, theta=theta)
 	else:
 		sersic_init = ConvolvedSersic2D(
-			amplitude=ellip_annulus_mean_flux, r_eff=self.rhalf_ellip,
+			amplitude=ellip_annulus_mean_flux, r_eff=rhalf_ellip,
 			n=guess_n, x_0=xc, y_0=yc, ellip=self.ellipticity_asymmetry, theta=theta)
 		sersic_init.set_psf(self._psf)
 

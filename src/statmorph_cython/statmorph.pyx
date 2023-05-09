@@ -1214,6 +1214,20 @@ cdef class G2Info(MorphInfo):
 	def get_value_formats():
 		return ["%f", "%f"]
 
+cdef class ShapeAsymmetryInfo(MorphInfo):
+	def __init__(self):
+		super().__init__()
+
+	def get_values(self):
+		return [self.rhalf_circ, self.rhalf_ellip, self.shape_asymmetry, self.runtime, self.flags.value()]
+
+	@staticmethod
+	def get_value_names():
+		return ["rhalf_circ", "rhalf_ellip", "shape_asymmetry", "shape_asym_time", "shape_asym_flag"]
+
+	@staticmethod
+	def get_value_formats():
+		return ["%f", "%f", "%f", "%f", "%d"]
 
 cdef class SersicInfo:
 	pass

@@ -342,6 +342,7 @@ cdef class PixelAperture(Aperture):
 
 cdef class CircularAperture(PixelAperture):
 	def __init__(self, (double, double) position, double r):
+		super().__init__()
 		self.position = position
 		self.r = r
 		self.set_bbox_and_centered_edges()
@@ -372,6 +373,7 @@ cdef class CircularAperture(PixelAperture):
 
 cdef class CircularAnnulus(PixelAperture):
 	def __init__(self, (double, double) position, double r_in, double r_out):
+		super().__init__()
 		if not r_out > r_in:
 			raise ValueError('r_out must be greater than r_in')
 
@@ -427,6 +429,7 @@ cdef class EllipticalMaskMixin:
 
 cdef class EllipticalAperture(PixelAperture):
 	def __init__(self, (double, double) position, double a, double b, double theta=0.):
+		super().__init__()
 		self.position = position
 		self.a = a
 		self.b = b
@@ -463,6 +466,7 @@ cdef class EllipticalAperture(PixelAperture):
 cdef class EllipticalAnnulus(PixelAperture):
 	def __init__(self, (double, double) position, double a_in, double a_out, double b_out, double b_in=-1,
 				 double theta=0.):
+		super().__init__()
 		if not a_out > a_in:
 			raise ValueError('"a_out" must be greater than "a_in".')
 
