@@ -118,7 +118,7 @@ cpdef double _fraction_of_total_function_ellip(double a, cnp.ndarray[double,ndim
 		b = a / elongation
 		ap = EllipticalAperture(center, a, b, theta)
 		# Force flux sum to be positive:
-		ap_sum = np.abs(ap.do_photometry(image, method='exact')[0][0])
+		ap_sum = fabs(do_photometry(ap,image))
 		cur_fraction = ap_sum / total_sum
 
 	return cur_fraction - fraction
