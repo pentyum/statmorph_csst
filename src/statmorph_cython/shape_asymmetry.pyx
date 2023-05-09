@@ -20,7 +20,7 @@ from .flags import Flags
 
 cnp.import_array()
 
-cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, (double,double) asymmetry_center, double rpetro_ellip, cnp.ndarray mask_stamp, tuple slice_skybox, cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_no_bg, Flags flags, ConstantsSetting constants):
+cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, (double,double) asymmetry_center, double rpetro_ellip, cnp.ndarray mask_stamp, tuple slice_skybox, cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_no_bg, flags, ConstantsSetting constants):
 
 	cdef int ny = cutout_stamp_maskzeroed.shape[0]
 	cdef int nx = cutout_stamp_maskzeroed.shape[1]
