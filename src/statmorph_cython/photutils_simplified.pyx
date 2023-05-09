@@ -137,7 +137,8 @@ cdef (double, bint) _radius_at_fraction_of_total_ellip(cnp.ndarray[double,ndim=2
 	cdef EllipticalAperture ap_total = EllipticalAperture(
 		center, a_total, b_total, theta)
 
-	cdef double total_sum = ap_total.do_photometry(image, method='exact')[0][0]
+	cdef double total_sum = do_photometry(ap_total,image)
+	assert not isnan(total_sum), "total_sum为nan"
 	assert total_sum != 0
 	if total_sum < 0:
 		warnings.warn('[r_ellip] Total flux sum is negative.', AstropyUserWarning)
