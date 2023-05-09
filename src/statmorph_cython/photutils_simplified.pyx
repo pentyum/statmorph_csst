@@ -45,9 +45,9 @@ cpdef double _fraction_of_total_function_circ(double r, cnp.ndarray[double,ndim=
 	"""
 	Helper function to calculate ``_radius_at_fraction_of_total_circ``.
 	"""
-	assert (r >= 0), "需要r>=0，r=%f"%r
-	assert (fraction >= 0) & (fraction <= 1), "需要0<=fraction<=1，fraction=%f"%fraction
-	assert (total_sum > 0), "需要total_sum>0，而total_sum=%f"%total_sum
+	assert (r >= 0), "_fraction_of_total_function_circ: 需要r>=0，r=%f"%r
+	assert (fraction >= 0) & (fraction <= 1), "_fraction_of_total_function_circ: 需要0<=fraction<=1，fraction=%f"%fraction
+	assert (total_sum > 0), "_fraction_of_total_function_circ: 需要total_sum>0，而total_sum=%f"%total_sum
 
 	cdef double cur_fraction, ap_sum
 	cdef CircularAperture ap
@@ -71,8 +71,8 @@ cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2]
 	cdef CircularAperture ap_total = CircularAperture(center, r_total)
 
 	cdef double total_sum = do_photometry(ap_total, image)
-	assert not isnan(total_sum), "total_sum为nan"
-	assert total_sum != 0, "total_sum=%f，为0" % total_sum
+	assert not isnan(total_sum), "_radius_at_fraction_of_total_circ: total_sum为nan"
+	assert total_sum != 0, "_radius_at_fraction_of_total_circ: total_sum=%f，为0" % total_sum
 	if total_sum < 0:
 		warnings.warn('[r_circ] Total flux sum is negative.', AstropyUserWarning)
 		flag = True
@@ -138,8 +138,8 @@ cdef (double, bint) _radius_at_fraction_of_total_ellip(cnp.ndarray[double,ndim=2
 		center, a_total, b_total, theta)
 
 	cdef double total_sum = do_photometry(ap_total,image)
-	assert not isnan(total_sum), "total_sum为nan"
-	assert total_sum != 0
+	assert not isnan(total_sum), "_radius_at_fraction_of_total_ellip: total_sum为nan"
+	assert total_sum != 0, "_radius_at_fraction_of_total_ellip: total_sum=%f，为0" % total_sum
 	if total_sum < 0:
 		warnings.warn('[r_ellip] Total flux sum is negative.', AstropyUserWarning)
 		flag = True
