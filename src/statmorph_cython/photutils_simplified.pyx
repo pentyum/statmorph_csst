@@ -6,7 +6,6 @@
 
 import warnings
 
-from astropy.stats import SigmaClip
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 cimport numpy as cnp
@@ -14,7 +13,7 @@ from libc.math cimport sqrt, floor, ceil, pi, cos, sin, asin, fabs, isnan
 from photutils.geometry import elliptical_overlap_grid
 import scipy.optimize as opt
 from numpy.math cimport NAN
-from statmorph_cython.array_utils cimport sum_1d_d
+from .array_utils cimport sum_1d_d
 
 cnp.import_array()
 
@@ -309,6 +308,9 @@ cdef class PixelAperture(Aperture):
 	cdef ApertureMask to_mask(self):
 		raise NotImplementedError('Needs to be implemented in a subclass.')
 
+	cdef ApertureMask to_mask_mode(self, int use_exact):
+		raise NotImplementedError('Needs to be implemented in a subclass.')
+
 	cdef (double, double) _do_photometry(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray[double, ndim=2] variance):
 
 		cdef double aperture_sums
@@ -351,7 +353,9 @@ cdef class CircularAperture(PixelAperture):
 		return pi * self.r ** 2
 
 	cdef ApertureMask to_mask(self):
-		cdef int use_exact = 1
+		return self.to_mask_mode(1)
+
+	cdef ApertureMask to_mask_mode(self, int use_exact):
 		cdef int subpixels = 1
 
 		cdef double radius = self.r
@@ -365,8 +369,6 @@ cdef class CircularAperture(PixelAperture):
 		mask = circular_overlap_grid(edges[0], edges[1], edges[2],
 									 edges[3], nx, ny, radius, use_exact,
 									 subpixels)
-
-		return ApertureMask(mask, bbox)
 
 cdef class CircularAnnulus(PixelAperture):
 	def __init__(self, (double, double) position, double r_in, double r_out):
@@ -385,7 +387,9 @@ cdef class CircularAnnulus(PixelAperture):
 		return pi * (self.r_out ** 2 - self.r_in ** 2)
 
 	cdef ApertureMask to_mask(self):
-		cdef int use_exact = 1
+		return self.to_mask_mode(1)
+
+	cdef ApertureMask to_mask_mode(self, int use_exact):
 		cdef int subpixels = 1
 
 		cdef double radius = self.r_out
@@ -436,7 +440,9 @@ cdef class EllipticalAperture(PixelAperture):
 		return pi * self.a * self.b
 
 	cdef ApertureMask to_mask(self):
-		cdef int use_exact = 1
+		return self.to_mask_mode(1)
+
+	cdef ApertureMask to_mask_mode(self, int use_exact):
 		cdef int subpixels = 1
 
 		cdef double a = self.a
@@ -481,8 +487,10 @@ cdef class EllipticalAnnulus(PixelAperture):
 	cdef double area(self):
 		return pi * (self.a_out * self.b_out - self.a_in * self.b_in)
 
-	cdef ApertureMask to_mask(self):
-		cdef int use_exact = 1
+	cdef ApertureMask to_mask(self, int use_exact):
+		return self.to_mask_mode(1)
+
+	cdef ApertureMask to_mask_mode(self, int use_exact):
 		cdef int subpixels = 1
 
 		cdef double a = self.a_out

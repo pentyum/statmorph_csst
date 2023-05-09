@@ -57,6 +57,7 @@ cdef class PixelAperture(Aperture):
 	cdef double area(self)
 
 	cdef ApertureMask to_mask(self)
+	cdef ApertureMask to_mask_mode(self, int use_exact)
 
 	cdef (double, double) _do_photometry(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray[double, ndim=2] variance)
 
@@ -69,6 +70,7 @@ cdef class CircularAperture(PixelAperture):
 	cdef double area(self)
 
 	cdef ApertureMask to_mask(self)
+	cdef ApertureMask to_mask_mode(self, int use_exact)
 
 cdef class CircularAnnulus(PixelAperture):
 	cdef double r_in
@@ -79,6 +81,7 @@ cdef class CircularAnnulus(PixelAperture):
 	cdef double area(self)
 
 	cdef ApertureMask to_mask(self)
+	cdef ApertureMask to_mask_mode(self, int use_exact)
 
 cdef class EllipticalMaskMixin:
 	@staticmethod
@@ -93,6 +96,7 @@ cdef class EllipticalAperture(PixelAperture):
 	cdef double area(self)
 
 	cdef ApertureMask to_mask(self)
+	cdef ApertureMask to_mask_mode(self, int use_exact)
 
 cdef class EllipticalAnnulus(PixelAperture):
 	cdef double a_in
@@ -105,3 +109,4 @@ cdef class EllipticalAnnulus(PixelAperture):
 	cdef double area(self)
 
 	cdef ApertureMask to_mask(self)
+	cdef ApertureMask to_mask_mode(self, int use_exact)

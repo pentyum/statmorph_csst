@@ -37,7 +37,7 @@ cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=
 	cdef CircularAnnulus circ_annulus = CircularAnnulus(center, r_in, r_out)
 
 	# Convert circular annulus aperture to binary mask
-	cdef ApertureMask circ_annulus_mask_obj = circ_annulus.to_mask(method='center')
+	cdef ApertureMask circ_annulus_mask_obj = circ_annulus.to_mask_mode(0)
 
 	# With the same shape as the postage stamp
 	cdef cnp.ndarray[double,ndim=2] circ_annulus_mask = circ_annulus_mask_obj.to_image((ny, nx), cnp.NPY_DOUBLE)
