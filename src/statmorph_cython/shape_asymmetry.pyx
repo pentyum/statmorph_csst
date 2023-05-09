@@ -10,14 +10,12 @@ import photutils
 from astropy.stats import sigma_clipped_stats
 from astropy.utils.exceptions import AstropyUserWarning
 from libc.math cimport cos, sin
-
-from .flags import Flags
-from .photutils_simplified import _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, \
-	CircularAnnulus, ApertureMask
-from .constants_setting cimport ConstantsSetting
-
 import numpy as np
 import scipy.ndimage as ndi
+
+from .photutils_simplified import _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask
+from .constants_setting cimport ConstantsSetting
+from .flags import Flags
 
 cnp.import_array()
 
