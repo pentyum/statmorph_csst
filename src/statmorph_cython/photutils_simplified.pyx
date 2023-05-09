@@ -487,7 +487,7 @@ cdef class EllipticalAnnulus(PixelAperture):
 	cdef double area(self):
 		return pi * (self.a_out * self.b_out - self.a_in * self.b_in)
 
-	cdef ApertureMask to_mask(self, int use_exact):
+	cdef ApertureMask to_mask(self):
 		return self.to_mask_mode(1)
 
 	cdef ApertureMask to_mask_mode(self, int use_exact):
