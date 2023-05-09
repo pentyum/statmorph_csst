@@ -14,8 +14,8 @@ import numpy as np
 import scipy.ndimage as ndi
 
 from .statmorph cimport BaseInfo, CASInfo
-from .photutils_simplified import _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask
 from .constants_setting cimport ConstantsSetting
+from .photutils_simplified import _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask
 from .flags import Flags
 
 cnp.import_array()
