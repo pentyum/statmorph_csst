@@ -5,6 +5,8 @@
 # cython: initializedcheck=False
 
 import warnings
+
+from astropy.stats import SigmaClip
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 cimport numpy as cnp
@@ -99,6 +101,73 @@ cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2]
 
 	return r, flag
 
+cpdef double _fraction_of_total_function_ellip(double a, cnp.ndarray[double,ndim=2] image, (double,double) center, double elongation, double theta,
+									  double fraction, double total_sum):
+	"""
+	Helper function to calculate ``_radius_at_fraction_of_total_ellip``.
+	"""
+	assert (a >= 0)
+	assert (fraction >= 0) & (fraction <= 1)
+	assert (total_sum > 0)
+
+	cdef double cur_fraction, ap_sum, b
+	cdef EllipticalAperture ap
+	if a == 0:
+		cur_fraction = 0.0
+	else:
+		b = a / elongation
+		ap = EllipticalAperture(center, a, b, theta)
+		# Force flux sum to be positive:
+		ap_sum = np.abs(ap.do_photometry(image, method='exact')[0][0])
+		cur_fraction = ap_sum / total_sum
+
+	return cur_fraction - fraction
+
+
+cdef (double, bint) _radius_at_fraction_of_total_ellip(cnp.ndarray[double,ndim=2] image, (double,double) center, double elongation, double theta,
+									   double a_total, double fraction):
+	"""
+	Return the semimajor axis (in pixels) of a concentric ellipse that
+	contains a given fraction of the light within a larger ellipse of
+	semimajor axis ``a_total``.
+	"""
+	cdef bint flag = False
+
+	cdef double b_total = a_total / elongation
+	cdef EllipticalAperture ap_total = EllipticalAperture(
+		center, a_total, b_total, theta)
+
+	cdef double total_sum = ap_total.do_photometry(image, method='exact')[0][0]
+	assert total_sum != 0
+	if total_sum < 0:
+		warnings.warn('[r_ellip] Total flux sum is negative.', AstropyUserWarning)
+		flag = True
+		total_sum = fabs(total_sum)
+
+	# Find appropriate range for root finder
+	cdef int npoints = 100
+	cdef double[:] a_grid = np.linspace(0.0, a_total, num=npoints)
+	cdef int i = 0  # initial value
+	cdef double a, a_min, a_max, curval
+
+	while True:
+		assert i < npoints, 'Root not found within range.'
+		a = a_grid[i]
+		curval = _fraction_of_total_function_ellip(
+			a, image, center, elongation, theta, fraction, total_sum)
+		if curval <= 0:
+			a_min = a
+		elif curval > 0:
+			a_max = a
+			break
+		i += 1
+
+	a = opt.brentq(_fraction_of_total_function_ellip, a_min, a_max,
+				   args=(image, center, elongation, theta, fraction, total_sum),
+				   xtol=1e-6)
+
+	return a, flag
+
 cdef class BoundingBox:
 	def __init__(self, int ixmin, int ixmax, int iymin, int iymax):
 		if ixmin > ixmax:
@@ -186,6 +255,18 @@ cdef class ApertureMask:
 
 		# ignore multiplication with non-finite data values
 		return (cutout * apermask)[pixel_mask]
+
+	cdef cnp.ndarray to_image(self, (int, int) shape, int dtype):
+		# find the overlap of the mask on the output image shape
+		slices_large, slices_small = self.get_overlap_slices(shape)
+
+		if slices_small is None:
+			return None  # no overlap
+
+		# insert the mask into the output image
+		cdef cnp.ndarray image = cnp.PyArray_ZEROS(2, [shape[0], shape[1]], dtype, 0)
+		image[slices_large] = self.data[slices_small]
+		return image
 
 cdef class Aperture:
 	def __init__(self):

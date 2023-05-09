@@ -75,6 +75,8 @@ cdef class ConstantsSetting:
 		self.g2_modular_tolerance = 0.01
 		self.g2_phase_tolerance = 0.01
 
+		self.boxcar_size_shape_asym = 3.0
+
 		self.verbose = False
 
 		self.label = 0

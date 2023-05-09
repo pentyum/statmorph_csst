@@ -151,7 +151,7 @@ cdef class CASInfo(MorphInfo):
 	cdef readonly double sky_mean, sky_sigma, _sky_smoothness
 
 cdef class GiniM20Info(MorphInfo):
-	cdef readonly double gini, m20, rpetro_ellip, f, s
+	cdef readonly double gini, m20, rpetro_ellip, f, s, elongation_asymmetry, orientation_asymmetry
 	cdef cnp.ndarray _segmap_gini
 
 cdef class MIDInfo(MorphInfo):

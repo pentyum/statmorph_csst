@@ -70,5 +70,7 @@ cdef class ConstantsSetting:
 	cdef double g2_modular_tolerance
 	cdef double g2_phase_tolerance
 
+	cdef double boxcar_size_shape_asym
+
 	cdef bint verbose
 	cdef int label

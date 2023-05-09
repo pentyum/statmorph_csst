@@ -1215,6 +1215,9 @@ cdef class G2Info(MorphInfo):
 		return ["%f", "%f"]
 
 
+cdef class SersicInfo:
+	pass
+
 cdef class MorphInfo:
 	def __init__(self):
 		# These flags will be modified during the calculations:

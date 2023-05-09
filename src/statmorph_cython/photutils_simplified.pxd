@@ -10,6 +10,8 @@ cdef double _aperture_mean_nomask(PixelAperture ap, cnp.ndarray[double,ndim=2] i
 
 cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2] image, (double,double) center, double r_total, double fraction)
 
+cdef (double, bint) _radius_at_fraction_of_total_ellip(cnp.ndarray[double,ndim=2] image, (double,double) center, double elongation, double theta, double a_total, double fraction)
+
 cdef class BoundingBox:
 	cdef int ixmin
 	cdef int ixmax
@@ -34,6 +36,7 @@ cdef class ApertureMask:
 
 	cdef cnp.ndarray[double, ndim=1] get_values(self, cnp.ndarray[double, ndim=2] data)
 	# cdef cnp.ndarray[double, ndim=1] get_values(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray mask)
+	cdef cnp.ndarray to_image(self, (int, int) shape, int dtype)
 
 cdef class Aperture:
 	cdef (double, double) position

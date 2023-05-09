@@ -298,13 +298,12 @@ cdef double get_gini_m20_merger(double gini, double m20):
 
 cdef GiniM20Info calc_g_m20(BaseInfo base_info, (double, double) asymmetry_center):
 	cdef GiniM20Info g_m20_info = GiniM20Info()
-	cdef double elongation_asymmetry, orientation_asymmetry
 	cdef double[:,:] _covariance_asymmetry = _covariance_generic(base_info._cutout_stamp_maskzeroed_no_bg, asymmetry_center, g_m20_info.flags)
 	cdef double[:] _eigvals_asymmetry = _eigvals_generic(_covariance_asymmetry, g_m20_info.flags)
-	elongation_asymmetry = _elongation_generic(_eigvals_asymmetry)
-	orientation_asymmetry = _orientation_generic(_covariance_asymmetry)
-	g_m20_info.rpetro_ellip = _rpetro_ellip_generic(base_info._cutout_stamp_maskzeroed, asymmetry_center, elongation_asymmetry, orientation_asymmetry, base_info._diagonal_distance, g_m20_info.flags, base_info.constants)
-	g_m20_info._segmap_gini = get_segmap_gini(base_info._cutout_stamp_maskzeroed, g_m20_info.rpetro_ellip, elongation_asymmetry, orientation_asymmetry, base_info._centroid, g_m20_info.flags, base_info.constants)
+	g_m20_info.elongation_asymmetry = _elongation_generic(_eigvals_asymmetry)
+	g_m20_info.orientation_asymmetry = _orientation_generic(_covariance_asymmetry)
+	g_m20_info.rpetro_ellip = _rpetro_ellip_generic(base_info._cutout_stamp_maskzeroed, asymmetry_center, g_m20_info.elongation_asymmetry, g_m20_info.orientation_asymmetry, base_info._diagonal_distance, g_m20_info.flags, base_info.constants)
+	g_m20_info._segmap_gini = get_segmap_gini(base_info._cutout_stamp_maskzeroed, g_m20_info.rpetro_ellip, g_m20_info.elongation_asymmetry, g_m20_info.orientation_asymmetry, base_info._centroid, g_m20_info.flags, base_info.constants)
 	g_m20_info.gini = get_gini(base_info._cutout_stamp_maskzeroed, g_m20_info._segmap_gini, g_m20_info.flags)
 	g_m20_info.m20 = get_m20(base_info._cutout_stamp_maskzeroed, g_m20_info._segmap_gini, g_m20_info.flags)
 	g_m20_info.f = get_gini_m20_bulge(g_m20_info.gini, g_m20_info.m20)
