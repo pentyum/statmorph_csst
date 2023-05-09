@@ -256,13 +256,13 @@ cdef double get_rhalf_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double
 	# In theory, this return value can also be NaN
 	return r
 
-cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym, (double, double) asymmetry_center, Flags flags, ConstantsSetting constants):
+cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym, (double, double) asymmetry_center, _mask_stamp, rmax_circ, Flags flags, ConstantsSetting constants):
 	"""
 	Calculate shape asymmetry as described in Pawlik et al. (2016).
 	Note that the center is the one used for the standard asymmetry.
 	"""
 	cdef cnp.ndarray[double,ndim=2] image = cnp.PyArray_Where(segmap_shape_asym, 1.0, 0.0)
-	cdef double asym = _shape_asymmetry_function(asymmetry_center, image)
+	cdef double asym = _shape_asymmetry_function(asymmetry_center, image, _mask_stamp, rmax_circ, flags, constants)
 
 	return asym
 
@@ -275,6 +275,6 @@ cdef ShapeAsymmetryInfo calc_shape_asymmetry(BaseInfo base_info, CASInfo cas, Gi
 	cdef rmax_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)
 	shape_asym_info.rhalf_circ = get_rhalf_circ(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, rmax_circ, shape_asym_info.flags)
 	shape_asym_info.rhalf_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)
-	shape_asym_info.shape_asymmetry = get_shape_asymmetry(segmap, cas._asymmetry_center, base_info.constants)
+	shape_asym_info.shape_asymmetry = get_shape_asymmetry(segmap, cas._asymmetry_center, base_info._mask_stamp, rmax_circ, base_info.constants)
 
 	return shape_asym_info
