@@ -275,6 +275,6 @@ cdef ShapeAsymmetryInfo calc_shape_asymmetry(BaseInfo base_info, CASInfo cas, Gi
 	cdef rmax_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)
 	shape_asym_info.rhalf_circ = get_rhalf_circ(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, rmax_circ, shape_asym_info.flags)
 	shape_asym_info.rhalf_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)
-	shape_asym_info.shape_asymmetry = get_shape_asymmetry(segmap, cas._asymmetry_center, base_info._mask_stamp, rmax_circ, base_info.constants)
+	shape_asym_info.shape_asymmetry = get_shape_asymmetry(segmap, cas._asymmetry_center, base_info._mask_stamp, rmax_circ, shape_asym_info.flags, base_info.constants)
 
 	return shape_asym_info
