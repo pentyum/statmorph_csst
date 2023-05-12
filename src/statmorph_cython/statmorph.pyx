@@ -310,7 +310,7 @@ cdef class BaseInfo(MorphInfo):
 		if calc_shape_asymmetry:
 			if self.cas is not None and self.g_m20 is not None:
 				start = clock()
-				self.shape_asymmetry = statmorph_cython.shape_astmmetry.calc_shape_asymmetry(self, self.cas, self.g_m20)
+				self.shape_asymmetry = statmorph_cython.shape_asymmetry.calc_shape_asymmetry(self, self.cas, self.g_m20)
 				self.shape_asymmetry.calc_runtime(start)
 
 		if calc_mid:
