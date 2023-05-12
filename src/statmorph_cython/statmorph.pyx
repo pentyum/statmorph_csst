@@ -21,7 +21,7 @@ from .petrosian cimport _rpetro_circ_generic
 from .flags cimport Flags
 cimport statmorph_cython.cas
 cimport statmorph_cython.g_m20
-cimport statmorph_cython.g_m20
+cimport statmorph_cython.multiplicity
 cimport statmorph_cython.mid
 cimport statmorph_cython.shape_asymmetry
 cimport statmorph_cython.color_dispersion
@@ -318,7 +318,7 @@ cdef class BaseInfo(MorphInfo):
 			self.mid = statmorph_cython.mid.calc_mid(self)
 			self.mid.calc_runtime(start)
 			if calc_multiplicity:
-				self.multiplicity = statmorph_cython.multiply.multiplicity(self.mid._cutout_mid)
+				self.multiplicity = statmorph_cython.multiplicity.multiplicity(self.mid._cutout_mid)
 
 		if calc_color_dispersion:
 			if self.image_compare is not None:
