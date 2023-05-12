@@ -5,13 +5,15 @@ import numpy as np
 
 import statmorph_cython.statmorph as statmorph
 from statmorph_cython.statmorph_vanilla import SourceMorphology
-from statmorph_cython.statmorph import CASInfo, GiniM20Info, MIDInfo, CompareInfo, G2Info
+from statmorph_cython.statmorph import CASInfo, GiniM20Info, MIDInfo, CompareInfo, G2Info, ShapeAsymmetryInfo
 
 
 class MorphProvider(abc.ABC):
-	def __init__(self, calc_cas, calc_g_m20, calc_mid, calc_multiplicity, calc_color_dispersion, calc_g2):
+	def __init__(self, calc_cas: bool, calc_g_m20: bool, calc_shape_asymmetry: bool,
+				 calc_mid: bool, calc_multiplicity: bool, calc_color_dispersion: bool, calc_g2: bool):
 		self.calc_cas: bool = calc_cas
 		self.calc_g_m20: bool = calc_g_m20
+		self.calc_shape_asymmetry: bool = calc_shape_asymmetry
 		self.calc_mid: bool = calc_mid
 		self.calc_multiplicity: bool = calc_multiplicity
 		self.calc_color_dispersion: bool = calc_color_dispersion
@@ -28,6 +30,8 @@ class MorphProvider(abc.ABC):
 			result_format.extend(CASInfo.get_value_formats())
 		if self.calc_g_m20:
 			result_format.extend(GiniM20Info.get_value_formats())
+		if self.calc_shape_asymmetry:
+			result_format.extend(ShapeAsymmetryInfo.get_value_formats())
 		if self.calc_mid:
 			result_format.extend(MIDInfo.get_value_formats())
 			if self.calc_multiplicity:
@@ -54,6 +58,8 @@ class MorphProvider(abc.ABC):
 			result_header.extend(CASInfo.get_value_names())
 		if self.calc_g_m20:
 			result_header.extend(GiniM20Info.get_value_names())
+		if self.calc_shape_asymmetry:
+			result_header.extend(ShapeAsymmetryInfo.get_value_names())
 		if self.calc_mid:
 			result_header.extend(MIDInfo.get_value_names())
 			if self.calc_multiplicity:
@@ -130,7 +136,7 @@ class StatmorphVanilla(MorphProvider):
 class StatmorphCython(MorphProvider):
 	def _calc(self, morph: statmorph.BaseInfo, set_asym_center: Tuple[float, float]):
 		if not morph.flag_catastrophic:
-			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_mid, self.calc_multiplicity,
+			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_shape_asymmetry, self.calc_mid, self.calc_multiplicity,
 									   self.calc_color_dispersion, self.calc_g2,
 									   set_asym_center)
 

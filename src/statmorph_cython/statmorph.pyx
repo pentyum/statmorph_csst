@@ -21,8 +21,9 @@ from .petrosian cimport _rpetro_circ_generic
 from .flags cimport Flags
 cimport statmorph_cython.cas
 cimport statmorph_cython.g_m20
+cimport statmorph_cython.g_m20
 cimport statmorph_cython.mid
-cimport statmorph_cython.multiply
+cimport statmorph_cython.shape_asymmetry
 cimport statmorph_cython.color_dispersion
 from .constants_setting cimport ConstantsSetting
 from .g2 cimport G2Calculator, _get_contour_count, get_G2
@@ -280,7 +281,7 @@ cdef class BaseInfo(MorphInfo):
 			return True
 		return False
 
-	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_mid, bint calc_multiplicity,
+	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid, bint calc_multiplicity,
 				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center):
 		cdef (double, double) center_used
 		cdef long start
@@ -305,6 +306,12 @@ cdef class BaseInfo(MorphInfo):
 			start = clock()
 			self.g_m20 = statmorph_cython.g_m20.calc_g_m20(self, center_used)
 			self.g_m20.calc_runtime(start)
+
+		if calc_shape_asymmetry:
+			if self.cas is not None and self.g_m20 is not None:
+				start = clock()
+				self.shape_asymmetry = statmorph_cython.shape_astmmetry.calc_shape_asymmetry(self, self.cas, self.g_m20)
+				self.shape_asymmetry.calc_runtime(start)
 
 		if calc_mid:
 			start = clock()

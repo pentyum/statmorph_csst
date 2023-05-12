@@ -138,7 +138,7 @@ def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: 
 
 
 def run_statmorph_init_calc_para_str_list(threads: int, calc_cas: bool = True, calc_g_m20: bool = True,
-										  calc_mid: bool = False, calc_multiplicity: bool = False,
+										  calc_shape_asymmetry: bool = False, calc_mid: bool = False, calc_multiplicity: bool = False,
 										  calc_color_dispersion: bool = False, calc_g2: bool = False) -> List[str]:
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 
@@ -147,6 +147,8 @@ def run_statmorph_init_calc_para_str_list(threads: int, calc_cas: bool = True, c
 		calc_para_str_list.append("CAS")
 	if calc_g_m20:
 		calc_para_str_list.append("G_M20")
+	if calc_shape_asymmetry:
+		calc_para_str_list.append("shape_asymmetry")
 	if calc_mid:
 		calc_para_str_list.append("MID")
 	if calc_multiplicity:
@@ -183,10 +185,10 @@ def get_center_in_center_table(center_table: Table, label: int, calc_cas: bool) 
 def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_file: Optional[str], save_file: str,
 				  threads: int, run_percentage: int, run_specified_label: int, ignore_mag_fainter_than: float = 26.0,
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
-				  calc_mid: bool = False, calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
-				  image_compare_file: Optional[str] = None, calc_g2: bool = False,
+				  calc_shape_asymmetry: bool = False, calc_mid: bool = False, calc_multiplicity: bool = False,
+				  calc_color_dispersion: bool = False, image_compare_file: Optional[str] = None, calc_g2: bool = False,
 				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
-	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_mid,
+	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
 	logger.info("进入大图模式")
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
@@ -243,10 +245,10 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		logger.info("只运行label=%d" % run_specified_label)
 
 	if use_vanilla:
-		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
 														 calc_color_dispersion, calc_g2)
 	else:
-		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
 														calc_color_dispersion, calc_g2)
 	logger.info("使用" + morph_provider.__class__.__qualname__)
 
@@ -343,11 +345,11 @@ def table_split(table: Table, max_rows: int) -> List[Table]:
 
 
 def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_percentage: int, run_specified_label: int,
-						calc_cas: bool = True, calc_g_m20: bool = True, calc_mid: bool = False,
-						calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
+						calc_cas: bool = True, calc_g_m20: bool = True, calc_shape_asymmetry: bool = False,
+						calc_mid: bool = False, calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
 						calc_g2: bool = False, output_image_dir: Optional[str] = None,
 						center_file: Optional[str] = None, use_vanilla: bool = False):
-	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_mid,
+	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
 	logger.info("进入独立stamp模式")
 	catalog_table = Table.read(catalog_file, format="ascii")
@@ -369,10 +371,10 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 		logger.info("只运行label=%d" % run_specified_label)
 
 	if use_vanilla:
-		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
 														 calc_color_dispersion, calc_g2)
 	else:
-		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
 														calc_color_dispersion, calc_g2)
 	logger.info("使用" + morph_provider.__class__.__qualname__)
 
@@ -522,6 +524,7 @@ help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
 	-n, --center_file=预定义的星系中心文件，用于取代星系质心和不对称中心
 	-c, --calc_cas 是否测量CAS
 	-g, --calc_g_m20 是否测量Gini,M20
+	-x, --calc_shape_asymmetry 是否测量shape_asymmetry，依赖CAS和G_M20
 	-d, --calc_mid 是否测量MID
 	-u, --calc_multiplicity 是否测量multiplicity
 	-e, --calc_color_dispersion 是否测量color_dispersion
@@ -564,6 +567,7 @@ def main(argv) -> int:
 		"n": ("center_file", True),
 		"c": ("calc_cas", False),
 		"g": ("calc_g_m20", False),
+		"x": ("calc_shape_asymmetry", False),
 		"d": ("calc_mid", False),
 		"u": ("calc_multiplicity", False),
 		"e": ("calc_color_dispersion", False),
@@ -613,6 +617,7 @@ def main(argv) -> int:
 	ignore_class_star_greater_than: float = float(config["ignore_class_star_greater_than"])
 	calc_cas: bool = check_not_false(config["calc_cas"])
 	calc_g_m20: bool = check_not_false(config["calc_g_m20"])
+	calc_shape_asymmetry: bool = check_not_false(config["calc_shape_asymmetry"])
 	calc_mid: bool = check_not_false(config["calc_mid"])
 	calc_multiplicity: bool = check_not_false(config["calc_multiplicity"])
 	calc_color_dispersion: bool = check_not_false(config["calc_color_dispersion"])
@@ -631,6 +636,13 @@ def main(argv) -> int:
 		center_file = None
 	if not check_not_null(stamp_catalog):
 		stamp_catalog = None
+	if calc_shape_asymmetry:
+		if not calc_cas:
+			calc_cas = True
+			logger.warning("shape_asymmetry依赖CAS，因此添加CAS的计算!")
+		if not calc_g_m20:
+			calc_g_m20 = True
+			logger.warning("shape_asymmetry依赖G_M20，因此添加G_M20的计算!")
 
 	run_name = get_basename_without_end(detect_file)
 	if measure_file is not None:
@@ -650,14 +662,14 @@ def main(argv) -> int:
 		run_statmorph(sextractor.output_catalog_file, sextractor.output_subback_file, sextractor.output_segmap_file,
 					  sextractor.noise_file,
 					  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
-					  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_mid,
+					  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
 					  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir,
 					  center_file,
 					  use_vanilla)
 	else:
 		run_statmorph_stamp(stamp_catalog, save_file, threads, run_percentage, run_specified_label, calc_cas,
-							calc_g_m20, calc_mid, calc_multiplicity, calc_color_dispersion, calc_g2, output_image_dir,
-							center_file, use_vanilla)
+							calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity, calc_color_dispersion,
+							calc_g2, output_image_dir, center_file, use_vanilla)
 
 	return 0
 
