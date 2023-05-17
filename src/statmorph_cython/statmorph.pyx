@@ -453,7 +453,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		return self.ymax_stamp + 1 - self.ymin_stamp
 
-	cdef cnp.ndarray get_mask_stamp_nan(self):
+	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_nan(self):
 		"""
 		Flag any NaN or inf values within the postage stamp.
 		"""
@@ -526,7 +526,7 @@ cdef class BaseInfo(MorphInfo):
 		# cdef cnp.ndarray segmap_stamp = self._segmap[self._slice_stamp]
 		return self._mask_stamp | (self._segmap_stamp == 0)
 
-	cdef cnp.ndarray get_cutout_stamp_maskzeroed(self):
+	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed(self):
 		"""
 		Return a data cutout with its shape and position determined
 		by ``_slice_stamp``. Pixels belonging to other sources
@@ -539,7 +539,7 @@ cdef class BaseInfo(MorphInfo):
 		return cnp.PyArray_Where(~self._mask_stamp,
 								 self._cutout_stamp, 0.0)
 
-	cdef cnp.ndarray get_cutout_stamp_maskzeroed_no_bg(self):
+	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed_no_bg(self):
 		"""
 		Like ``_cutout_stamp_maskzeroed``, but also mask the
 		background.

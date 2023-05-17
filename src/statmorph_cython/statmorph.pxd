@@ -100,7 +100,7 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef int get_ny_stamp(self)
 
-	cdef cnp.ndarray get_mask_stamp_nan(self)
+	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_nan(self)
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] _get_badpixels(self, cnp.ndarray[double, ndim=2] image)
 
@@ -110,9 +110,9 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_no_bg(self)
 
-	cdef cnp.ndarray get_cutout_stamp_maskzeroed(self)
+	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed(self)
 
-	cdef cnp.ndarray get_cutout_stamp_maskzeroed_no_bg(self)
+	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed_no_bg(self)
 
 	cdef (double,double) get_centroid(self)
 
