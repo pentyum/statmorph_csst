@@ -77,6 +77,8 @@ cdef class ConstantsSetting:
 
 		self.boxcar_size_shape_asym = 3.0
 
+		self.sersic_maxiter = 500
+
 		self.verbose = False
 
 		self.label = 0

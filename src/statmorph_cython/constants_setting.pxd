@@ -72,5 +72,7 @@ cdef class ConstantsSetting:
 
 	cdef double boxcar_size_shape_asym
 
+	cdef int sersic_maxiter
+
 	cdef bint verbose
 	cdef int label

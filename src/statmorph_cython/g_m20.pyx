@@ -93,18 +93,6 @@ cdef double[:] _eigvals_generic(double[:,:] covariance, Flags flags):
 	return eigvals
 
 
-cdef double _ellipticity_generic(double[:] eigvals):
-	"""
-	The ellipticity of (the Gaussian function that has the same
-	second-order moments as) the source. Note that we allow
-	negative eigenvalues.
-	"""
-	cdef double a = sqrt(fabs(eigvals[0]))
-	cdef double b = sqrt(fabs(eigvals[1]))
-
-	return 1.0 - (b / a)
-
-
 cdef double _elongation_generic(double[:] eigvals):
 	"""
 	The elongation of (the Gaussian function that has the same
@@ -299,7 +287,7 @@ cdef double get_gini_m20_merger(double gini, double m20):
 cdef GiniM20Info calc_g_m20(BaseInfo base_info, (double, double) asymmetry_center):
 	cdef GiniM20Info g_m20_info = GiniM20Info()
 	cdef double[:,:] _covariance_asymmetry = _covariance_generic(base_info._cutout_stamp_maskzeroed_no_bg, asymmetry_center, g_m20_info.flags)
-	cdef double[:] _eigvals_asymmetry = _eigvals_generic(_covariance_asymmetry, g_m20_info.flags)
+	g_m20_info.eigvals_asymmetry = _eigvals_generic(_covariance_asymmetry, g_m20_info.flags)
 	g_m20_info.elongation_asymmetry = _elongation_generic(_eigvals_asymmetry)
 	g_m20_info.orientation_asymmetry = _orientation_generic(_covariance_asymmetry)
 	g_m20_info.rpetro_ellip = _rpetro_ellip_generic(base_info._cutout_stamp_maskzeroed, asymmetry_center, g_m20_info.elongation_asymmetry, g_m20_info.orientation_asymmetry, base_info._diagonal_distance, g_m20_info.flags, base_info.constants)

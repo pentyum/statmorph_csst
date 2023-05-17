@@ -152,6 +152,7 @@ cdef class CASInfo(MorphInfo):
 	cdef readonly double sky_mean, sky_sigma, _sky_smoothness
 
 cdef class GiniM20Info(MorphInfo):
+	cdef double[:] eigvals_asymmetry
 	cdef readonly double gini, m20, rpetro_ellip, f, s, elongation_asymmetry, orientation_asymmetry
 	cdef cnp.ndarray _segmap_gini
 
@@ -203,3 +204,12 @@ cdef class ShapeAsymmetryInfo(MorphInfo):
 	cdef double rhalf_circ
 	cdef double rhalf_ellip
 	cdef double shape_asymmetry
+
+cdef class SersicInfo(MorphInfo):
+	cdef double sersic_amplitude
+	cdef double sersic_rhalf
+	cdef double sersic_n
+	cdef double sersic_xc
+	cdef double sersic_yc
+	cdef double sersic_ellip
+	cdef double sersic_theta
