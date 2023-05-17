@@ -288,7 +288,7 @@ cdef GiniM20Info calc_g_m20(BaseInfo base_info, (double, double) asymmetry_cente
 	cdef GiniM20Info g_m20_info = GiniM20Info()
 	cdef double[:,:] _covariance_asymmetry = _covariance_generic(base_info._cutout_stamp_maskzeroed_no_bg, asymmetry_center, g_m20_info.flags)
 	g_m20_info.eigvals_asymmetry = _eigvals_generic(_covariance_asymmetry, g_m20_info.flags)
-	g_m20_info.elongation_asymmetry = _elongation_generic(_eigvals_asymmetry)
+	g_m20_info.elongation_asymmetry = _elongation_generic(g_m20_info.eigvals_asymmetry)
 	g_m20_info.orientation_asymmetry = _orientation_generic(_covariance_asymmetry)
 	g_m20_info.rpetro_ellip = _rpetro_ellip_generic(base_info._cutout_stamp_maskzeroed, asymmetry_center, g_m20_info.elongation_asymmetry, g_m20_info.orientation_asymmetry, base_info._diagonal_distance, g_m20_info.flags, base_info.constants)
 	g_m20_info._segmap_gini = get_segmap_gini(base_info._cutout_stamp_maskzeroed, g_m20_info.rpetro_ellip, g_m20_info.elongation_asymmetry, g_m20_info.orientation_asymmetry, base_info._centroid, g_m20_info.flags, base_info.constants)
