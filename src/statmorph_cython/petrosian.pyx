@@ -87,6 +87,7 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double, ndim=2] _cutout_stamp_maskz
 	while r <= r_outer:
 		print("r=%f"%r)
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
+		print("curval=%f" % curval)
 		if curval == 0:
 			warnings.warn('[rpetro_circ] Found rpetro by chance?',
 						  AstropyUserWarning)
