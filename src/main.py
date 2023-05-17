@@ -403,7 +403,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 		run_rows_list = table_split(run_rows, 20000)
 		for block_i in range(len(run_rows_list)):
 			run_rows_block = run_rows_list[block_i]
-			logger.info("表过长(%d>20000)，分段运行，当前段数%d/%d" % (len(run_rows), block_i + 1, len(run_rows_list)))
+			logger.info("分段运行，当前段数%d/%d" % (len(run_rows), block_i + 1, len(run_rows_list)))
 			with ProcessPoolExecutor(threads) as executor:
 				set_centroid_list = []
 				set_asym_center_list = []

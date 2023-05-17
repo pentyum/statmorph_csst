@@ -190,11 +190,12 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		图像切片中的坏点数量，也就是不满足abs(原始图像而切片-周围平均后的图像切片)<=n_sigma_outlier*std像素的数量
 		"""
-
+		print("get_mask_stamp_badpixels start")
 		self._mask_stamp_badpixels = self.get_mask_stamp_badpixels()
 		"""
 		图像切片中坏点存在位置
 		"""
+		print("get_mask_stamp_badpixels end")
 
 		self._mask_stamp = self.get_mask_stamp()
 		"""
