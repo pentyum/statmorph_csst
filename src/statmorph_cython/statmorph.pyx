@@ -645,7 +645,7 @@ cdef class BaseInfo(MorphInfo):
 						  AstropyUserWarning)
 			noisemap = np.abs(noisemap)
 
-		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed >= 0) & (noisemap > 0))
+		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed > 0) & (noisemap > 0))
 		if self.calc_g_m20:
 			locs = locs & self.g_m20._segmap_gini
 		else:
