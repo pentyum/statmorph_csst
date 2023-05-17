@@ -646,12 +646,15 @@ cdef class BaseInfo(MorphInfo):
 			noisemap = np.abs(noisemap)
 
 		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed >= 0) & (noisemap > 0))
+		print(np.sum(locs))
+
 		if self.calc_g_m20:
 			locs = locs & self.g_m20._segmap_gini
 		else:
 			locs = locs & self._segmap_stamp
 
 		cdef double snp
+		print(np.sum(self._segmap_stamp))
 
 		print(np.sum(locs))
 		if np.sum(locs) == 0:
