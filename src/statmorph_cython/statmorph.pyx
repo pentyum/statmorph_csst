@@ -905,36 +905,30 @@ cdef class IndividualBaseInfo(BaseInfo):
 		图像切片中的坏点数量，也就是不满足abs(原始图像而切片-周围平均后的图像切片)<=n_sigma_outlier*std像素的数量
 		"""
 
-		print("get_mask_stamp_badpixels start")
 		self._mask_stamp_badpixels = self.get_mask_stamp_badpixels()
 		"""
 		图像切片中坏点存在位置
 		"""
-		print("get_mask_stamp_badpixels end")
 
 		self._mask_stamp = self.get_mask_stamp()
 		"""
 		图像切片的总mask，该mask是segmap中非label的源、输入的mask、nan或者inf位置和坏点位置的并集
 		"""
-		print("get_mask_stamp end")
 
 		self._mask_stamp_no_bg = self.get_mask_stamp_no_bg()
 		"""
 		图像切片的包括背景的mask，即总mask和segmap中label=0位置(即背景)的并集
 		"""
-		print("get_mask_stamp_no_bg end")
 
 		self._cutout_stamp_maskzeroed = self.get_cutout_stamp_maskzeroed()
 		"""
 		获得星系本体+背景的图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp中的总mask，包括其它label的源、输入的mask、nan、inf和坏点
 		"""
-		print("get_cutout_stamp_maskzeroed end")
 
 		self._cutout_stamp_maskzeroed_no_bg = self.get_cutout_stamp_maskzeroed_no_bg()
 		"""
 		获得星系本体图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp_no_bg中的包括背景的总mask。
 		"""
-		print("get_cutout_stamp_maskzeroed_no_bg end")
 
 		# Check that the labeled galaxy segment has a positive flux sum.
 		# If not, this is bad enough to abort all calculations and return
@@ -943,7 +937,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 			return
 
 		cdef cnp.ndarray[double, ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
-		print("cutout_not_in_mask end")
 
 		self.size = len(cutout_not_in_mask)
 		"""
@@ -962,7 +955,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
 		"""
-		print("get_centroid end")
 
 		self.xc_centroid = self._centroid[0]
 		"""
@@ -989,7 +981,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		图像切片的对角线长度
 		"""
-		print("get_diagonal_distance end")
 
 		self._rpetro_circ_centroid = self.get_rpetro_circ_centroid()
 		"""
