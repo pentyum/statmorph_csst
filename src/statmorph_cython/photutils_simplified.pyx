@@ -246,6 +246,7 @@ cdef class ApertureMask:
 
 	cdef cnp.ndarray[double, ndim=1] get_values(self, cnp.ndarray[double, ndim=2] data):
 		cdef tuple slc_large, slc_small
+		print("start get_overlap_slices")
 		slc_large, slc_small = self.get_overlap_slices((data.shape[0], data.shape[1]))
 		if slc_large is None:
 			return np.array([])
