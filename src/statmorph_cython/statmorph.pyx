@@ -645,7 +645,7 @@ cdef class BaseInfo(MorphInfo):
 						  AstropyUserWarning)
 			noisemap = np.abs(noisemap)
 
-		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed > 0) & (noisemap > 0))
+		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed >= 0) & (noisemap > 0))
 		if self.calc_g_m20:
 			locs = locs & self.g_m20._segmap_gini
 		else:
@@ -653,6 +653,7 @@ cdef class BaseInfo(MorphInfo):
 
 		cdef double snp
 
+		print(np.sum(locs))
 		if np.sum(locs) == 0:
 			warnings.warn('%d: Invalid sn_per_pixel.'%self.label, AstropyUserWarning)
 			self.flags.set_flag_true(2)
@@ -1001,7 +1002,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		return self._cutout_stamp.shape[0]
 
 	cpdef void close_all(self):
-		self.dump_stamps()
+		# self.dump_stamps()
 		self._image_fits.close()
 		if self._mask_fits is not None:
 			self._mask_fits.close()
