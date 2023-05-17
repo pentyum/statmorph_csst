@@ -646,17 +646,13 @@ cdef class BaseInfo(MorphInfo):
 			noisemap = np.abs(noisemap)
 
 		cdef cnp.ndarray locs = ((self._cutout_stamp_maskzeroed >= 0) & (noisemap > 0))
-		print(np.sum(locs))
 
 		if self.calc_g_m20:
 			locs = locs & self.g_m20._segmap_gini
 		else:
-			locs = locs & self._segmap_stamp
+			locs = locs & (self._segmap_stamp==self.label)
 
 		cdef double snp
-		print(np.sum(self._segmap_stamp))
-
-		print(np.sum(locs))
 		if np.sum(locs) == 0:
 			warnings.warn('%d: Invalid sn_per_pixel.'%self.label, AstropyUserWarning)
 			self.flags.set_flag_true(2)
