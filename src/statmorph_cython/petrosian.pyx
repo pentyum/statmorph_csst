@@ -88,8 +88,6 @@ cdef double _rpetro_circ_generic(cnp.ndarray[double, ndim=2] _cutout_stamp_maskz
 	cdef double r = r_inner  # initial value
 	cdef double curval
 
-	np.savetxt("test.txt", _cutout_stamp_maskzeroed)
-
 	while r <= r_outer:
 		curval = _petrosian_function_circ(r, center, _cutout_stamp_maskzeroed, flags, constants)
 

@@ -312,7 +312,7 @@ cdef class PixelAperture(Aperture):
 		raise NotImplementedError('Needs to be implemented in a subclass.')
 
 	cdef (double, double) _do_photometry(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray[double, ndim=2] variance):
-
+		print("start _do_photometry")
 		cdef double aperture_sums
 		cdef double aperture_sum_errs
 		cdef double aper_var
