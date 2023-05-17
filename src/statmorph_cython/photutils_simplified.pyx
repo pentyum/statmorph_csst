@@ -322,6 +322,7 @@ cdef class PixelAperture(Aperture):
 		cdef ApertureMask apermask = self.to_mask()
 		print("start get_values")
 		print(data)
+		print(apermask)
 		cdef cnp.ndarray[double,ndim=1] values = apermask.get_values(data)
 		# if the aperture does not overlap the data return np.nan
 		print("start sum_1d_d")
