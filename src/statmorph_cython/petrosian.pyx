@@ -30,20 +30,19 @@ cpdef double _petrosian_function_circ(double r, (double, double) center,
 	cdef cnp.ndarray[double, ndim=2] image = _cutout_stamp_maskzeroed
 	cdef double r_in = r - 0.5 * constants.annulus_width
 	cdef double r_out = r + 0.5 * constants.annulus_width
-	print(r_in, r_out)
 
 	cdef CircularAnnulus circ_annulus = CircularAnnulus(center, r_in, r_out)
 	# print(constants.label, r)
 	cdef CircularAperture circ_aperture = CircularAperture(center, r)
-	print("created circ aper")
 
 	# Force mean fluxes to be positive:
 	cdef double circ_annulus_mean_flux = fabs(_aperture_mean_nomask(
 		circ_annulus, image))
+	print("circ_annulus_mean_flux")
 	cdef double circ_aperture_mean_flux = fabs(_aperture_mean_nomask(
 		circ_aperture, image))
 	cdef double ratio
-	print("mean")
+	print("circ_aperture_mean_flux")
 
 	# print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e" % (circ_annulus_mean_flux, circ_aperture_mean_flux))
 
@@ -51,7 +50,7 @@ cpdef double _petrosian_function_circ(double r, (double, double) center,
 		warnings.warn('[rpetro_circ] Mean flux is zero.', AstropyUserWarning)
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
-		ratio = float(circ_annulus_mean_flux != 0 and not isnan(circ_annulus_mean_flux))
+		ratio = <double>(circ_annulus_mean_flux != 0 and not isnan(circ_annulus_mean_flux))
 		flags.set_flag_true(7)
 	else:
 		ratio = circ_annulus_mean_flux / circ_aperture_mean_flux
