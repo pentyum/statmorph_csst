@@ -943,6 +943,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 			return
 
 		cdef cnp.ndarray[double, ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
+		print("cutout_not_in_mask end")
 
 		self.size = len(cutout_not_in_mask)
 		"""
@@ -961,6 +962,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
 		"""
+		print("get_centroid end")
 
 		self.xc_centroid = self._centroid[0]
 		"""
@@ -987,11 +989,13 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		图像切片的对角线长度
 		"""
+		print("get_diagonal_distance end")
 
 		self._rpetro_circ_centroid = self.get_rpetro_circ_centroid()
 		"""
 		以光度质心为中心的Petrosian圆形孔径半径
 		"""
+		print("get_rpetro_circ_centroid end")
 
 
 	cdef int get_nx_stamp(self):
