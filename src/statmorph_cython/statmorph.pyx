@@ -986,7 +986,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		以光度质心为中心的Petrosian圆形孔径半径
 		"""
-		print("get_rpetro_circ_centroid end")
 
 
 	cdef int get_nx_stamp(self):
