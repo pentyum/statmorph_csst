@@ -6,7 +6,6 @@
 
 import warnings
 
-import numpy as np
 from astropy.utils.exceptions import AstropyUserWarning
 import scipy.optimize as opt
 
@@ -40,11 +39,9 @@ cpdef double _petrosian_function_circ(double r, (double, double) center,
 	# Force mean fluxes to be positive:
 	cdef double circ_annulus_mean_flux = fabs(_aperture_mean_nomask(
 		circ_annulus, image))
-	print("circ_annulus_mean_flux")
 	cdef double circ_aperture_mean_flux = fabs(_aperture_mean_nomask(
 		circ_aperture, image))
 	cdef double ratio
-	print("circ_aperture_mean_flux")
 
 	# print("circ_annulus_mean_flux=%f, circ_aperture_mean_flux=%e" % (circ_annulus_mean_flux, circ_aperture_mean_flux))
 

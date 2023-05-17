@@ -246,7 +246,6 @@ cdef class ApertureMask:
 
 	cdef cnp.ndarray[double, ndim=1] get_values(self, cnp.ndarray[double, ndim=2] data):
 		cdef tuple slc_large, slc_small
-		print("start get_overlap_slices")
 		slc_large, slc_small = self.get_overlap_slices((data.shape[0], data.shape[1]))
 		if slc_large is None:
 			return np.array([])
@@ -313,19 +312,15 @@ cdef class PixelAperture(Aperture):
 		raise NotImplementedError('Needs to be implemented in a subclass.')
 
 	cdef (double, double) _do_photometry(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray[double, ndim=2] variance):
-		print("start _do_photometry")
 		cdef double aperture_sums
 		cdef double aperture_sum_errs
 		cdef double aper_var
 
-		print("start to_mask")
 		cdef ApertureMask apermask = self.to_mask()
-		print("start get_values")
-		print(data)
-		print(apermask)
+
 		cdef cnp.ndarray[double,ndim=1] values = apermask.get_values(data)
 		# if the aperture does not overlap the data return np.nan
-		print("start sum_1d_d")
+
 		aperture_sums = sum_1d_d(values) if len(values) != 0 else NAN
 
 		if variance is not None:
@@ -375,6 +370,7 @@ cdef class CircularAperture(PixelAperture):
 		mask = circular_overlap_grid(edges[0], edges[1], edges[2],
 									 edges[3], nx, ny, radius, use_exact,
 									 subpixels)
+		return ApertureMask(mask, bbox)
 
 cdef class CircularAnnulus(PixelAperture):
 	def __init__(self, (double, double) position, double r_in, double r_out):
