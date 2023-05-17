@@ -916,21 +916,25 @@ cdef class IndividualBaseInfo(BaseInfo):
 		"""
 		图像切片的总mask，该mask是segmap中非label的源、输入的mask、nan或者inf位置和坏点位置的并集
 		"""
+		print("get_mask_stamp end")
 
 		self._mask_stamp_no_bg = self.get_mask_stamp_no_bg()
 		"""
 		图像切片的包括背景的mask，即总mask和segmap中label=0位置(即背景)的并集
 		"""
+		print("get_mask_stamp_no_bg end")
 
 		self._cutout_stamp_maskzeroed = self.get_cutout_stamp_maskzeroed()
 		"""
 		获得星系本体+背景的图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp中的总mask，包括其它label的源、输入的mask、nan、inf和坏点
 		"""
+		print("get_cutout_stamp_maskzeroed end")
 
 		self._cutout_stamp_maskzeroed_no_bg = self.get_cutout_stamp_maskzeroed_no_bg()
 		"""
 		获得星系本体图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp_no_bg中的包括背景的总mask。
 		"""
+		print("get_cutout_stamp_maskzeroed_no_bg end")
 
 		# Check that the labeled galaxy segment has a positive flux sum.
 		# If not, this is bad enough to abort all calculations and return
