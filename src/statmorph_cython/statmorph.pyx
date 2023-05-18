@@ -577,7 +577,7 @@ cdef class BaseInfo(MorphInfo):
 		cdef int ic = int(round(yc))
 		cdef int jc = int(round(xc))
 		if self._cutout_stamp_maskzeroed[ic][jc] == 0.0:
-			warnings.warn('%d: Centroid is masked.'%self.label, AstropyUserWarning)
+			warnings.warn('%d: Centroid (%d,%d) is masked.'%(self.label, jc, ic), AstropyUserWarning)
 			self.flags.set_flag_true(1)
 
 		#return np.array([xc, yc])
