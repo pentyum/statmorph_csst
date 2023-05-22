@@ -554,6 +554,8 @@ class SourceMorphology(object):
 			'r80',
 		]
 		g_m20_quantity = [
+			'elongation_asymmetry',
+			'orientation_asymmetry',
 			'rpetro_ellip',
 			'gini',
 			'm20',
@@ -578,8 +580,6 @@ class SourceMorphology(object):
 			'elongation_centroid',
 			'orientation_centroid',
 			'ellipticity_asymmetry',
-			'elongation_asymmetry',
-			'orientation_asymmetry',
 
 			'outer_asymmetry',
 			'shape_asymmetry',
