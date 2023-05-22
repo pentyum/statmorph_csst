@@ -138,7 +138,8 @@ def run_sextractor(work_dir: str, detect_file: str, wht_file: str, use_existed: 
 
 
 def run_statmorph_init_calc_para_str_list(threads: int, calc_cas: bool = True, calc_g_m20: bool = True,
-										  calc_shape_asymmetry: bool = False, calc_mid: bool = False, calc_multiplicity: bool = False,
+										  calc_shape_asymmetry: bool = False, calc_mid: bool = False,
+										  calc_multiplicity: bool = False,
 										  calc_color_dispersion: bool = False, calc_g2: bool = False) -> List[str]:
 	logger.info("欢迎使用Statmorph, 线程数%d" % threads)
 
@@ -188,7 +189,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  calc_shape_asymmetry: bool = False, calc_mid: bool = False, calc_multiplicity: bool = False,
 				  calc_color_dispersion: bool = False, image_compare_file: Optional[str] = None, calc_g2: bool = False,
 				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
-	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
+	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry,
+															   calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
 	logger.info("进入大图模式")
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
@@ -245,10 +247,12 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		logger.info("只运行label=%d" % run_specified_label)
 
 	if use_vanilla:
-		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
+														 calc_multiplicity,
 														 calc_color_dispersion, calc_g2)
 	else:
-		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
+														calc_multiplicity,
 														calc_color_dispersion, calc_g2)
 	logger.info("使用" + morph_provider.__class__.__qualname__)
 
@@ -349,7 +353,8 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 						calc_mid: bool = False, calc_multiplicity: bool = False, calc_color_dispersion: bool = False,
 						calc_g2: bool = False, output_image_dir: Optional[str] = None,
 						center_file: Optional[str] = None, use_vanilla: bool = False):
-	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
+	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry,
+															   calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
 	logger.info("进入独立stamp模式")
 	catalog_table = Table.read(catalog_file, format="ascii")
@@ -371,10 +376,12 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 		logger.info("只运行label=%d" % run_specified_label)
 
 	if use_vanilla:
-		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphVanilla(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
+														 calc_multiplicity,
 														 calc_color_dispersion, calc_g2)
 	else:
-		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,
+		morph_provider: MorphProvider = StatmorphCython(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
+														calc_multiplicity,
 														calc_color_dispersion, calc_g2)
 	logger.info("使用" + morph_provider.__class__.__qualname__)
 
@@ -499,7 +506,7 @@ def get_basename_without_end(path) -> str:
 
 
 help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
-
+	-C, --config=配置文件名，默认为config.properties，配置同样可以通过命令行设置，通过命令行设置的的参数会覆盖配置文件中的参数
 	-j, --threads=并行进程数量，若为0则为CPU核心数量-1(若为单核则为1)
 	-i, --image_file=原始图像文件(未扣除背景)，双图像模式中指用来探测源的图像文件(深度越深，PSF越大越好)，若跳过SExtractor可以不需要
 	-y, --measure_file=双图像模式中用于测量的图像文件(未扣除背景)，若不指定(为null)则为单图像模式，若跳过SExtractor可以不需要
@@ -536,10 +543,8 @@ help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
 
 
 def main(argv) -> int:
-	config: Dict = read_properties("./config.properties")
-	config["help"] = False
-
 	arg_short_dict = {
+		"C": ("config", True),
 		"h": ("help", False),
 		"j": ("threads", True),
 		"i": ("image_file", True),
@@ -582,6 +587,11 @@ def main(argv) -> int:
 		print("-h 查看帮助信息")
 		return 1
 
+	old_opt_dict = opts_to_dict(opts, arg_short_dict, None)
+	if not check_not_null(old_opt_dict["config"]):
+		old_opt_dict["config"] = "config.properties"
+
+	config: Dict = read_properties("./" + old_opt_dict["config"])
 	opts_to_dict(opts, arg_short_dict, config)
 
 	if check_not_false(config["help"]):
