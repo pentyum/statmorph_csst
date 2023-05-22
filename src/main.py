@@ -588,7 +588,7 @@ def main(argv) -> int:
 		return 1
 
 	old_opt_dict = opts_to_dict(opts, arg_short_dict, None)
-	if not check_not_null(old_opt_dict["config"]):
+	if "config" not in old_opt_dict:
 		old_opt_dict["config"] = "config.properties"
 
 	config: Dict = read_properties("./" + old_opt_dict["config"])
