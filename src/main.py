@@ -592,6 +592,8 @@ def main(argv) -> int:
 		old_opt_dict["config"] = "config.properties"
 
 	config: Dict = read_properties("./" + old_opt_dict["config"])
+	config["help"] = False
+
 	opts_to_dict(opts, arg_short_dict, config)
 
 	if check_not_false(config["help"]):
