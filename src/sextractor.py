@@ -347,7 +347,7 @@ NTHREADS         4              # 1 single thread
 		self.output_catalog_file: str = ""
 		self.output_subback_file: str = ""
 		self.output_segmap_file: str = ""
-		self.noise_file: str = ""
+		self.noise_file: Optional[str] = ""
 
 	def unzip_fits_gz(self, file_name: str) -> str:
 		if file_name.endswith(".gz"):
@@ -536,11 +536,15 @@ NTHREADS         4              # 1 single thread
 		if use_existed and os.path.exists(self.work_dir):
 			self.logger.info("使用已经生成的SExtractor文件")
 			if os.path.exists(self.output_catalog_file) and os.path.exists(self.output_subback_file) and os.path.exists(
-					self.output_segmap_file and os.path.exists(self.noise_file)):
+					self.output_segmap_file):
 				self.logger.info("catalog使用" + self.output_catalog_file)
 				self.logger.info("subback使用" + self.output_subback_file)
 				self.logger.info("segmap使用" + self.output_segmap_file)
-				self.logger.info("noise使用" + self.noise_file)
+				if os.path.exists(self.noise_file):
+					self.logger.info("noise使用" + self.noise_file)
+				else:
+					self.logger.info("不提供noise文件")
+					self.noise_file = None
 				return
 			else:
 				self.logger.warning("文件不全，继续运行SExtractor")
