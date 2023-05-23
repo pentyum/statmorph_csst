@@ -14,7 +14,7 @@ import skimage.measure
 import matplotlib.pyplot as plt
 
 from libc.math cimport sqrt, round
-from libc.time cimport clock, CLOCKS_PER_SEC
+import time
 cimport numpy as cnp
 
 from .petrosian cimport _rpetro_circ_generic
@@ -83,7 +83,7 @@ cdef class BaseInfo(MorphInfo):
 		self.image_compare = image_compare
 
 		# Measure runtime
-		self.global_start = clock()
+		self.global_start = time()
 
 		# if not isinstance(self._segmap, photutils.SegmentationImage):
 		#	self._segmap = photutils.SegmentationImage(self._segmap)
@@ -294,7 +294,7 @@ cdef class BaseInfo(MorphInfo):
 		self.calc_g2 = calc_g2
 
 		if calc_cas:
-			start = clock()
+			start = time()
 			self.cas = statmorph_cython.cas.calc_cas(self, set_asym_center)
 			self.cas.calc_runtime(start)
 			center_used = self.cas._asymmetry_center
@@ -303,18 +303,18 @@ cdef class BaseInfo(MorphInfo):
 			center_used = self._centroid
 
 		if calc_g_m20:
-			start = clock()
+			start = time()
 			self.g_m20 = statmorph_cython.g_m20.calc_g_m20(self, center_used)
 			self.g_m20.calc_runtime(start)
 
 		if calc_shape_asymmetry:
 			if self.cas is not None and self.g_m20 is not None:
-				start = clock()
+				start = time()
 				self.shape_asymmetry = statmorph_cython.shape_asymmetry.calc_shape_asymmetry(self, self.cas, self.g_m20)
 				self.shape_asymmetry.calc_runtime(start)
 
 		if calc_mid:
-			start = clock()
+			start = time()
 			self.mid = statmorph_cython.mid.calc_mid(self)
 			self.mid.calc_runtime(start)
 			if calc_multiplicity:
@@ -322,7 +322,7 @@ cdef class BaseInfo(MorphInfo):
 
 		if calc_color_dispersion:
 			if self.image_compare is not None:
-				start = clock()
+				start = time()
 				self.image_compare_stamp = self.image_compare[self._slice_stamp]
 				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, self.image_compare_stamp)
 				self.compare_info.calc_runtime(start)
@@ -330,7 +330,7 @@ cdef class BaseInfo(MorphInfo):
 				warnings.warn("%d: [Color dispersion] compare image not defined"%self.label)
 
 		if calc_g2:
-			start = clock()
+			start = time()
 			self.g2 = get_G2(self, center_used)
 			self.g2.calc_runtime(start)
 
@@ -822,7 +822,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 			self._image_compare_fits = None
 
 		# Measure runtime
-		self.global_start = clock()
+		self.global_start = time()
 
 		# if not isinstance(self._segmap, photutils.SegmentationImage):
 		#	self._segmap = photutils.SegmentationImage(self._segmap)
@@ -1250,10 +1250,10 @@ cdef class MorphInfo:
 
 	@staticmethod
 	cdef double get_duration_sec(long end, long start):
-		return <double> (end - start) / CLOCKS_PER_SEC
+		return <double> (end - start)
 
 	cdef void calc_runtime(self, long start):
-		self.runtime = MorphInfo.get_duration_sec(clock(), start)
+		self.runtime = MorphInfo.get_duration_sec(time(), start)
 
 	def get_values(self):
 		pass
