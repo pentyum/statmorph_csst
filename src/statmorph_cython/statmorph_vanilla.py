@@ -959,9 +959,11 @@ class SourceMorphology(object):
 		"""
 		if self._weightmap is None:
 			# Already checked that gain is not None:
-			assert self._gain > 0
-			weightmap_stamp = np.sqrt(
-				np.abs(self._image[self._slice_stamp]) / self._gain + self.sky_sigma ** 2)
+			if self._gain > 0:
+				weightmap_stamp = np.sqrt(
+					np.abs(self._image[self._slice_stamp]) / self._gain + self.sky_sigma ** 2)
+			else:
+				return None
 		else:
 			weightmap_stamp = self._weightmap[self._slice_stamp]
 
