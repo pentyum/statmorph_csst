@@ -187,7 +187,7 @@ cpdef double _petrosian_function_ellip(double a, (double, double) center,
 		warnings.warn('[rpetro_ellip] Mean flux is zero.', AstropyUserWarning)
 		# If flux within annulus is also zero (e.g. beyond the image
 		# boundaries), return zero. Otherwise return 1.0:
-		ratio = float(ellip_annulus_mean_flux != 0 and not isnan(ellip_annulus_mean_flux))
+		ratio = <double>(ellip_annulus_mean_flux != 0 and not isnan(ellip_annulus_mean_flux))
 		flags.set_flag_true(9)
 	else:
 		ratio = ellip_annulus_mean_flux / ellip_aperture_mean_flux
@@ -285,7 +285,7 @@ cdef double _rpetro_ellip_generic(cnp.ndarray[double, ndim=2] cutout_stamp_maskz
 	# i = i + 1
 	"""
 
-	rpetro_ellip = opt.brentq(_petrosian_function_ellip, a_min, a_max,
+	cdef double rpetro_ellip = opt.brentq(_petrosian_function_ellip, a_min, a_max,
 							  args=(center, cutout_stamp_maskzeroed, elongation, theta, flags, constants), xtol=1e-6)
 
 	return rpetro_ellip
