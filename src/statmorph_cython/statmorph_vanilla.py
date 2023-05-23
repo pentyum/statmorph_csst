@@ -429,8 +429,8 @@ class SourceMorphology(object):
 		if self._weightmap is not None:
 			assert self._weightmap.shape == self._image.shape
 
-		if self._weightmap is None and self._gain is None:
-			raise AssertionError('Must provide either weightmap or gain.')
+		#if self._weightmap is None and self._gain is None:
+		#	raise AssertionError('Must provide either weightmap or gain.')
 
 		# Normalize PSF
 		if self._psf is not None:
@@ -1427,6 +1427,9 @@ class SourceMorphology(object):
 		Calculate the signal-to-noise per pixel using the Petrosian segmap.
 		"""
 		weightmap = self._weightmap_stamp
+		if weightmap is None:
+			return -99.0
+
 		if np.any(weightmap < 0):
 			warnings.warn('[sn_per_pixel] Some negative weightmap values.',
 						  AstropyUserWarning)
