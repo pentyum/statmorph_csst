@@ -429,7 +429,7 @@ class SourceMorphology(object):
 		if self._weightmap is not None:
 			assert self._weightmap.shape == self._image.shape
 
-		#if self._weightmap is None and self._gain is None:
+		# if self._weightmap is None and self._gain is None:
 		#	raise AssertionError('Must provide either weightmap or gain.')
 
 		# Normalize PSF
@@ -959,7 +959,7 @@ class SourceMorphology(object):
 		"""
 		if self._weightmap is None:
 			# Already checked that gain is not None:
-			if self._gain > 0:
+			if self._gain is not None and self._gain > 0:
 				weightmap_stamp = np.sqrt(
 					np.abs(self._image[self._slice_stamp]) / self._gain + self.sky_sigma ** 2)
 			else:
