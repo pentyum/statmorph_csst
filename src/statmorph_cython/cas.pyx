@@ -87,7 +87,7 @@ cdef double get_sky_asymmetry(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 		assert flags.get_flag(1)
 		return -99.0
 
-	return np.sum(np.abs(bkg_180 - bkg)) / float(cnp.PyArray_SIZE(bkg))
+	return np.sum(np.abs(bkg_180 - bkg)) / <double>cnp.PyArray_SIZE(bkg)
 
 cdef double get_sky_mean(cnp.ndarray[double,ndim=2] bkg, Flags flags):
 	"""
@@ -141,7 +141,7 @@ cdef double get_sky_smoothness(cnp.ndarray[double,ndim=2] bkg, double rpetro_cir
 	cdef cnp.ndarray bkg_diff = bkg - bkg_smooth
 	bkg_diff[bkg_diff < 0] = 0.0  # set negative pixels to zero
 
-	return np.sum(bkg_diff) / float(cnp.PyArray_SIZE(bkg))
+	return np.sum(bkg_diff) / <double>cnp.PyArray_SIZE(bkg)
 
 cdef cnp.ndarray simplified_rot180(cnp.ndarray image, (double, double) center):
 	cdef cnp.ndarray rotted_image = image[::-1, ::-1]
