@@ -14,7 +14,7 @@ import skimage.measure
 import matplotlib.pyplot as plt
 
 from libc.math cimport sqrt, round
-import time
+from time import time
 cimport numpy as cnp
 
 from .petrosian cimport _rpetro_circ_generic
