@@ -1249,10 +1249,10 @@ cdef class MorphInfo:
 		self.runtime = 0
 
 	@staticmethod
-	cdef double get_duration_sec(long end, long start):
+	cdef double get_duration_sec(double end, double start):
 		return <double> (end - start)
 
-	cdef void calc_runtime(self, long start):
+	cdef void calc_runtime(self, double start):
 		self.runtime = MorphInfo.get_duration_sec(time(), start)
 
 	def get_values(self):

@@ -9,9 +9,9 @@ cdef class MorphInfo:
 	cdef readonly Flags flags
 
 	@staticmethod
-	cdef double get_duration_sec(long end, long start)
+	cdef double get_duration_sec(double end, double start)
 
-	cdef void calc_runtime(self, long start)
+	cdef void calc_runtime(self, double start)
 
 cdef class BaseInfo(MorphInfo):
 	cdef cnp.ndarray _image
