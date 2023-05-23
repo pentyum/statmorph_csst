@@ -6,7 +6,7 @@
 
 cimport numpy as cnp
 from numpy.math cimport NAN
-from libc.math cimport isnan, pow, sqrt, pi, floor, fabs, round
+from libc.math cimport isnan, pow, sqrt, pi, floor, fabs
 
 from .statmorph cimport BaseInfo, G2Info
 
