@@ -169,7 +169,7 @@ cdef (double, bint) _radius_at_fraction_of_total_ellip(cnp.ndarray[double,ndim=2
 	return a, flag
 
 cdef class BoundingBox:
-	def __init__(self, int ixmin, int ixmax, int iymin, int iymax):
+	def __cinit__(self, int ixmin, int ixmax, int iymin, int iymax):
 		if ixmin > ixmax:
 			raise ValueError('ixmin must be <= ixmax')
 		if iymin > iymax:
@@ -187,7 +187,7 @@ cdef class BoundingBox:
 		cdef int iymin = int(floor(ymin + 0.5))
 		cdef int iymax = int(ceil(ymax + 0.5))
 
-		return BoundingBox(ixmin, ixmax, iymin, iymax)
+		return BoundingBox.__new__(BoundingBox, ixmin, ixmax, iymin, iymax)
 
 	def __eq__(self, other):
 		if not isinstance(other, BoundingBox):
