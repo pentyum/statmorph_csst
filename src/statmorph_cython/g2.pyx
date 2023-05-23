@@ -6,7 +6,7 @@
 
 cimport numpy as cnp
 from numpy.math cimport NAN
-from libc.math cimport isnan, pow, sqrt, pi, floor
+from libc.math cimport isnan, pow, sqrt, pi, floor, fabs, round
 
 from .statmorph cimport BaseInfo, G2Info
 
@@ -86,10 +86,10 @@ cdef class G2Calculator:
 	cdef double angle_difference(self,double a1,double a2):
 		# if it is in second quadrant - add pi
 		if pi/2 <= a1 <= pi:
-			return abs(round((a1 - (a2 - pi)),4)) 
+			return fabs(round((a1 - (a2 - pi)),4))
 		# if it is in first quadrant - substract pi pi
 		else:
-			return abs(round((a1 - (a2 + pi)),4)) 
+			return fabs(round((a1 - (a2 + pi)),4))
 
 	# function that converst 0 to nan in matrix
 	cdef void convert_to_nan(self):

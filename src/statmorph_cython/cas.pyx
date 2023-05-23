@@ -10,7 +10,7 @@ import numpy as np
 import scipy.ndimage as ndi
 cimport numpy as cnp
 import skimage.transform
-from libc.math cimport fabs, log10, sqrt
+from libc.math cimport fabs, log10, sqrt, round
 from numpy.math cimport isnan, isfinite
 
 from .statmorph cimport BaseInfo, CASInfo
@@ -271,8 +271,8 @@ cdef (double,double) get_asymmetry_center(cnp.ndarray[double,ndim=2] _cutout_sta
 		center_asym = center_0
 
 	# Print warning if center is masked
-	cdef int ic = int(round(center_asym[1]))
-	cdef int jc = int(round(center_asym[0]))
+	cdef int ic = <int>round(center_asym[1])
+	cdef int jc = <int>round(center_asym[0])
 	if _cutout_stamp_maskzeroed[ic, jc] == 0:
 		warnings.warn('[asym_center] Asymmetry center is masked.',
 					  AstropyUserWarning)
