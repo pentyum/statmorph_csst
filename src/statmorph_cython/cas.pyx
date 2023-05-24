@@ -455,12 +455,16 @@ cdef CASInfo calc_cas(BaseInfo base_info, (double, double) set_asym_center):
 	"""
 
 	if base_info._use_centroid:
-		cas_info.rpetro_circ = _rpetro_circ_generic(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center, base_info._diagonal_distance, cas_info.flags, base_info.constants)
+		cas_info.rpetro_circ = base_info._rpetro_circ_centroid
+		"""
+		直接用光度中心得到的Petrosian圆形孔径半径
+		"""
+	else:
+		cas_info.rpetro_circ = _rpetro_circ_generic(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center,
+													base_info._diagonal_distance, cas_info.flags, base_info.constants)
 		"""
 		以不对称中心为中心的Petrosian圆形孔径半径
 		"""
-	else:
-		cas_info.rpetro_circ = base_info._rpetro_circ_centroid
 
 	cas_info.r20 = get_r20(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center, cas_info.rpetro_circ, cas_info.flags, base_info.constants)
 	"""
