@@ -6,7 +6,7 @@
 
 cdef class ConstantsSetting:
 	def __init__(self):
-		self.cutout_extent = 1.8
+		self.cutout_extent = 1.5
 		"""
 		图像切片往外延伸的倍率
 		"""
