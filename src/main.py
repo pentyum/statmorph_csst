@@ -406,7 +406,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 	if "cmp_file_name" not in run_rows.colnames:
 		run_rows["cmp_file_name"] = None
 
-	if threads > 1:
+	if (threads > 1) and (len(run_rows) > 1):
 		run_rows_list = table_split(run_rows, 20000)
 		for block_i in range(len(run_rows_list)):
 			run_rows_block = run_rows_list[block_i]
@@ -419,7 +419,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 					set_centroid_list.append(set_centroid)
 					set_asym_center_list.append(set_asym_center)
 
-				output_image_dir_list:List[str] = np.repeat(output_image_dir, len(run_rows_block)).tolist()
+				output_image_dir_list: List[str] = np.repeat(output_image_dir, len(run_rows_block)).tolist()
 				morph_provider_list = np.repeat(morph_provider, len(run_rows_block))
 
 				result_iter = executor.map(work_with_individual_file, run_rows_block["label"],
