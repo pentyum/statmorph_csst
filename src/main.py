@@ -451,6 +451,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 
 	logger.info("开始写入文件")
 
+	print(result_all)
 	with open(save_file, "w") as f:
 		f.writelines(result_all)
 
