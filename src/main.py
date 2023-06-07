@@ -445,7 +445,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 											   output_image_dir, set_centroid,
 											   set_asym_center, morph_provider
 											   )
-			result_all.append(result)
+			result_all.append(result_format % result)
 
 	logger.info(f'用时: {time.time() - start_time:.2f}s')
 
