@@ -715,13 +715,14 @@ cdef class BaseInfo(MorphInfo):
 		plt.clim(0, vmax)
 
 		if self.cas is not None:
-			rec_x = stamp_x + self.cas._slice_skybox[1].start
-			rec_y = stamp_y + self.cas._slice_skybox[0].start
-			rec_x_length = self.cas._slice_skybox[1].stop - self.cas._slice_skybox[1].start
-			rec_y_length = self.cas._slice_skybox[0].stop - self.cas._slice_skybox[0].start
+			if self.cas._slice_skybox is not None:
+				rec_x = stamp_x + self.cas._slice_skybox[1].start
+				rec_y = stamp_y + self.cas._slice_skybox[0].start
+				rec_x_length = self.cas._slice_skybox[1].stop - self.cas._slice_skybox[1].start
+				rec_y_length = self.cas._slice_skybox[0].stop - self.cas._slice_skybox[0].start
 
-			rec_sky = plt.Rectangle((rec_x, rec_y), rec_x_length, rec_y_length, edgecolor="white", linewidth=2,
-									fill=False)
+				rec_sky = plt.Rectangle((rec_x, rec_y), rec_x_length, rec_y_length, edgecolor="white", linewidth=2,
+										fill=False)
 
 			asym_center = (self.cas.xc_asymmetry, self.cas.yc_asymmetry)
 
