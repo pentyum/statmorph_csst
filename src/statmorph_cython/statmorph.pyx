@@ -695,8 +695,18 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		cdef cnp.ndarray sm_all = cnp.PyArray_Where(self._segmap_stamp == self.label, 2, cnp.PyArray_Where(self._segmap_stamp == 0, 0, 1))
 
-		cdef int stamp_x = self._slice_stamp[1].start
-		cdef int stamp_y = self._slice_stamp[0].start
+		cdef int stamp_x, stamp_y
+		cdef tuple extent
+
+		if self._slice_stamp is not None:
+			stamp_x = self._slice_stamp[1].start
+			stamp_y = self._slice_stamp[0].start
+			extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
+		else:
+			stamp_x = 0
+			stamp_y = 0
+			extent = None
+
 		cdef int rec_x, rec_y, rec_x_length, rec_y_length
 		if self.nx_stamp < 1000 and self.ny_stamp < 1000:
 			plt.figure(figsize=(10, 5))
@@ -708,7 +718,7 @@ cdef class BaseInfo(MorphInfo):
 		plt.subplot(1,2,1)
 		plt.imshow(sm_all, origin="lower")
 
-		cdef tuple extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
+
 		plt.subplot(1,2,2)
 		plt.imshow(self._cutout_stamp, cmap="gray", origin="lower", extent=extent)
 		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 90)
