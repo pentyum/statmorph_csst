@@ -723,6 +723,8 @@ cdef class BaseInfo(MorphInfo):
 		plt.imshow(self._cutout_stamp, cmap="gray", origin="lower", extent=extent)
 		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 90)
 		plt.clim(0, vmax)
+		plt.xlim(self.xmin_stamp,self.xmax_stamp)
+		plt.ylim(self.ymin_stamp, self.ymax_stamp)
 
 		if self.cas is not None:
 			if self.cas._slice_skybox is not None:
@@ -885,6 +887,16 @@ cdef class IndividualBaseInfo(BaseInfo):
 
 		self._check_stamp_size()
 
+		self.xmin_stamp = 0
+		"""
+		图像切片的x起点在整幅图像中的下标
+		"""
+
+		self.ymin_stamp = 0
+		"""
+		图像切片的y起点在整幅图像中的下标
+		"""
+
 		self.nx_stamp = self.get_nx_stamp()
 		"""
 		图像切片的宽度
@@ -893,6 +905,16 @@ cdef class IndividualBaseInfo(BaseInfo):
 		self.ny_stamp = self.get_ny_stamp()
 		"""
 		图像切片的高度
+		"""
+
+		self.xmax_stamp = self.nx_stamp
+		"""
+		图像切片的x终点在整幅图像中的下标
+		"""
+
+		self.ymax_stamp = self.ny_stamp
+		"""
+		图像切片的y终点在整幅图像中的下标
 		"""
 
 		if self.nx_stamp * self.ny_stamp > 10000000:
