@@ -39,7 +39,7 @@ def read_properties(path) -> Dict[str, str]:
 
 def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_name: Optional[str], segm_slice,
 							label: int, shape, shm_img_cmp_name: Optional[str],
-							output_image_dir: str, set_centroid: Tuple[float, float],
+							output_image_dir: str, save_stamp_dir: str, set_centroid: Tuple[float, float],
 							set_asym_center: Tuple[float, float], img_dtype, segm_dtype,
 							morph_provider: MorphProvider) -> Tuple:
 	"""
@@ -78,7 +78,7 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 
 	try:
 		return_list = morph_provider.measure_label(image, segmap, noisemap, segm_slice, label,
-												   image_compare, output_image_dir, set_centroid, set_asym_center)
+												   image_compare, output_image_dir, save_stamp_dir, set_centroid, set_asym_center)
 	except:
 		logger.error(str(label) + ": " + traceback.format_exc())
 		return_list = morph_provider.get_empty_result(label)
@@ -191,8 +191,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  output_image_dir: Optional[str] = None, save_stamp_dir: Optional[str] = None,
 				  center_file: Optional[str] = None, use_vanilla: bool = False):
 	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry,
-															   calc_mid,
-															   calc_multiplicity, calc_color_dispersion, calc_g2)
+															   calc_mid, calc_multiplicity, calc_color_dispersion, calc_g2)
 	logger.info("进入大图模式")
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
@@ -323,7 +322,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 
 				fs.append(
 					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
-							   shape, shm_img_cmp_name, output_image_dir, set_centroid, set_asym_center,
+							   shape, shm_img_cmp_name, output_image_dir, save_stamp_dir, set_centroid, set_asym_center,
 							   img_dtype, segm_dtype, morph_provider))
 			for result in as_completed(fs):
 				line = result_format % result.result()
