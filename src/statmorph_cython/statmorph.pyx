@@ -34,7 +34,7 @@ cdef class BaseInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double,ndim=2] image, cnp.ndarray[int,ndim=2] segmap, tuple segmap_slice,
 				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
 				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
-				 str output_image_dir=None, str save_stamp_dir, tuple set_centroid=(-1, -1)):
+				 str output_image_dir=None, str save_stamp_dir=None, tuple set_centroid=(-1, -1)):
 		super().__init__()
 		self.logger = None
 		self.constants = ConstantsSetting()
