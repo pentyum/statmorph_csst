@@ -133,6 +133,8 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef void save_image(self)
 
+	cdef void save_stamp(self)
+
 	cdef void dump_stamps(self)
 
 cdef class IndividualBaseInfo(BaseInfo):
