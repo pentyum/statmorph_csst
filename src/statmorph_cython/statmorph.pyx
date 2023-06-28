@@ -34,7 +34,7 @@ cdef class BaseInfo(MorphInfo):
 	def __init__(self, cnp.ndarray[double,ndim=2] image, cnp.ndarray[int,ndim=2] segmap, tuple segmap_slice,
 				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
 				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
-				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
+				 str output_image_dir=None, str save_stamp_dir, tuple set_centroid=(-1, -1)):
 		super().__init__()
 		self.logger = None
 		self.constants = ConstantsSetting()
@@ -43,6 +43,10 @@ cdef class BaseInfo(MorphInfo):
 		self.output_image_dir = output_image_dir
 		"""
 		图像输出文件夹，None表示不输出
+		"""
+		self.save_stamp_dir = save_stamp_dir
+		"""
+		stamp保存文件夹，None表示不保存
 		"""
 
 		self._image = image
@@ -341,6 +345,9 @@ cdef class BaseInfo(MorphInfo):
 		# Save image
 		if self.output_image_dir is not None:
 			self.save_image()
+
+		if self.save_stamp_dir is not None:
+			self.save_stamp()
 
 		self.calc_runtime(self.global_start)
 
@@ -686,6 +693,14 @@ cdef class BaseInfo(MorphInfo):
 		self.g2 = G2Info(cnp.PyArray_ZEROS(2, [1,1], cnp.NPY_DOUBLE, 0), self.constants)
 
 
+	cdef void save_stamp(self):
+		hdu1 = fits.PrimaryHDU(self._cutout_stamp)
+		hdu2 = fits.ImageHDU(self._weightmap_stamp_old)
+		hdu2.name = "NOISE"
+		hdulist = fits.HDUList([hdu1, hdu2])
+		hdulist.writeto("%s/%d.fits" % (self.save_stamp_dir, self.label), overwrite=True)
+		hdulist.close()
+
 	cdef void save_image(self):
 		"""
 		其中绿色轮廓为原始segmentation map(_mask_stamp_no_bg)，黄色轮廓为计算G和M20的segmentation map(_segmap_gini)
@@ -791,8 +806,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 	def __init__(self,  int label, str fits_file_name, int fits_hdu_index=0,
 				 str mask_file_name=None, int mask_hdu_index=0,
 				 str weightmap=None, int weightmap_hdu_index=0,
-				 double gain=-1,
-				 str image_compare_file_name=None, int image_compare_hdu_index=0,
+				 double gain=-1, str image_compare_file_name=None, int image_compare_hdu_index=0,
 				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
 		MorphInfo.__init__(self)
 		self.logger = None

@@ -58,6 +58,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly double sn_per_pixel
 
 	cdef str output_image_dir
+	cdef str save_stamp_dir
 	cdef readonly bint calc_cas
 	cdef readonly bint calc_g_m20
 	cdef readonly bint calc_mid
