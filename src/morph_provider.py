@@ -75,7 +75,7 @@ class MorphProvider(abc.ABC):
 
 	@abc.abstractmethod
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
-					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str, save_stamp_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		pass
 
@@ -105,7 +105,7 @@ class StatmorphVanilla(MorphProvider):
 		pass
 
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
-					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str, save_stamp_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		morph = SourceMorphology(
 			image, segmap, label, weightmap=noisemap)
@@ -175,9 +175,9 @@ class StatmorphCython(MorphProvider):
 		return result
 
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
-					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str,
+					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str, save_stamp_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		morph = statmorph.BaseInfo(
 			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
-			output_image_dir=output_image_dir, set_centroid=set_centroid)
+			output_image_dir=output_image_dir, save_stamp_dir=save_stamp_dir, set_centroid=set_centroid)
 		return self._calc(morph, set_asym_center)

@@ -188,7 +188,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  ignore_class_star_greater_than: float = 0.9, calc_cas: bool = True, calc_g_m20: bool = True,
 				  calc_shape_asymmetry: bool = False, calc_mid: bool = False, calc_multiplicity: bool = False,
 				  calc_color_dispersion: bool = False, image_compare_file: Optional[str] = None, calc_g2: bool = False,
-				  output_image_dir: Optional[str] = None, center_file: Optional[str] = None, use_vanilla: bool = False):
+				  output_image_dir: Optional[str] = None, save_stamp_dir: Optional[str] = None,
+				  center_file: Optional[str] = None, use_vanilla: bool = False):
 	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry,
 															   calc_mid,
 															   calc_multiplicity, calc_color_dispersion, calc_g2)
@@ -202,6 +203,10 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 	if output_image_dir is not None:
 		if not os.path.exists(output_image_dir):
 			os.mkdir(output_image_dir)
+
+	if save_stamp_dir is not None:
+		if not os.path.exists(save_stamp_dir):
+			os.mkdir(save_stamp_dir)
 
 	# Make a large data frame with date, float and character columns
 	image_fits = fits.open(image_file)
@@ -627,6 +632,7 @@ def main(argv) -> int:
 	stamp_catalog: Optional[str] = config["stamp_catalog"]
 
 	output_image_dir: Optional[str] = config["output_image_dir"]
+	save_stamp_dir: Optional[str] = config["save_stamp_dir"]
 	ignore_mag_fainter_than: float = float(config["ignore_mag_fainter_than"])
 	ignore_class_star_greater_than: float = float(config["ignore_class_star_greater_than"])
 	calc_cas: bool = check_not_false(config["calc_cas"])
@@ -644,6 +650,8 @@ def main(argv) -> int:
 		measure_file = None
 	if not check_not_null(output_image_dir):
 		output_image_dir = None
+	if not check_not_null(save_stamp_dir):
+		save_stamp_dir = None
 	if not check_not_null(image_compare_file):
 		image_compare_file = None
 	if not check_not_null(center_file):
@@ -677,9 +685,9 @@ def main(argv) -> int:
 					  sextractor.noise_file,
 					  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 					  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
-					  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2, output_image_dir,
-					  center_file,
-					  use_vanilla)
+					  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2,
+					  output_image_dir,save_stamp_dir,
+					  center_file, use_vanilla)
 	else:
 		run_statmorph_stamp(stamp_catalog, save_file, threads, run_percentage, run_specified_label, calc_cas,
 							calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity, calc_color_dispersion,
