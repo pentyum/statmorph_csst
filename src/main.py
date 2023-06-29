@@ -236,7 +236,7 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 	if image_compare is not None:
 		logger.info(f"image_compare's size={image_compare.nbytes / 1e6}MB")
 
-	segm_image = photutils.SegmentationImage(segmap)
+	segm_image = photutils.segmentation.SegmentationImage(segmap)
 	labels: Column = sextractor_table["NUMBER"]
 	logger.info("图像数量%d" % len(labels))
 	if run_specified_label <= 0:
