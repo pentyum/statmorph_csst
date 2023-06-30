@@ -139,6 +139,7 @@ cdef class BaseInfo(MorphInfo):
 
 cdef class IndividualBaseInfo(BaseInfo):
 	cdef _image_fits
+	cdef _segmap_fits
 	cdef _mask_fits
 	cdef _weightmap_fits
 	cdef _image_compare_fits

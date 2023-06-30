@@ -82,6 +82,7 @@ class MorphProvider(abc.ABC):
 	@abc.abstractmethod
 	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
 						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   segmap_file_name: Optional[str], segmap_hdu_index: Optional[int],
 						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
 						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 						   output_image_dir: str,
@@ -98,6 +99,7 @@ class StatmorphVanilla(MorphProvider):
 
 	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
 						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   segmap_file_name: Optional[str], segmap_hdu_index: Optional[int],
 						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
 						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 						   output_image_dir: str,
@@ -160,11 +162,13 @@ class StatmorphCython(MorphProvider):
 
 	def measure_individual(self, label: int, flux_file_name: str, flux_hdu_index: int,
 						   noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+						   segmap_file_name: Optional[str], segmap_hdu_index: Optional[int],
 						   mask_file_name: Optional[str], mask_hdu_index: Optional[int],
 						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 						   output_image_dir: str,
 						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
 		morph = statmorph.IndividualBaseInfo(label, str(flux_file_name), flux_hdu_index,
+											 str(segmap_file_name), segmap_hdu_index,
 											 str(mask_file_name), mask_hdu_index,
 											 str(noise_file_name), noise_hdu_index,
 											 image_compare_file_name=str(cmp_file_name),

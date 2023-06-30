@@ -804,10 +804,11 @@ cdef class BaseInfo(MorphInfo):
 
 cdef class IndividualBaseInfo(BaseInfo):
 	def __init__(self,  int label, str fits_file_name, int fits_hdu_index=0,
-				 str mask_file_name=None, int mask_hdu_index=0,
-				 str weightmap=None, int weightmap_hdu_index=0,
-				 double gain=-1, str image_compare_file_name=None, int image_compare_hdu_index=0,
-				 str output_image_dir=None, tuple set_centroid=(-1, -1)):
+				 str segmap_file_name="None", int segmap_hdu_index=0,
+				 str mask_file_name="None", int mask_hdu_index=0,
+				 str weightmap="None", int weightmap_hdu_index=0,
+				 double gain=-1, str image_compare_file_name="None", int image_compare_hdu_index=0,
+				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
 		MorphInfo.__init__(self)
 		self.logger = None
 		self.constants = ConstantsSetting()
@@ -823,9 +824,20 @@ cdef class IndividualBaseInfo(BaseInfo):
 		输入的原始图像引用
 		"""
 
-		self._mask_fits = fits.open(mask_file_name)
+		if mask_file_name is not "None":
+			self._mask_fits = fits.open(mask_file_name)
+		else:
+			self._mask_fits = None
 		"""
-		输入的segmentation map应用
+		输入的segmentation map引用
+		"""
+
+		if segmap_file_name is not "None":
+			self._segmap_fits = fits.open(segmap_file_name)
+		else:
+			self._segmap_fits = None
+		"""
+		输入的segmentation map引用
 		"""
 
 		self.label = label
@@ -875,7 +887,10 @@ cdef class IndividualBaseInfo(BaseInfo):
 		原始图像在该星系处的切片
 		"""
 
-		self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=np.int32)
+		if self._segmap_fits is None:
+			self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=np.int32)
+		else:
+			self._segmap_stamp = self._segmap_fits[segmap_hdu_index].data
 		"""
 		segmap在该星系处的切片
 		"""
@@ -888,10 +903,10 @@ cdef class IndividualBaseInfo(BaseInfo):
 		weightmap在该星系处的切片，原始值
 		"""
 
-		if self._mask_fits is not None:
-			self._mask_stamp_old = self._mask_fits[mask_hdu_index].data > 0
+		if self._mask_fits is None:
+			self._mask_stamp_old = np.full_like(self._cutout_stamp, False, dtype=np.bool_)
 		else:
-			self._mask_stamp_old = None
+			self._mask_stamp_old = self._mask_fits[mask_hdu_index].data > 0
 		"""
 		mask在该星系处的切片，原始值
 		"""
@@ -1050,6 +1065,8 @@ cdef class IndividualBaseInfo(BaseInfo):
 	cpdef void close_all(self):
 		# self.dump_stamps()
 		self._image_fits.close()
+		if self._segmap_fits is not None:
+			self._segmap_fits.close()
 		if self._mask_fits is not None:
 			self._mask_fits.close()
 		if self._weightmap_fits is not None:

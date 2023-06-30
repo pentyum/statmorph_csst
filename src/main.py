@@ -78,7 +78,8 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 
 	try:
 		return_list = morph_provider.measure_label(image, segmap, noisemap, segm_slice, label,
-												   image_compare, output_image_dir, save_stamp_dir, set_centroid, set_asym_center)
+												   image_compare, output_image_dir, save_stamp_dir, set_centroid,
+												   set_asym_center)
 	except:
 		logger.error(str(label) + ": " + traceback.format_exc())
 		return_list = morph_provider.get_empty_result(label)
@@ -90,6 +91,7 @@ def work_with_shared_memory(shm_img_name: str, shm_segm_name: str, shm_noise_nam
 
 def work_with_individual_file(label: int, flux_file_name: str, flux_hdu_index: int,
 							  noise_file_name: Optional[str], noise_hdu_index: Optional[int],
+							  segmap_file_name: Optional[str], segmap_hdu_index: Optional[int],
 							  mask_file_name: Optional[str], mask_hdu_index: Optional[int],
 							  cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 							  output_image_dir: str, set_centroid: Tuple[float, float],
@@ -116,6 +118,7 @@ def work_with_individual_file(label: int, flux_file_name: str, flux_hdu_index: i
 	try:
 		return_list = morph_provider.measure_individual(label, flux_file_name, flux_hdu_index,
 														noise_file_name, noise_hdu_index,
+														segmap_file_name, segmap_hdu_index,
 														mask_file_name, mask_hdu_index,
 														cmp_file_name, cmp_hdu_index, output_image_dir,
 														set_centroid, set_asym_center)
@@ -191,7 +194,8 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 				  output_image_dir: Optional[str] = None, save_stamp_dir: Optional[str] = None,
 				  center_file: Optional[str] = None, use_vanilla: bool = False):
 	calc_para_str_list = run_statmorph_init_calc_para_str_list(threads, calc_cas, calc_g_m20, calc_shape_asymmetry,
-															   calc_mid, calc_multiplicity, calc_color_dispersion, calc_g2)
+															   calc_mid, calc_multiplicity, calc_color_dispersion,
+															   calc_g2)
 	logger.info("进入大图模式")
 	sextractor_table: Table = Table.read(catalog_file, format="ascii")
 	center_table: Optional[Table] = None
@@ -394,21 +398,16 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 
 	start_time = time.time()
 
-	if "image_hdu_index" not in run_rows.colnames:
-		run_rows["image_hdu_index"] = 0
-	if "noise_hdu_index" not in run_rows.colnames:
-		run_rows["noise_hdu_index"] = 0
-	if "mask_hdu_index" not in run_rows.colnames:
-		run_rows["mask_hdu_index"] = 0
-	if "cmp_hdu_index" not in run_rows.colnames:
-		run_rows["cmp_hdu_index"] = 0
+	hdu_index_colname_list = ["image_hdu_index", "noise_hdu_index", "mask_hdu_index", "cmp_hdu_index"]
+	file_name_colname_list = ["noise_file_name", "mask_file_name", "cmp_file_name", "segmap_file_name"]
 
-	if "noise_file_name" not in run_rows.colnames:
-		run_rows["noise_file_name"] = None
-	if "mask_file_name" not in run_rows.colnames:
-		run_rows["mask_file_name"] = None
-	if "cmp_file_name" not in run_rows.colnames:
-		run_rows["cmp_file_name"] = None
+	for hdu_index_name in hdu_index_colname_list:
+		if hdu_index_name not in run_rows.colnames:
+			run_rows[hdu_index_name] = 0
+
+	for file_name_colname in file_name_colname_list:
+		if file_name_colname not in run_rows.colnames:
+			run_rows[file_name_colname] = None
 
 	if (threads > 1) and (len(run_rows) > 1):
 		run_rows_list = table_split(run_rows, 20000)
@@ -429,6 +428,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 				result_iter = executor.map(work_with_individual_file, run_rows_block["label"],
 										   run_rows_block["image_file_name"], run_rows_block["image_hdu_index"],
 										   run_rows_block["noise_file_name"], run_rows_block["noise_hdu_index"],
+										   run_rows_block["segmap_file_name"], run_rows_block["segmap_hdu_index"],
 										   run_rows_block["mask_file_name"], run_rows_block["mask_hdu_index"],
 										   run_rows_block["cmp_file_name"], run_rows_block["cmp_hdu_index"],
 										   output_image_dir_list, set_centroid_list,
@@ -444,6 +444,7 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 			result = work_with_individual_file(label,
 											   row["image_file_name"], row["image_hdu_index"],
 											   row["noise_file_name"], row["noise_hdu_index"],
+											   row["segmap_file_name"], row["segmap_hdu_index"],
 											   row["mask_file_name"], row["mask_hdu_index"],
 											   row["cmp_file_name"], row["cmp_hdu_index"],
 											   output_image_dir, set_centroid,
@@ -528,7 +529,7 @@ help_str = """SExtractor-Statmorph_csst 简化合并版使用说明
 	-S, --sextractor_back_size
 	-F, --sextractor_back_filtersize
 	-P, --sextractor_backphoto_thick
-	-r, --stamp_catalog 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建，stamp_catalog文件必须包含id，image_file_name，image_hdu_index，(noise_file_name，noise_hdu_index，cmp_file_name，cmp_hdu_index)列，如果不指定hdu_index，则默认为0。指定该项后，image_file、measure_file、wht_file、sextractor_work_dir、skip_sextractor将全部失效。
+	-r, --stamp_catalog 如果填写则进入stamp模式，每个星系具有独立的stamp的fits文件，而不是从segmap中创建，stamp_catalog文件必须包含id，image_file_name，image_hdu_index，(segmap_file_name，segmap_hdu_index,noise_file_name，noise_hdu_index，cmp_file_name，cmp_hdu_index)列，如果不指定hdu_index，则默认为0。指定该项后，image_file、measure_file、wht_file、sextractor_work_dir、skip_sextractor将全部失效。
 	-a, --output_image_dir=输出示意图的文件夹，若为null则不输出示意图
 	-q, --save_stamp_dir=输出stamp图的文件夹，若为null则不输出stamp图，只在大图模式中生效。stamp模式下因为输入的就是stamp因此没必要输出。
 	-f, --ignore_mag_fainter_than=忽略测量视星等比该星等更高的源
@@ -685,7 +686,7 @@ def main(argv) -> int:
 					  save_file, threads, run_percentage, run_specified_label, ignore_mag_fainter_than,
 					  ignore_class_star_greater_than, calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid,
 					  calc_multiplicity, calc_color_dispersion, image_compare_file, calc_g2,
-					  output_image_dir,save_stamp_dir,
+					  output_image_dir, save_stamp_dir,
 					  center_file, use_vanilla)
 	else:
 		run_statmorph_stamp(stamp_catalog, save_file, threads, run_percentage, run_specified_label, calc_cas,
