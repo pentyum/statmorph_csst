@@ -398,8 +398,8 @@ def run_statmorph_stamp(catalog_file: str, save_file: str, threads: int, run_per
 
 	start_time = time.time()
 
-	hdu_index_colname_list = ["image_hdu_index", "noise_hdu_index", "mask_hdu_index", "cmp_hdu_index"]
-	file_name_colname_list = ["noise_file_name", "mask_file_name", "cmp_file_name", "segmap_file_name"]
+	hdu_index_colname_list = ["image_hdu_index", "noise_hdu_index", "segmap_hdu_index", "mask_hdu_index", "cmp_hdu_index"]
+	file_name_colname_list = ["noise_file_name", "segmap_file_name", "mask_file_name", "cmp_file_name"]
 
 	for hdu_index_name in hdu_index_colname_list:
 		if hdu_index_name not in run_rows.colnames:
