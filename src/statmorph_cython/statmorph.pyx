@@ -824,7 +824,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		输入的原始图像引用
 		"""
 
-		if mask_file_name is not "None":
+		if mask_file_name != "None":
 			self._mask_fits = fits.open(mask_file_name)
 		else:
 			self._mask_fits = None
@@ -832,7 +832,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		输入的segmentation map引用
 		"""
 
-		if segmap_file_name is not "None":
+		if segmap_file_name != "None":
 			self._segmap_fits = fits.open(segmap_file_name)
 		else:
 			self._segmap_fits = None
