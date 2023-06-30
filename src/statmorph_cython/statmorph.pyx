@@ -890,7 +890,7 @@ cdef class IndividualBaseInfo(BaseInfo):
 		if self._segmap_fits is None:
 			self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=np.int32)
 		else:
-			self._segmap_stamp = self._segmap_fits[segmap_hdu_index].data
+			self._segmap_stamp =  cnp.PyArray_Cast(self._segmap_fits[segmap_hdu_index].data, cnp.NPY_INT32)
 		"""
 		segmap在该星系处的切片
 		"""
