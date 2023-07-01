@@ -572,7 +572,6 @@ cdef class BaseInfo(MorphInfo):
 		ny = self.ny_stamp
 		nx = self.nx_stamp
 		if (yc < 0) or (yc >= ny) or (xc < 0) or (xc >= nx):
-
 			warnings.warn('%d: Centroid is out-of-range. Fixing at center of postage stamp (bad!).'%self.label, AstropyUserWarning)
 			yc = ny / 2.0
 			xc = nx / 2.0
