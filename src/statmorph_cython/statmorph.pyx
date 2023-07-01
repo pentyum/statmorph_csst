@@ -239,7 +239,11 @@ cdef class BaseInfo(MorphInfo):
 		"""
 
 		if set_centroid == (-1, -1):
-			self._centroid = self.get_centroid()
+			try:
+				self._centroid = self.get_centroid()
+			except Exception as e:
+				print(e.__traceback__)
+				return
 		else:
 			self._centroid = set_centroid
 		"""
