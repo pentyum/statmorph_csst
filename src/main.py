@@ -314,7 +314,6 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 		# Spawn some processes to do some work
 		with ProcessPoolExecutor(threads) as exe:
 			fs = []
-			label_list = []
 			for label in run_labels:
 				try:
 					label_index = segm_image.get_index(label)
@@ -329,21 +328,11 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
 							   shape, shm_img_cmp_name, output_image_dir, save_stamp_dir, set_centroid, set_asym_center,
 							   img_dtype, segm_dtype, morph_provider))
-				label_list.append(label)
-			i = 0
+
 			for result in as_completed(fs):
-				try:
-					result_paras = result.result()
-					line = result_format % result_paras
-				except Exception as e:
-					logger.info("label=%d" % label_list[i])
-					logger.error(e)
-					logger.info("result_format=%s" % result_format)
-					logger.info("result_paras=%s" % result_paras)
-					i = i + 1
-					continue
+				result_paras = result.result()
+				line = result_format % result_paras
 				result_all.append(line)
-				i = i + 1
 
 	logger.info(f'用时: {time.time() - start_time:.2f}s')
 
