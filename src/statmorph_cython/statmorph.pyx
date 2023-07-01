@@ -3,7 +3,6 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: initializedcheck=False
-import traceback
 import warnings
 
 from astropy.io import fits
@@ -591,8 +590,8 @@ cdef class BaseInfo(MorphInfo):
 			#return np.array([xc, yc])
 			return xc, yc
 		except Exception as e:
-			print("centroid错误")
-			traceback.print_exc()
+			print("centroid错误,%d"%self.label)
+			print(e)
 			return 0,0
 
 	cdef double get_xc_centroid(self):
