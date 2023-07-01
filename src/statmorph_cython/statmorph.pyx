@@ -239,11 +239,7 @@ cdef class BaseInfo(MorphInfo):
 		"""
 
 		if set_centroid == (-1, -1):
-			try:
-				self._centroid = self.get_centroid()
-			except Exception as e:
-				print(e.__traceback__)
-				return
+			self._centroid = self.get_centroid()
 		else:
 			self._centroid = set_centroid
 		"""
@@ -564,35 +560,40 @@ cdef class BaseInfo(MorphInfo):
 		``_slice_stamp``.
 		可能产生Base警告0,1
 		"""
-		cdef int ny, nx
-		cdef cnp.ndarray image = self._cutout_stamp_maskzeroed_no_bg
-		# cdef cnp.ndarray image = np.float64(self._cutout_stamp_maskzeroed_no_bg)  # skimage wants double
+		try:
+			cdef int ny, nx
+			cdef cnp.ndarray image = self._cutout_stamp_maskzeroed_no_bg
+			# cdef cnp.ndarray image = np.float64(self._cutout_stamp_maskzeroed_no_bg)  # skimage wants double
 
-		# Calculate centroid
-		cdef double[:,:] M = skimage.measure.moments(image, order=1)
-		assert M[0, 0] > 0  # already checked by constructor
-		cdef double yc = M[1, 0] / M[0, 0]
-		cdef double xc = M[0, 1] / M[0, 0]
+			# Calculate centroid
+			cdef double[:,:] M = skimage.measure.moments(image, order=1)
+			assert M[0, 0] > 0  # already checked by constructor
+			cdef double yc = M[1, 0] / M[0, 0]
+			cdef double xc = M[0, 1] / M[0, 0]
 
-		ny = self.ny_stamp
-		nx = self.nx_stamp
-		if (yc < 0) or (yc >= ny) or (xc < 0) or (xc >= nx):
+			ny = self.ny_stamp
+			nx = self.nx_stamp
+			if (yc < 0) or (yc >= ny) or (xc < 0) or (xc >= nx):
 
-			warnings.warn('%d: Centroid is out-of-range. Fixing at center of ' +
-						  'postage stamp (bad!).'%self.label, AstropyUserWarning)
-			yc = ny / 2.0
-			xc = nx / 2.0
-			self.flags.set_flag_true(0) # unusual
+				warnings.warn('%d: Centroid is out-of-range. Fixing at center of ' +
+							  'postage stamp (bad!).'%self.label, AstropyUserWarning)
+				yc = ny / 2.0
+				xc = nx / 2.0
+				self.flags.set_flag_true(0) # unusual
 
-		# Print warning if centroid is masked:
-		cdef int ic = int(round(yc))
-		cdef int jc = int(round(xc))
-		if self._cutout_stamp_maskzeroed[ic][jc] == 0.0:
-			warnings.warn('%d: Centroid (%d,%d) is masked.'%(self.label, jc, ic), AstropyUserWarning)
-			self.flags.set_flag_true(1)
+			# Print warning if centroid is masked:
+			cdef int ic = int(round(yc))
+			cdef int jc = int(round(xc))
+			if self._cutout_stamp_maskzeroed[ic][jc] == 0.0:
+				warnings.warn('%d: Centroid (%d,%d) is masked.'%(self.label, jc, ic), AstropyUserWarning)
+				self.flags.set_flag_true(1)
 
-		#return np.array([xc, yc])
-		return xc, yc
+			#return np.array([xc, yc])
+			return xc, yc
+		except Exception as e:
+			print("centroid错误")
+			print(e.__traceback__)
+			return 0,0
 
 	cdef double get_xc_centroid(self):
 		"""
