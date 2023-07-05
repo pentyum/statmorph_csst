@@ -411,7 +411,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 cdef CASInfo calc_cas(StampMorphology base_info, (double, double) set_asym_center):
 	cdef CASInfo cas_info = CASInfo()
 
-	check_rp_beyond_edge(base_info._xc_stamp[0], base_info._yc_stamp, base_info._rpetro_circ_centroid, base_info._cutout_stamp.shape, cas_info.flags, base_info.constants)
+	check_rp_beyond_edge(base_info._xc_stamp, base_info._yc_stamp, base_info._rpetro_circ_centroid, base_info._cutout_stamp.shape, cas_info.flags, base_info.constants)
 	"""
 	检查1.5倍rp是否超出图像边缘
 	"""
