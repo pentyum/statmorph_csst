@@ -309,9 +309,10 @@ cdef class StampMorphology(MorphInfo):
 
 	cdef void calc_morphology_uncertainties(self, int times):
 		cdef int i
+		cdef cnp.ndarray[double,ndim=2] noise, new_stamp
 		for i in range(times):
 			noise = self.generate_noise_stamp()
-			new_stamp = None
+			new_stamp = self._cutout_stamp + noise
 		return
 
 	cdef void _check_segmaps(self):
