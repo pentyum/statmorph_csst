@@ -496,18 +496,6 @@ cdef class StampMorphology(MorphInfo):
 		return xc, yc
 
 
-	cdef double get_xc_centroid(self):
-		"""
-		The x-coordinate of the centroid, relative to the original image.
-		"""
-		return self._centroid[0] + self.xmin_stamp
-
-	cdef double get_yc_centroid(self):
-		"""
-		The y-coordinate of the centroid, relative to the original image.
-		"""
-		return self._centroid[1] + self.ymin_stamp
-
 	cdef double get_diagonal_distance(self):
 		"""
 		Return the diagonal distance (in pixels) of the postage stamp.
@@ -601,8 +589,8 @@ cdef class StampMorphology(MorphInfo):
 		self.compare_info = CompareInfo()
 		self.g2 = G2Info(cnp.PyArray_ZEROS(2, [1,1], cnp.NPY_DOUBLE, 0), self.constants)
 
-	cdef tuple get_image_extent(self):
-		return None
+	cdef (int, int, int, int) get_image_extent(self):
+		return (0, self.nx_stamp, 0, self.ny_stamp)
 
 	cdef void save_image(self):
 		"""
@@ -614,15 +602,13 @@ cdef class StampMorphology(MorphInfo):
 		cdef cnp.ndarray sm_all = cnp.PyArray_Where(self._segmap_stamp == self.label, 2,
 													cnp.PyArray_Where(self._segmap_stamp == 0, 0, 1))
 
-		cdef int stamp_x, stamp_y
-		cdef tuple extent = self.get_image_extent()
+		cdef int xmin_stamp, xmax_stamp, ymin_stamp, ymax_stamp
+		cdef (int, int, int, int) extent = self.get_image_extent()
 
-		if extent is None:
-			stamp_x = 0
-			stamp_y = 0
-		else:
-			stamp_x = extent[0]
-			stamp_y = extent[2]
+		xmin_stamp = extent[0]
+		xmax_stamp = extent[1]
+		ymin_stamp = extent[2]
+		ymax_stamp = extent[3]
 
 		cdef int rec_x, rec_y, rec_x_length, rec_y_length
 		if self.nx_stamp < 1000 and self.ny_stamp < 1000:
@@ -639,8 +625,8 @@ cdef class StampMorphology(MorphInfo):
 		plt.imshow(self._cutout_stamp, cmap="gray", origin="lower", extent=extent)
 		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 90)
 		plt.clim(0, vmax)
-		plt.xlim(self.xmin_stamp, self.xmax_stamp)
-		plt.ylim(self.ymin_stamp, self.ymax_stamp)
+		plt.xlim(xmin_stamp, xmax_stamp)
+		plt.ylim(ymin_stamp, ymax_stamp)
 
 		if self.cas is not None:
 			if self.cas._slice_skybox is not None:
@@ -652,7 +638,7 @@ cdef class StampMorphology(MorphInfo):
 				rec_sky = plt.Rectangle((rec_x, rec_y), rec_x_length, rec_y_length, edgecolor="white", linewidth=2,
 										fill=False)
 
-			asym_center = (self.cas.xc_asymmetry, self.cas.yc_asymmetry)
+			asym_center = (self.cas._asymmetry_center[0]+xmin_stamp, self.cas._asymmetry_center[1]+ymin_stamp)
 
 			circ_15rp = plt.Circle(asym_center, self.constants.petro_extent_cas * self.cas.rpetro_circ,
 								   edgecolor="white",
@@ -668,7 +654,10 @@ cdef class StampMorphology(MorphInfo):
 			plt.gca().add_patch(circ_r80)
 			plt.gca().add_patch(circ_r20)
 
-		plt.scatter(self.xc_centroid, self.yc_centroid, s=10, color="olive",
+		cdef int xc_centroid = self._xc_stamp+xmin_stamp
+		cdef int yc_centroid = self._yc_stamp+ymin_stamp
+
+		plt.scatter(xc_centroid, yc_centroid, s=10, color="olive",
 					label="centroid (%.1f,%.1f)" % tuple(self._centroid))
 		plt.contour(self._mask_stamp_no_bg, colors="green", extent=extent, levels=[0.5])
 
@@ -818,12 +807,12 @@ cdef class BigImageMorphology(StampMorphology):
 
 		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
-		self.xc_centroid = self._centroid[0]
+		self.xc_centroid = self.get_xc_centroid()
 		"""
 		星系光度质心的x坐标，相对于整个图像的
 		"""
 
-		self.yc_centroid = self._centroid[1]
+		self.yc_centroid = self.get_yc_centroid()
 		"""
 		星系光度质心的y坐标，相对于整个图像的
 		"""
@@ -899,6 +888,18 @@ cdef class BigImageMorphology(StampMorphology):
 		"""
 		return self.ymax_stamp + 1 - self.ymin_stamp
 
+	cdef double get_xc_centroid(self):
+		"""
+		The x-coordinate of the centroid, relative to the original image.
+		"""
+		return self._centroid[0] + self.xmin_stamp
+
+	cdef double get_yc_centroid(self):
+		"""
+		The y-coordinate of the centroid, relative to the original image.
+		"""
+		return self._centroid[1] + self.ymin_stamp
+
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid,
 									bint calc_multiplicity,
 									bint calc_color_dispersion, bint calc_g2, (double, double) set_asym_center):
@@ -914,7 +915,7 @@ cdef class BigImageMorphology(StampMorphology):
 		hdulist.writeto("%s/%d.fits" % (self.save_stamp_dir, self.label), overwrite=True)
 		hdulist.close()
 
-	cdef tuple get_image_extent(self):
+	cdef (int, int, int, int) get_image_extent(self):
 		cdef int stamp_x = self._slice_stamp[1].start
 		cdef int stamp_y = self._slice_stamp[0].start
 		return stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop

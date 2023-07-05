@@ -98,10 +98,6 @@ cdef class StampMorphology(MorphInfo):
 
 	cdef (double, double) get_centroid(self)
 
-	cdef double get_xc_centroid(self)
-
-	cdef double get_yc_centroid(self)
-
 	cdef double get_diagonal_distance(self)
 
 	cdef double get_rpetro_circ_centroid(self)
@@ -114,7 +110,7 @@ cdef class StampMorphology(MorphInfo):
 
 	cdef void _abort_calculations(self)
 
-	cdef tuple get_image_extent(self)
+	cdef (int, int, int, int) get_image_extent(self)
 
 	cdef void save_image(self)
 
@@ -150,6 +146,10 @@ cdef class BigImageMorphology(StampMorphology):
 	cdef int get_xmax_stamp(self)
 
 	cdef int get_ymax_stamp(self)
+
+	cdef double get_xc_centroid(self)
+
+	cdef double get_yc_centroid(self)
 
 	cdef void save_stamp(self)
 
