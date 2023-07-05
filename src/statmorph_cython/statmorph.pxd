@@ -118,8 +118,6 @@ cdef class StampMorphology:
 
 	cdef void save_image(self)
 
-	cdef void save_stamp(self)
-
 	cdef void dump_stamps(self)
 
 
@@ -152,6 +150,8 @@ cdef class BigImageMorphology(StampMorphology):
 	cdef int get_xmax_stamp(self)
 
 	cdef int get_ymax_stamp(self)
+
+	cdef void save_stamp(self)
 
 
 cdef class FileStampMorphology(StampMorphology):
