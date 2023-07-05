@@ -654,8 +654,8 @@ cdef class StampMorphology(MorphInfo):
 			plt.gca().add_patch(circ_r80)
 			plt.gca().add_patch(circ_r20)
 
-		cdef int xc_centroid = self._xc_stamp+xmin_stamp
-		cdef int yc_centroid = self._yc_stamp+ymin_stamp
+		cdef double xc_centroid = self._xc_stamp + xmin_stamp
+		cdef double yc_centroid = self._yc_stamp + ymin_stamp
 
 		plt.scatter(xc_centroid, yc_centroid, s=10, color="olive",
 					label="centroid (%.1f,%.1f)" % tuple(self._centroid))
