@@ -900,7 +900,7 @@ cdef class BigImageMorphology(StampMorphology):
 	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid,
 									bint calc_multiplicity,
 									bint calc_color_dispersion, bint calc_g2, (double, double) set_asym_center):
-		super().calculate_morphology(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,calc_color_dispersion, calc_g2,set_asym_center)
+		super(BigImageMorphology, self).calculate_morphology(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,calc_color_dispersion, calc_g2,set_asym_center)
 		if self.save_stamp_dir is not None:
 			self.save_stamp()
 
