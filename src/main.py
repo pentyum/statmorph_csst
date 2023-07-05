@@ -311,10 +311,32 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 
 		logger.info("全部复制完成")
 
-		# Spawn some processes to do some work
-		with ProcessPoolExecutor(threads) as exe:
-			fs = []
+		if threads > 1:
+			# Spawn some processes to do some work
+			with ProcessPoolExecutor(threads) as exe:
+				fs = []
+				for label in run_labels:
+					try:
+						label_index = segm_image.get_index(label)
+					except ValueError as e:
+						logger.warning(e)
+						continue
+					segm_slice = segm_image.slices[label_index]
+
+					set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
+
+					fs.append(
+						exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
+								   shape, shm_img_cmp_name, output_image_dir, save_stamp_dir, set_centroid, set_asym_center,
+								   img_dtype, segm_dtype, morph_provider))
+
+				for result in as_completed(fs):
+					result_paras = result.result()
+					line = result_format % result_paras
+					result_all.append(line)
+		else:
 			for label in run_labels:
+				result_list = []
 				try:
 					label_index = segm_image.get_index(label)
 				except ValueError as e:
@@ -324,15 +346,14 @@ def run_statmorph(catalog_file: str, image_file: str, segmap_file: str, noise_fi
 
 				set_centroid, set_asym_center = get_center_in_center_table(center_table, label, calc_cas)
 
-				fs.append(
-					exe.submit(work_with_shared_memory, shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
+				result_list.append(
+					work_with_shared_memory(shm_img.name, shm_segm.name, shm_noise_name, segm_slice, label,
 							   shape, shm_img_cmp_name, output_image_dir, save_stamp_dir, set_centroid, set_asym_center,
 							   img_dtype, segm_dtype, morph_provider))
 
-			for result in as_completed(fs):
-				result_paras = result.result()
-				line = result_format % result_paras
-				result_all.append(line)
+				for result_paras in result_list:
+					line = result_format % result_paras
+					result_all.append(line)
 
 	logger.info(f'用时: {time.time() - start_time:.2f}s')
 
