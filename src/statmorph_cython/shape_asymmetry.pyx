@@ -266,7 +266,7 @@ cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_as
 
 	return asym
 
-cdef ShapeAsymmetryInfo calc_shape_asymmetry(BaseInfo base_info, CASInfo cas, GiniM20Info g_m20):
+cdef ShapeAsymmetryInfo calc_shape_asymmetry(StampMorphology base_info, CASInfo cas, GiniM20Info g_m20):
 	cdef ShapeAsymmetryInfo shape_asym_info = ShapeAsymmetryInfo()
 
 	cdef cnp.ndarray segmap = segmap_shape_asym(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.rpetro_ellip, base_info._mask_stamp, cas._slice_skybox, base_info._mask_stamp_no_bg, shape_asym_info.flags, base_info.constants)
