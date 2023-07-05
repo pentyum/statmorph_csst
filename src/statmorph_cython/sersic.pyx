@@ -13,7 +13,7 @@ from libc.math cimport fabs, sqrt
 
 from .flags cimport Flags
 from .photutils_simplified cimport EllipticalAnnulus, _aperture_mean_nomask
-from .statmorph cimport BaseInfo, SersicInfo, CASInfo, GiniM20Info, ShapeAsymmetryInfo
+from .statmorph cimport StampMorphology, SersicInfo, CASInfo, GiniM20Info, ShapeAsymmetryInfo
 from .constants_setting cimport ConstantsSetting
 
 import numpy as np
@@ -147,7 +147,7 @@ cdef _sersic_model(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, cnp.ndarr
 
 	return sersic_model
 
-cdef SersicInfo calc_sersic(BaseInfo base_info, CASInfo cas, GiniM20Info g_m20_info, ShapeAsymmetryInfo shape_asym_info):
+cdef SersicInfo calc_sersic(StampMorphology base_info, CASInfo cas, GiniM20Info g_m20_info, ShapeAsymmetryInfo shape_asym_info):
 	cdef SersicInfo sersic_info = SersicInfo()
 	cdef double ellipticity_asymmetry = _ellipticity_generic(g_m20_info.eigvals_asymmetry)
 

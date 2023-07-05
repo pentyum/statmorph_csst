@@ -16,7 +16,7 @@ import scipy.optimize as opt
 from numpy.math cimport INFINITY, isfinite
 from libc.math cimport sqrt, pi
 
-from .statmorph cimport BaseInfo, MIDInfo
+from .statmorph cimport StampMorphology, MIDInfo
 from .constants_setting cimport ConstantsSetting
 from .flags cimport Flags
 
@@ -435,7 +435,7 @@ cdef double get_deviation(cnp.ndarray[double,ndim=2] _cutout_mid, cnp.ndarray _s
 
 	return D
 
-cdef MIDInfo calc_mid(BaseInfo base_info):
+cdef MIDInfo calc_mid(StampMorphology base_info):
 	cdef MIDInfo mid_info = MIDInfo()
 
 	cdef cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed_no_bg_nonnegative = get_cutout_stamp_maskzeroed_no_bg_nonnegative(base_info._cutout_stamp_maskzeroed_no_bg)

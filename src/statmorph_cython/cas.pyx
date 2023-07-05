@@ -13,7 +13,7 @@ import skimage.transform
 from libc.math cimport fabs, log10, sqrt, round
 from numpy.math cimport isnan, isfinite
 
-from .statmorph cimport BaseInfo, CASInfo
+from .statmorph cimport StampMorphology, CASInfo
 from .constants_setting cimport ConstantsSetting
 from .petrosian cimport _rpetro_circ_generic
 from .photutils_simplified cimport CircularAperture, CircularAnnulus, _aperture_area, do_photometry, _radius_at_fraction_of_total_circ
@@ -408,7 +408,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 
 	return S
 
-cdef CASInfo calc_cas(BaseInfo base_info, (double, double) set_asym_center):
+cdef CASInfo calc_cas(StampMorphology base_info, (double, double) set_asym_center):
 	cdef CASInfo cas_info = CASInfo()
 
 	check_rp_beyond_edge(base_info.xc_centroid, base_info.yc_centroid, base_info._rpetro_circ_centroid, base_info._image.shape, cas_info.flags, base_info.constants)

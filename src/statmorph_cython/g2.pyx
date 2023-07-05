@@ -8,7 +8,7 @@ cimport numpy as cnp
 from numpy.math cimport NAN
 from libc.math cimport isnan, pow, sqrt, pi, floor, fabs
 
-from .statmorph cimport BaseInfo, G2Info
+from .statmorph cimport StampMorphology, G2Info
 
 import numpy as np
 from scipy import signal
@@ -330,7 +330,7 @@ cdef int _get_contour_count(cnp.ndarray[double,ndim=2] image):
 
 	return contourMask.sum()
 
-cdef G2Info get_G2(BaseInfo base_info, (double,double) _asymmetry_center):
+cdef G2Info get_G2(StampMorphology base_info, (double,double) _asymmetry_center):
 	cdef cnp.ndarray[double,ndim=2] image = _recenter_image(base_info._cutout_stamp_maskzeroed, _asymmetry_center)
 	# image = np.float32(image)
 

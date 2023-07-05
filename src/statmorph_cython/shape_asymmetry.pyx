@@ -19,7 +19,7 @@ from .cas cimport simplified_rot180
 from .constants_setting cimport ConstantsSetting
 from .photutils_simplified cimport _radius_at_fraction_of_total_circ, _radius_at_fraction_of_total_ellip, CircularAnnulus, ApertureMask, do_photometry, CircularAperture
 from .flags cimport Flags
-from .statmorph cimport BaseInfo, ShapeAsymmetryInfo, CASInfo, GiniM20Info
+from .statmorph cimport StampMorphology, ShapeAsymmetryInfo, CASInfo, GiniM20Info
 
 cnp.import_array()
 

@@ -21,12 +21,12 @@ import numpy as np
 
 cimport numpy as cnp
 from libc.math cimport log10
-from libc.time cimport clock, CLOCKS_PER_SEC
+import time
 
 cnp.import_array()
 
 cdef double multiply_calculate_help(cnp.ndarray[double,ndim=2] image, int timeout=5):
-	cdef long start_time = clock()
+	cdef long start_time = time.time()
 	cdef double cost_time
 	cdef int i, j
 	cdef cnp.ndarray multiply, distances
@@ -42,7 +42,7 @@ cdef double multiply_calculate_help(cnp.ndarray[double,ndim=2] image, int timeou
 			#multiply = cnp.PyArray_Where(np.isfinite(multiply), multiply, 0)
 			#multiply_list[i, j] = np.sum(multiply)
 			multiply_list.append(multiply)
-		cost_time = <double> (clock() - start_time) / CLOCKS_PER_SEC
+		cost_time = time.time() - start_time
 		if cost_time > timeout:
 			warnings.warn("[multiply] timeout (%d)" % timeout)
 			return -99

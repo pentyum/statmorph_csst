@@ -17,7 +17,7 @@ from .petrosian cimport _rpetro_ellip_generic
 from .photutils_simplified cimport EllipticalAnnulus, _aperture_mean_nomask
 from .array_utils cimport create_22_mat, sum_1d_d, cumsum_1d_d
 from .flags cimport Flags
-from .statmorph cimport BaseInfo, GiniM20Info
+from .statmorph cimport StampMorphology, GiniM20Info
 from .constants_setting cimport ConstantsSetting
 
 cnp.import_array()
@@ -284,7 +284,7 @@ cdef double get_gini_m20_merger(double gini, double m20):
 
 	return 0.139 * m20 + 0.990 * gini - 0.327
 
-cdef GiniM20Info calc_g_m20(BaseInfo base_info, (double, double) asymmetry_center):
+cdef GiniM20Info calc_g_m20(StampMorphology base_info, (double, double) asymmetry_center):
 	cdef GiniM20Info g_m20_info = GiniM20Info()
 	cdef double[:,:] _covariance_asymmetry = _covariance_generic(base_info._cutout_stamp_maskzeroed_no_bg, asymmetry_center, g_m20_info.flags)
 	g_m20_info.eigvals_asymmetry = _eigvals_generic(_covariance_asymmetry, g_m20_info.flags)

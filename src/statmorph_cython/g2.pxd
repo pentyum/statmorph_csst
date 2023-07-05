@@ -1,7 +1,7 @@
 # cython: language_level=3
 
 cimport numpy as cnp
-from .statmorph cimport BaseInfo, G2Info
+from .statmorph cimport StampMorphology, G2Info
 
 cnp.import_array()
 
@@ -57,4 +57,4 @@ cdef class G2Calculator:
 	cdef tuple get_g2(self)
 
 cdef int _get_contour_count(cnp.ndarray[double,ndim=2] image)
-cdef G2Info get_G2(BaseInfo base_info, (double, double) _asymmetry_center)
+cdef G2Info get_G2(StampMorphology base_info, (double, double) _asymmetry_center)
