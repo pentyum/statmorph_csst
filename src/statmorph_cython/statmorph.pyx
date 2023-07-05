@@ -31,6 +31,7 @@ cnp.import_array()
 
 cdef class MorphInfo:
 	def __init__(self):
+		print("开始MorphInfo")
 		# These flags will be modified during the calculations:
 		self.flags = Flags()  # attempts to flag bad measurements
 		"""
