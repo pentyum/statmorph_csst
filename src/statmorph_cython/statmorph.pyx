@@ -31,7 +31,6 @@ cnp.import_array()
 
 cdef class MorphInfo:
 	def __init__(self):
-		print("开始MorphInfo")
 		# These flags will be modified during the calculations:
 		self.flags = Flags()  # attempts to flag bad measurements
 		"""
@@ -65,13 +64,10 @@ cdef class StampMorphology(MorphInfo):
 				 cnp.ndarray[double,ndim=2] weightmap_stamp_old=None,
 				 double gain=-1,  cnp.ndarray[double,ndim=2] image_compare_stamp=None,
 				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
-		print("开始创建stampmorphology")
 		super().__init__()
 		self.logger = None
 		self.constants = ConstantsSetting()
 		self.constants.label = label
-
-		print("开始设置stamp")
 
 		self.output_image_dir = output_image_dir
 		"""
@@ -1001,17 +997,8 @@ cdef class FileStampMorphology(StampMorphology):
 
 		if self._image_compare_fits is not None:
 			image_compare_stamp = cnp.PyArray_Cast(self._image_compare_fits[image_compare_hdu_index].data, cnp.NPY_DOUBLE)
-
-		print("开始stampmorphology")
-		print(label)
-		print(cutout_stamp)
-		print(segmap_stamp)
-		print(mask_stamp_old)
-		print(weightmap_stamp_old)
-		print(gain)
-		print(image_compare_stamp)
-		print(output_image_dir)
-		print(set_centroid)
+		else:
+			image_compare_stamp = None
 
 		super(FileStampMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
