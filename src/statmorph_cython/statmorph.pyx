@@ -66,7 +66,6 @@ cdef class StampMorphology(MorphInfo):
 				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
 		super().__init__()
 		self.logger = None
-		self.label = label
 		self.constants = ConstantsSetting()
 		self.constants.label = label
 
@@ -128,6 +127,8 @@ cdef class StampMorphology(MorphInfo):
 		"""
 
 		self.image_compare_stamp = self.image_compare_stamp
+
+		print("stamp设置完成")
 
 		self._check_stamp_size()
 
@@ -996,6 +997,7 @@ cdef class FileStampMorphology(StampMorphology):
 		if self._image_compare_fits is not None:
 			image_compare_stamp = cnp.PyArray_Cast(self._image_compare_fits[image_compare_hdu_index].data, cnp.NPY_DOUBLE)
 
+		print("开始stampmorphology")
 		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
 
