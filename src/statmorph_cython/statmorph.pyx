@@ -64,7 +64,7 @@ cdef class StampMorphology(MorphInfo):
 				 cnp.ndarray[double,ndim=2] weightmap_stamp_old=None,
 				 double gain=-1,  cnp.ndarray[double,ndim=2] image_compare_stamp=None,
 				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
-		super().__init__()
+		MorphInfo.__init__(self)
 		self.logger = None
 		self.constants = ConstantsSetting()
 		self.constants.label = label
@@ -802,7 +802,7 @@ cdef class BigImageMorphology(StampMorphology):
 		图像切片的y终点在整幅图像中的下标
 		"""
 
-		super(BigImageMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
 		self.xc_centroid = self.get_xc_centroid()
 		"""
@@ -997,7 +997,7 @@ cdef class FileStampMorphology(StampMorphology):
 		else:
 			image_compare_stamp = None
 
-		super(FileStampMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
 
 	cpdef void close_all(self):
@@ -1059,7 +1059,7 @@ cdef class MIDInfo(MorphInfo):
 
 cdef class CompareInfo(MorphInfo):
 	def __init__(self):
-		super().__init__()
+		MorphInfo.__init__(self)
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_nan_compare(self):
 		"""
@@ -1152,7 +1152,7 @@ cdef class G2Info(MorphInfo):
 	"""
 
 	def __init__(self, cnp.ndarray[double, ndim=2] segmented_image, ConstantsSetting constants):
-		super().__init__()
+		MorphInfo.__init__(self)
 		if segmented_image.shape[0] != segmented_image.shape[1]:
 			raise ValueError("array must be square")
 		if segmented_image.size == 0:
@@ -1225,7 +1225,7 @@ cdef class G2Info(MorphInfo):
 
 cdef class ShapeAsymmetryInfo(MorphInfo):
 	def __init__(self):
-		super().__init__()
+		MorphInfo.__init__(self)
 
 	def get_values(self):
 		return [self.rhalf_circ, self.rhalf_ellip, self.shape_asymmetry, self.runtime, self.flags.value()]
