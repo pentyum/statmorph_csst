@@ -69,6 +69,8 @@ cdef class StampMorphology(MorphInfo):
 		self.constants = ConstantsSetting()
 		self.constants.label = label
 
+		print("开始设置stamp")
+
 		self.output_image_dir = output_image_dir
 		"""
 		图像输出文件夹，None表示不输出
