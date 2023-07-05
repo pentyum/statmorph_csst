@@ -630,8 +630,8 @@ cdef class StampMorphology(MorphInfo):
 
 		if self.cas is not None:
 			if self.cas._slice_skybox is not None:
-				rec_x = stamp_x + self.cas._slice_skybox[1].start
-				rec_y = stamp_y + self.cas._slice_skybox[0].start
+				rec_x = xmin_stamp + self.cas._slice_skybox[1].start
+				rec_y = ymin_stamp + self.cas._slice_skybox[0].start
 				rec_x_length = self.cas._slice_skybox[1].stop - self.cas._slice_skybox[1].start
 				rec_y_length = self.cas._slice_skybox[0].stop - self.cas._slice_skybox[0].start
 
