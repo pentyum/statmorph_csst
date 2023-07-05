@@ -65,6 +65,7 @@ cdef class StampMorphology(MorphInfo):
 				 cnp.ndarray[double,ndim=2] weightmap_stamp_old=None,
 				 double gain=-1,  cnp.ndarray[double,ndim=2] image_compare_stamp=None,
 				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
+		print("开始创建stampmorphology")
 		super().__init__()
 		self.logger = None
 		self.constants = ConstantsSetting()
