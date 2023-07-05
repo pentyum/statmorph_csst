@@ -128,10 +128,7 @@ cdef class StampMorphology(MorphInfo):
 
 		self.image_compare_stamp = self.image_compare_stamp
 
-		print("stamp设置完成")
-
 		self._check_stamp_size()
-
 
 		self.nx_stamp = self.get_nx_stamp()
 		"""
