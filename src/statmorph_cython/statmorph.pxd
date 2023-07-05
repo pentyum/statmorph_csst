@@ -13,7 +13,7 @@ cdef class MorphInfo:
 
 	cdef void calc_runtime(self, double start)
 
-cdef class StampMorphology:
+cdef class StampMorphology(MorphInfo):
 	cdef readonly logger
 	cdef readonly int label
 	cdef ConstantsSetting constants
