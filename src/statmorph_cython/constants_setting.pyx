@@ -6,16 +6,6 @@
 
 cdef class ConstantsSetting:
 	def __init__(self):
-		self.cutout_extent = 1.5
-		"""
-		图像切片往外延伸的倍率
-		"""
-
-		self.min_cutout_size = 48
-		"""
-		最小切片大小，默认48
-		"""
-
 		self.n_sigma_outlier = 10
 		"""
 		排除几倍sigma，默认10
@@ -82,3 +72,15 @@ cdef class ConstantsSetting:
 		self.verbose = False
 
 		self.label = 0
+
+cdef class CutoutConstants:
+	def __init__(self):
+		self.cutout_extent = 1.5
+		"""
+		图像切片往外延伸的倍率
+		"""
+
+		self.min_cutout_size = 48
+		"""
+		最小切片大小，默认48
+		"""

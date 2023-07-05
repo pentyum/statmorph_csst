@@ -136,7 +136,7 @@ class StatmorphVanilla(MorphProvider):
 
 
 class StatmorphCython(MorphProvider):
-	def _calc(self, morph: statmorph.BaseInfo, set_asym_center: Tuple[float, float]):
+	def _calc(self, morph: statmorph.StampMorphology, set_asym_center: Tuple[float, float]):
 		if not morph.flag_catastrophic:
 			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_shape_asymmetry, self.calc_mid, self.calc_multiplicity,
 									   self.calc_color_dispersion, self.calc_g2,
@@ -167,7 +167,7 @@ class StatmorphCython(MorphProvider):
 						   cmp_file_name: Optional[str], cmp_hdu_index: Optional[int],
 						   output_image_dir: str,
 						   set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
-		morph = statmorph.IndividualBaseInfo(label, str(flux_file_name), flux_hdu_index,
+		morph = statmorph.FileStampMorphology(label, str(flux_file_name), flux_hdu_index,
 											 str(segmap_file_name), segmap_hdu_index,
 											 str(mask_file_name), mask_hdu_index,
 											 str(noise_file_name), noise_hdu_index,
@@ -181,7 +181,7 @@ class StatmorphCython(MorphProvider):
 	def measure_label(self, image: np.ndarray, segmap: np.ndarray, noisemap: Optional[np.ndarray], segm_slice,
 					  label: int, image_compare: Optional[np.ndarray], output_image_dir: str, save_stamp_dir: str,
 					  set_centroid: Tuple[float, float], set_asym_center: Tuple[float, float]) -> List:
-		morph = statmorph.BaseInfo(
+		morph = statmorph.BigImageMorphology(
 			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
 			output_image_dir=output_image_dir, save_stamp_dir=save_stamp_dir, set_centroid=set_centroid)
 		return self._calc(morph, set_asym_center)

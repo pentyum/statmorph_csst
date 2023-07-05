@@ -24,18 +24,49 @@ cimport statmorph_cython.multiplicity
 cimport statmorph_cython.mid
 cimport statmorph_cython.shape_asymmetry
 cimport statmorph_cython.color_dispersion
-from .constants_setting cimport ConstantsSetting
+from .constants_setting cimport ConstantsSetting, CutoutConstants
 from .g2 cimport G2Calculator, _get_contour_count, get_G2
 
 cnp.import_array()
 
-cdef class BaseInfo(MorphInfo):
-	def __init__(self, cnp.ndarray[double,ndim=2] image, cnp.ndarray[int,ndim=2] segmap, tuple segmap_slice,
-				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
-				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
-				 str output_image_dir=None, str save_stamp_dir=None, tuple set_centroid=(-1, -1)):
+cdef class MorphInfo:
+	def __init__(self):
+		# These flags will be modified during the calculations:
+		self.flags = Flags()  # attempts to flag bad measurements
+		"""
+		bitmask用于标记错误
+		"""
+		self.runtime = 0
+
+	@staticmethod
+	cdef double get_duration_sec(double end, double start):
+		return <double> (end - start)
+
+	cdef void calc_runtime(self, double start):
+		self.runtime = MorphInfo.get_duration_sec(time(), start)
+
+	def get_values(self):
+		pass
+
+	@staticmethod
+	def get_value_names():
+		pass
+
+	@staticmethod
+	def get_value_formats():
+		pass
+
+
+cdef class StampMorphology(MorphInfo):
+	def __init__(self,  int label, cnp.ndarray[double,ndim=2] cutout_stamp,
+				 cnp.ndarray[int,ndim=2] segmap_stamp=None,
+				 cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_old=None,
+				 cnp.ndarray[double,ndim=2] weightmap_stamp_old=None,
+				 double gain=-1,  cnp.ndarray[double,ndim=2] image_compare_stamp=None,
+				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
 		super().__init__()
 		self.logger = None
+		self.label = label
 		self.constants = ConstantsSetting()
 		self.constants.label = label
 
@@ -43,47 +74,16 @@ cdef class BaseInfo(MorphInfo):
 		"""
 		图像输出文件夹，None表示不输出
 		"""
-		self.save_stamp_dir = save_stamp_dir
-		"""
-		stamp保存文件夹，None表示不保存
-		"""
-
-		self._image = image
-		"""
-		输入的原始图像引用
-		"""
-
-		self._segmap = segmap
-		"""
-		输入的segmentation map应用
-		"""
-
-		self._segmap_slice = segmap_slice
-		"""
-		选区位置(由photutils生成)
-		"""
 
 		self.label = label
 		"""
 		该星系在在segmap中的label
 		"""
 
-		self._mask = mask
-		"""
-		需要遮蔽的区域
-		"""
-
-		self._weightmap = weightmap
-		"""
-		权重图
-		"""
-
 		self._gain = gain
 		"""
 		增益
 		"""
-
-		self.image_compare = image_compare
 
 		# Measure runtime
 		self.global_start = time()
@@ -94,12 +94,6 @@ cdef class BaseInfo(MorphInfo):
 		# Check sanity of input data
 		# self._segmap.check_labels([self.label])
 		# assert (self._segmap.shape[0] == self._image.shape[0]) and (self._segmap.shape[1] == self._image.shape[1])
-		assert cnp.PyArray_SAMESHAPE(self._segmap, self._image)
-		if self._mask is not None:
-			assert cnp.PyArray_SAMESHAPE(self._mask, self._image)
-			assert cnp.PyArray_ISBOOL(self._mask)
-		if self._weightmap is not None:
-			assert cnp.PyArray_SAMESHAPE(self._weightmap, self._image)
 
 		self.flag_catastrophic = False  # this one is reserved for really bad cases
 		"""
@@ -113,55 +107,38 @@ cdef class BaseInfo(MorphInfo):
 		是否用光度分布平均值而不是不对称中心，如果不计算cas则用光度分布平均值
 		"""
 
-		self._slice_stamp = self.get_slice_stamp()
-		"""
-		星系区域切片下标，依次为y和x，相对整幅图像
-		"""
-
-		self._cutout_stamp = self._image[self._slice_stamp]
+		self._cutout_stamp = cutout_stamp
 		"""
 		原始图像在该星系处的切片
 		"""
 
-		self._segmap_stamp = self._segmap[self._slice_stamp]
+		self._segmap_stamp = segmap_stamp
 		"""
 		segmap在该星系处的切片
 		"""
 
-		if self._weightmap is not None:
-			self._weightmap_stamp_old = self._weightmap[self._slice_stamp]
-		else:
-			self._weightmap_stamp_old = None
-		"""
-		weightmap在该星系处的切片，原始值
-		"""
-
-		if self._mask is not None:
-			self._mask_stamp_old = self._mask[self._slice_stamp]
-		else:
-			self._mask_stamp_old = None
+		self._mask_stamp_old = mask_stamp_old
 		"""
 		mask在该星系处的切片，原始值
 		"""
 
-		self.xmin_stamp = self.get_xmin_stamp()
+		self._weightmap_stamp_old = weightmap_stamp_old
+		"""
+		weightmap在该星系处的切片，原始值
+		"""
+
+		self.image_compare_stamp = self.image_compare_stamp
+
+		self._check_stamp_size()
+
+		self.xmin_stamp = 0
 		"""
 		图像切片的x起点在整幅图像中的下标
 		"""
 
-		self.ymin_stamp = self.get_ymin_stamp()
+		self.ymin_stamp = 0
 		"""
 		图像切片的y起点在整幅图像中的下标
-		"""
-
-		self.xmax_stamp = self.get_xmax_stamp()
-		"""
-		图像切片的x终点在整幅图像中的下标
-		"""
-
-		self.ymax_stamp = self.get_ymax_stamp()
-		"""
-		图像切片的y终点在整幅图像中的下标
 		"""
 
 		self.nx_stamp = self.get_nx_stamp()
@@ -174,8 +151,19 @@ cdef class BaseInfo(MorphInfo):
 		图像切片的高度
 		"""
 
-		if self.nx_stamp * self.ny_stamp > 10000000 :
-			warnings.warn('%d: Cutout size too big (%d*%d>10M), skip.' % (self.label, self.nx_stamp,self.ny_stamp), AstropyUserWarning)
+		self.xmax_stamp = self.nx_stamp
+		"""
+		图像切片的x终点在整幅图像中的下标
+		"""
+
+		self.ymax_stamp = self.ny_stamp
+		"""
+		图像切片的y终点在整幅图像中的下标
+		"""
+
+		if self.nx_stamp * self.ny_stamp > 10000000:
+			warnings.warn('%d: Cutout size too big (%d*%d>10M), skip.' % (self.label, self.nx_stamp, self.ny_stamp),
+						  AstropyUserWarning)
 			self._abort_calculations()
 			return
 
@@ -225,7 +213,7 @@ cdef class BaseInfo(MorphInfo):
 		if self.check_total_flux_nonpositive():
 			return
 
-		cdef cnp.ndarray[double,ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
+		cdef cnp.ndarray[double, ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
 
 		self.size = len(cutout_not_in_mask)
 		"""
@@ -245,12 +233,12 @@ cdef class BaseInfo(MorphInfo):
 		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
 		"""
 
-		self.xc_centroid = self.get_xc_centroid()
+		self.xc_centroid = self._centroid[0]
 		"""
 		星系光度质心的x坐标，相对于整个图像的
 		"""
 
-		self.yc_centroid = self.get_yc_centroid()
+		self.yc_centroid = self._centroid[1]
 		"""
 		星系光度质心的y坐标，相对于整个图像的
 		"""
@@ -278,14 +266,15 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef bint check_total_flux_nonpositive(self):
 		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
-			warnings.warn('%d: Total flux is nonpositive. Returning empty object.'%self.label,
+			warnings.warn('%d: Total flux is nonpositive. Returning empty object.' % self.label,
 						  AstropyUserWarning)
 			self._abort_calculations()
 			return True
 		return False
 
-	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid, bint calc_multiplicity,
-				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center):
+	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid,
+									bint calc_multiplicity,
+									bint calc_color_dispersion, bint calc_g2, (double, double) set_asym_center):
 		cdef (double, double) center_used
 		cdef long start
 
@@ -324,13 +313,13 @@ cdef class BaseInfo(MorphInfo):
 				self.multiplicity = statmorph_cython.multiplicity.multiplicity(self.mid._cutout_mid)
 
 		if calc_color_dispersion:
-			if self.image_compare is not None:
+			if self.image_compare_stamp is not None:
 				start = time()
-				self.image_compare_stamp = self.image_compare[self._slice_stamp]
-				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self, self.image_compare_stamp)
+				self.compare_info = statmorph_cython.color_dispersion.calc_color_dispersion(self,
+																							self.image_compare_stamp)
 				self.compare_info.calc_runtime(start)
 			else:
-				warnings.warn("%d: [Color dispersion] compare image not defined"%self.label)
+				warnings.warn("%d: [Color dispersion] compare image not defined" % self.label)
 
 		if calc_g2:
 			start = time()
@@ -345,10 +334,13 @@ cdef class BaseInfo(MorphInfo):
 		if self.output_image_dir is not None:
 			self.save_image()
 
-		if self.save_stamp_dir is not None:
-			self.save_stamp()
-
 		self.calc_runtime(self.global_start)
+
+	cdef void calc_morphology_uncertainties(self, int times):
+		for i in range(times):
+			noise = self.generate_noise_stamp()
+			new_stamp = None
+		return
 
 	cdef void _check_segmaps(self):
 		"""
@@ -366,7 +358,7 @@ cdef class BaseInfo(MorphInfo):
 			area_ratio = area_overlap / float(area_max)
 			if area_ratio < self.constants.segmap_overlap_ratio:
 				if self.constants.verbose:
-					warnings.warn('%d: Gini and MID segmaps are quite different.'%self.label,
+					warnings.warn('%d: Gini and MID segmaps are quite different.' % self.label,
 								  AstropyUserWarning)
 				self.flags.set_flag_true(13)  # suspect
 
@@ -377,7 +369,7 @@ cdef class BaseInfo(MorphInfo):
 		else:
 			return
 		if area_max == 0:
-			warnings.warn('%d: Segmaps are empty!'%self.label, AstropyUserWarning)
+			warnings.warn('%d: Segmaps are empty!' % self.label, AstropyUserWarning)
 			self.flags.set_flag_true(14)  # bad
 			return
 
@@ -389,84 +381,26 @@ cdef class BaseInfo(MorphInfo):
 		if self._weightmap_stamp_old is not None:
 			assert cnp.PyArray_SAMESHAPE(self._weightmap_stamp_old, self._cutout_stamp)
 
-	cdef tuple get_slice_stamp(self):
-		"""
-		Attempt to create a square slice that is somewhat larger
-		than the minimal bounding box containing the labeled segment.
-		Note that the cutout may not be square when the source is
-		close to a border of the original image.
-		"""
-		assert self.constants.cutout_extent >= 1.0
-		assert self.constants.min_cutout_size >= 2
-		# Get dimensions of original bounding box
-		cdef tuple s = self._segmap_slice
-		cdef slice y_slice = s[0]
-		cdef slice x_slice = s[1]
-		cdef int xmin = x_slice.start
-		cdef int xmax = x_slice.stop - 1
-		cdef int ymin = y_slice.start
-		cdef int ymax = y_slice.stop - 1
-		cdef int dx = xmax + 1 - xmin
-		cdef int dy = ymax + 1 - ymin
-
-		cdef int xc = xmin + dx // 2
-		cdef int yc = ymin + dy // 2
-		# Add some extra space in each dimension
-		cdef int dist = int(max(dx, dy) * self.constants.cutout_extent / 2.0)
-		# Make sure that cutout size is at least ``min_cutout_size``
-		dist = max(dist, self.constants.min_cutout_size // 2)
-		# Make cutout
-		cdef int ny = self._image.shape[0]
-		cdef int nx = self._image.shape[1]
-		# ny, nx = self._image.shape
-		cdef tuple slice_stamp = (slice(max(0, yc - dist), min(ny, yc + dist)),
-								  slice(max(0, xc - dist), min(nx, xc + dist)))
-		return slice_stamp
-
-	cdef int get_xmin_stamp(self):
-		"""
-		The minimum ``x`` position of the 'postage stamp'.
-		"""
-		return self._slice_stamp[1].start
-
-	cdef int get_ymin_stamp(self):
-		"""
-		The minimum ``y`` position of the 'postage stamp'.
-		"""
-		return self._slice_stamp[0].start
-
-	cdef int get_xmax_stamp(self):
-		"""
-		The maximum ``x`` position of the 'postage stamp'.
-		"""
-		return self._slice_stamp[1].stop - 1
-
-	cdef int get_ymax_stamp(self):
-		"""
-		The maximum ``y`` position of the 'postage stamp'.
-		"""
-		return self._slice_stamp[0].stop - 1
-
 	cdef int get_nx_stamp(self):
 		"""
 		Number of pixels in the 'postage stamp' along the ``x`` direction.
 		"""
-		return self.xmax_stamp + 1 - self.xmin_stamp
+		return self._cutout_stamp.shape[1]
 
 	cdef int get_ny_stamp(self):
 		"""
 		Number of pixels in the 'postage stamp' along the ``y`` direction.
 		"""
-		return self.ymax_stamp + 1 - self.ymin_stamp
+		return self._cutout_stamp.shape[0]
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] get_mask_stamp_nan(self):
-		"""
-		Flag any NaN or inf values within the postage stamp.
-		"""
-		cdef cnp.ndarray locs_invalid = ~np.isfinite(self._cutout_stamp)
-		if self._weightmap is not None:
-			locs_invalid |= ~np.isfinite(self._weightmap_stamp_old)
-		return locs_invalid
+			"""
+			Flag any NaN or inf values within the postage stamp.
+			"""
+			cdef cnp.ndarray locs_invalid = ~np.isfinite(self._cutout_stamp)
+			if self._weightmap_stamp_old is not None:
+				locs_invalid |= ~np.isfinite(self._weightmap_stamp_old)
+			return locs_invalid
 
 	cdef cnp.ndarray[cnp.npy_bool, ndim=2] _get_badpixels(self, cnp.ndarray[double, ndim=2] image):
 		"""
@@ -669,6 +603,9 @@ cdef class BaseInfo(MorphInfo):
 
 		return snp
 
+	cdef np.ndarray[double,ndim=2] generate_noise_stamp(self):
+		return np.random.normal(0,self._weightmap_stamp_old)
+
 	cdef void _abort_calculations(self):
 		"""
 		Some cases are so bad that basically nothing can be measured
@@ -690,14 +627,8 @@ cdef class BaseInfo(MorphInfo):
 		self.compare_info = CompareInfo()
 		self.g2 = G2Info(cnp.PyArray_ZEROS(2, [1,1], cnp.NPY_DOUBLE, 0), self.constants)
 
-
-	cdef void save_stamp(self):
-		hdu1 = fits.PrimaryHDU(self._cutout_stamp)
-		hdu2 = fits.ImageHDU(self._weightmap_stamp_old)
-		hdu2.name = "NOISE"
-		hdulist = fits.HDUList([hdu1, hdu2])
-		hdulist.writeto("%s/%d.fits" % (self.save_stamp_dir, self.label), overwrite=True)
-		hdulist.close()
+	cdef tuple get_image_extent(self):
+		return None
 
 	cdef void save_image(self):
 		"""
@@ -706,19 +637,18 @@ cdef class BaseInfo(MorphInfo):
 		黑色圆圈为以不对称中心为中心的1.5rp，白色圆圈为用于计算C的r20，灰色圆圈为r80
 		黑色方框为背景区域
 		"""
-		cdef cnp.ndarray sm_all = cnp.PyArray_Where(self._segmap_stamp == self.label, 2, cnp.PyArray_Where(self._segmap_stamp == 0, 0, 1))
+		cdef cnp.ndarray sm_all = cnp.PyArray_Where(self._segmap_stamp == self.label, 2,
+													cnp.PyArray_Where(self._segmap_stamp == 0, 0, 1))
 
 		cdef int stamp_x, stamp_y
-		cdef tuple extent
+		cdef tuple extent = self.get_image_extent()
 
-		if self._slice_stamp is not None:
-			stamp_x = self._slice_stamp[1].start
-			stamp_y = self._slice_stamp[0].start
-			extent = (stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop)
-		else:
+		if extent is None:
 			stamp_x = 0
 			stamp_y = 0
-			extent = None
+		else:
+			stamp_x = extent[0]
+			stamp_y = extent[2]
 
 		cdef int rec_x, rec_y, rec_x_length, rec_y_length
 		if self.nx_stamp < 1000 and self.ny_stamp < 1000:
@@ -728,15 +658,14 @@ cdef class BaseInfo(MorphInfo):
 		else:
 			plt.figure(figsize=(40, 20))
 
-		plt.subplot(1,2,1)
+		plt.subplot(1, 2, 1)
 		plt.imshow(sm_all, origin="lower")
 
-
-		plt.subplot(1,2,2)
+		plt.subplot(1, 2, 2)
 		plt.imshow(self._cutout_stamp, cmap="gray", origin="lower", extent=extent)
 		cdef double vmax = np.percentile(self._cutout_stamp[~self._mask_stamp_no_bg], 90)
 		plt.clim(0, vmax)
-		plt.xlim(self.xmin_stamp,self.xmax_stamp)
+		plt.xlim(self.xmin_stamp, self.xmax_stamp)
 		plt.ylim(self.ymin_stamp, self.ymax_stamp)
 
 		if self.cas is not None:
@@ -751,7 +680,8 @@ cdef class BaseInfo(MorphInfo):
 
 			asym_center = (self.cas.xc_asymmetry, self.cas.yc_asymmetry)
 
-			circ_15rp = plt.Circle(asym_center, self.constants.petro_extent_cas * self.cas.rpetro_circ, edgecolor="white",
+			circ_15rp = plt.Circle(asym_center, self.constants.petro_extent_cas * self.cas.rpetro_circ,
+								   edgecolor="white",
 								   linewidth=2,
 								   fill=False)
 			circ_r80 = plt.Circle(asym_center, self.cas.r80, edgecolor="gray", linewidth=1, fill=False)
@@ -792,31 +722,227 @@ cdef class BaseInfo(MorphInfo):
 		plt.figure(figsize=(12, 12))
 		cdef int i = 0
 		for i in range(9):
-			plt.subplot(3, 3, i+1)
+			plt.subplot(3, 3, i + 1)
 			plt.imshow(stamps[i], origin="lower")
 			plt.colorbar()
 
 		plt.tight_layout()
-		plt.savefig("./dump_stamps_%d.pdf"%self.label)
+		plt.savefig("./dump_stamps_%d.pdf" % self.label)
 		plt.close()
 
-cdef class IndividualBaseInfo(BaseInfo):
+
+cdef class BigImageMorphology(StampMorphology):
+	def __init__(self, cnp.ndarray[double,ndim=2] image, cnp.ndarray[int,ndim=2] segmap, tuple segmap_slice,
+				 int label, cnp.ndarray[cnp.npy_bool,ndim=2] mask=None, cnp.ndarray[double,ndim=2] weightmap=None,
+				 double gain=-1, cnp.ndarray[double,ndim=2] image_compare=None,
+				 str output_image_dir=None, str save_stamp_dir=None, tuple set_centroid=(-1, -1)):
+		self.cutout_constants = CutoutConstants()
+		self.save_stamp_dir = save_stamp_dir
+		"""
+		stamp保存文件夹，None表示不保存
+		"""
+
+		self._image = image
+		"""
+		输入的原始图像引用
+		"""
+
+		self._segmap = segmap
+		"""
+		输入的segmentation map应用
+		"""
+
+		self._segmap_slice = segmap_slice
+		"""
+		选区位置(由photutils生成)
+		"""
+
+		self._mask = mask
+		"""
+		需要遮蔽的区域
+		"""
+
+		self._weightmap = weightmap
+		"""
+		权重图
+		"""
+
+		self.image_compare = image_compare
+
+		# if not isinstance(self._segmap, photutils.SegmentationImage):
+		#	self._segmap = photutils.SegmentationImage(self._segmap)
+
+		# Check sanity of input data
+		# self._segmap.check_labels([self.label])
+		# assert (self._segmap.shape[0] == self._image.shape[0]) and (self._segmap.shape[1] == self._image.shape[1])
+		assert cnp.PyArray_SAMESHAPE(self._segmap, self._image)
+		if self._mask is not None:
+			assert cnp.PyArray_SAMESHAPE(self._mask, self._image)
+			assert cnp.PyArray_ISBOOL(self._mask)
+		if self._weightmap is not None:
+			assert cnp.PyArray_SAMESHAPE(self._weightmap, self._image)
+
+		self._slice_stamp = self.get_slice_stamp()
+		"""
+		星系区域切片下标，依次为y和x，相对整幅图像
+		"""
+
+		cdef cnp.ndarray[double, ndim=2] cutout_stamp, weightmap_stamp_old, image_compare_stamp
+		cdef cnp.ndarray[int, ndim=2] segmap_stamp
+		cdef cnp.ndarray[cnp.npy_bool, ndim=2] mask_stamp_old
+
+		cutout_stamp = self._image[self._slice_stamp]
+		"""
+		原始图像在该星系处的切片
+		"""
+
+		segmap_stamp = self._segmap[self._slice_stamp]
+		"""
+		segmap在该星系处的切片
+		"""
+
+		if self._weightmap is not None:
+			weightmap_stamp_old = self._weightmap[self._slice_stamp]
+		else:
+			weightmap_stamp_old = None
+		"""
+		weightmap在该星系处的切片，原始值
+		"""
+
+		if self._mask is not None:
+			mask_stamp_old = self._mask[self._slice_stamp]
+		else:
+			mask_stamp_old = None
+		"""
+		mask在该星系处的切片，原始值
+		"""
+
+		if self.image_compare is not None:
+			image_compare_stamp = self.image_compare[self._slice_stamp]
+		else:
+			image_compare_stamp = None
+
+		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+
+		self.xmin_stamp = self.get_xmin_stamp()
+		"""
+		图像切片的x起点在整幅图像中的下标
+		"""
+
+		self.ymin_stamp = self.get_ymin_stamp()
+		"""
+		图像切片的y起点在整幅图像中的下标
+		"""
+
+		self.xmax_stamp = self.get_xmax_stamp()
+		"""
+		图像切片的x终点在整幅图像中的下标
+		"""
+
+		self.ymax_stamp = self.get_ymax_stamp()
+		"""
+		图像切片的y终点在整幅图像中的下标
+		"""
+
+
+	cdef tuple get_slice_stamp(self):
+		"""
+		Attempt to create a square slice that is somewhat larger
+		than the minimal bounding box containing the labeled segment.
+		Note that the cutout may not be square when the source is
+		close to a border of the original image.
+		"""
+		assert self.cutout_constants.cutout_extent >= 1.0
+		assert self.cutout_constants.min_cutout_size >= 2
+		# Get dimensions of original bounding box
+		cdef tuple s = self._segmap_slice
+		cdef slice y_slice = s[0]
+		cdef slice x_slice = s[1]
+		cdef int xmin = x_slice.start
+		cdef int xmax = x_slice.stop - 1
+		cdef int ymin = y_slice.start
+		cdef int ymax = y_slice.stop - 1
+		cdef int dx = xmax + 1 - xmin
+		cdef int dy = ymax + 1 - ymin
+
+		cdef int xc = xmin + dx // 2
+		cdef int yc = ymin + dy // 2
+		# Add some extra space in each dimension
+		cdef int dist = int(max(dx, dy) * self.cutout_constants.cutout_extent / 2.0)
+		# Make sure that cutout size is at least ``min_cutout_size``
+		dist = max(dist, self.cutout_constants.min_cutout_size // 2)
+		# Make cutout
+		cdef int ny = self._image.shape[0]
+		cdef int nx = self._image.shape[1]
+		# ny, nx = self._image.shape
+		cdef tuple slice_stamp = (slice(max(0, yc - dist), min(ny, yc + dist)),
+								  slice(max(0, xc - dist), min(nx, xc + dist)))
+		return slice_stamp
+
+	cdef int get_xmin_stamp(self):
+		"""
+		The minimum ``x`` position of the 'postage stamp'.
+		"""
+		return self._slice_stamp[1].start
+
+	cdef int get_ymin_stamp(self):
+		"""
+		The minimum ``y`` position of the 'postage stamp'.
+		"""
+		return self._slice_stamp[0].start
+
+	cdef int get_xmax_stamp(self):
+		"""
+		The maximum ``x`` position of the 'postage stamp'.
+		"""
+		return self._slice_stamp[1].stop - 1
+
+	cdef int get_ymax_stamp(self):
+		"""
+		The maximum ``y`` position of the 'postage stamp'.
+		"""
+		return self._slice_stamp[0].stop - 1
+
+	cdef int get_nx_stamp(self):
+		"""
+		Number of pixels in the 'postage stamp' along the ``x`` direction.
+		"""
+		return self.xmax_stamp + 1 - self.xmin_stamp
+
+	cdef int get_ny_stamp(self):
+		"""
+		Number of pixels in the 'postage stamp' along the ``y`` direction.
+		"""
+		return self.ymax_stamp + 1 - self.ymin_stamp
+
+	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid,
+									bint calc_multiplicity,
+									bint calc_color_dispersion, bint calc_g2, (double, double) set_asym_center):
+		super().calculate_morphology(calc_cas, calc_g_m20, calc_shape_asymmetry, calc_mid, calc_multiplicity,calc_color_dispersion, calc_g2,set_asym_center)
+		if self.save_stamp_dir is not None:
+			self.save_stamp()
+
+	cdef void save_stamp(self):
+		hdu1 = fits.PrimaryHDU(self._cutout_stamp)
+		hdu2 = fits.ImageHDU(self._weightmap_stamp_old)
+		hdu2.name = "NOISE"
+		hdulist = fits.HDUList([hdu1, hdu2])
+		hdulist.writeto("%s/%d.fits" % (self.save_stamp_dir, self.label), overwrite=True)
+		hdulist.close()
+
+	cdef tuple get_image_extent(self):
+		cdef int stamp_x = self._slice_stamp[1].start
+		cdef int stamp_y = self._slice_stamp[0].start
+		return stamp_x, self._slice_stamp[1].stop, stamp_y, self._slice_stamp[0].stop
+
+
+cdef class FileStampMorphology(StampMorphology):
 	def __init__(self,  int label, str fits_file_name, int fits_hdu_index=0,
 				 str segmap_file_name="None", int segmap_hdu_index=0,
 				 str mask_file_name="None", int mask_hdu_index=0,
 				 str weightmap="None", int weightmap_hdu_index=0,
 				 double gain=-1, str image_compare_file_name="None", int image_compare_hdu_index=0,
 				 str output_image_dir="None", tuple set_centroid=(-1, -1)):
-		MorphInfo.__init__(self)
-		self.logger = None
-		self.constants = ConstantsSetting()
-		self.constants.label = label
-
-		self.output_image_dir = output_image_dir
-		"""
-		图像输出文件夹，None表示不输出
-		"""
-
 		self._image_fits = fits.open(fits_file_name)
 		"""
 		输入的原始图像引用
@@ -838,11 +964,6 @@ cdef class IndividualBaseInfo(BaseInfo):
 		输入的segmentation map引用
 		"""
 
-		self.label = label
-		"""
-		该星系在在segmap中的label
-		"""
-
 		if weightmap != "None":
 			self._weightmap_fits = fits.open(weightmap)
 		else:
@@ -851,217 +972,49 @@ cdef class IndividualBaseInfo(BaseInfo):
 		权重图
 		"""
 
-		self._gain = gain
-		"""
-		增益
-		"""
-
 		if image_compare_file_name != "None":
 			self._image_compare_fits = fits.open(image_compare_file_name)
 		else:
 			self._image_compare_fits = None
 
-		# Measure runtime
-		self.global_start = time()
+		cdef cnp.ndarray[double,ndim=2] cutout_stamp, weightmap_stamp_old, image_compare_stamp
+		cdef cnp.ndarray[int,ndim=2] segmap_stamp
+		cdef cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_old
 
-		# if not isinstance(self._segmap, photutils.SegmentationImage):
-		#	self._segmap = photutils.SegmentationImage(self._segmap)
-
-		# Check sanity of input data
-		# self._segmap.check_labels([self.label])
-		# assert (self._segmap.shape[0] == self._image.shape[0]) and (self._segmap.shape[1] == self._image.shape[1])
-
-		self.flag_catastrophic = False  # this one is reserved for really bad cases
-		"""
-		严重错误
-		"""
-
-		# If something goes wrong, use centroid instead of asymmetry center
-		# (better performance in some pathological cases, e.g. GOODS-S 32143):
-		self._use_centroid = False
-		"""
-		是否用光度分布平均值而不是不对称中心，如果不计算cas则用光度分布平均值
-		"""
-
-		self._cutout_stamp = cnp.PyArray_Cast(self._image_fits[fits_hdu_index].data, cnp.NPY_DOUBLE)
+		cutout_stamp = cnp.PyArray_Cast(self._image_fits[fits_hdu_index].data, cnp.NPY_DOUBLE)
 		"""
 		原始图像在该星系处的切片
 		"""
 
 		if self._segmap_fits is None:
-			self._segmap_stamp = np.full_like(self._cutout_stamp, self.label, dtype=np.int32)
+			segmap_stamp = np.full_like(cutout_stamp, label, dtype=np.int32)
 		else:
-			self._segmap_stamp =  cnp.PyArray_Cast(self._segmap_fits[segmap_hdu_index].data, cnp.NPY_INT32)
+			segmap_stamp =  cnp.PyArray_Cast(self._segmap_fits[segmap_hdu_index].data, cnp.NPY_INT32)
 		"""
 		segmap在该星系处的切片
 		"""
 
 		if self._weightmap_fits is not None:
-			self._weightmap_stamp_old = cnp.PyArray_Cast(self._weightmap_fits[weightmap_hdu_index].data, cnp.NPY_DOUBLE)
+			weightmap_stamp_old = cnp.PyArray_Cast(self._weightmap_fits[weightmap_hdu_index].data, cnp.NPY_DOUBLE)
 		else:
-			self._weightmap_stamp_old = None
+			weightmap_stamp_old = None
 		"""
 		weightmap在该星系处的切片，原始值
 		"""
 
 		if self._mask_fits is None:
-			self._mask_stamp_old = np.full_like(self._cutout_stamp, False, dtype=np.bool_)
+			mask_stamp_old = np.full_like(cutout_stamp, False, dtype=np.bool_)
 		else:
-			self._mask_stamp_old = self._mask_fits[mask_hdu_index].data > 0
+			mask_stamp_old = self._mask_fits[mask_hdu_index].data > 0
 		"""
 		mask在该星系处的切片，原始值
 		"""
 
 		if self._image_compare_fits is not None:
-			self.image_compare_stamp = cnp.PyArray_Cast(self._image_compare_fits[image_compare_hdu_index].data, cnp.NPY_DOUBLE)
+			image_compare_stamp = cnp.PyArray_Cast(self._image_compare_fits[image_compare_hdu_index].data, cnp.NPY_DOUBLE)
 
-		self._check_stamp_size()
+		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
-		self.xmin_stamp = 0
-		"""
-		图像切片的x起点在整幅图像中的下标
-		"""
-
-		self.ymin_stamp = 0
-		"""
-		图像切片的y起点在整幅图像中的下标
-		"""
-
-		self.nx_stamp = self.get_nx_stamp()
-		"""
-		图像切片的宽度
-		"""
-
-		self.ny_stamp = self.get_ny_stamp()
-		"""
-		图像切片的高度
-		"""
-
-		self.xmax_stamp = self.nx_stamp
-		"""
-		图像切片的x终点在整幅图像中的下标
-		"""
-
-		self.ymax_stamp = self.ny_stamp
-		"""
-		图像切片的y终点在整幅图像中的下标
-		"""
-
-		if self.nx_stamp * self.ny_stamp > 10000000:
-			warnings.warn('%d: Cutout size too big (%d*%d>10M), skip.' % (self.label, self.nx_stamp, self.ny_stamp),
-						  AstropyUserWarning)
-			self._abort_calculations()
-			return
-
-		self._mask_stamp_nan = self.get_mask_stamp_nan()
-		"""
-		图像切片中有哪些点是nan或者inf
-		"""
-
-		self._weightmap_stamp = self.get_weightmap_stamp()
-		"""
-		weightmap在该星系处的切片
-		"""
-
-		self.num_badpixels = -1
-		"""
-		图像切片中的坏点数量，也就是不满足abs(原始图像而切片-周围平均后的图像切片)<=n_sigma_outlier*std像素的数量
-		"""
-
-		self._mask_stamp_badpixels = self.get_mask_stamp_badpixels()
-		"""
-		图像切片中坏点存在位置
-		"""
-
-		self._mask_stamp = self.get_mask_stamp()
-		"""
-		图像切片的总mask，该mask是segmap中非label的源、输入的mask、nan或者inf位置和坏点位置的并集
-		"""
-
-		self._mask_stamp_no_bg = self.get_mask_stamp_no_bg()
-		"""
-		图像切片的包括背景的mask，即总mask和segmap中label=0位置(即背景)的并集
-		"""
-
-		self._cutout_stamp_maskzeroed = self.get_cutout_stamp_maskzeroed()
-		"""
-		获得星系本体+背景的图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp中的总mask，包括其它label的源、输入的mask、nan、inf和坏点
-		"""
-
-		self._cutout_stamp_maskzeroed_no_bg = self.get_cutout_stamp_maskzeroed_no_bg()
-		"""
-		获得星系本体图像切片，但是被mask的部分被置为0，该mask指的是mask_stamp_no_bg中的包括背景的总mask。
-		"""
-
-		# Check that the labeled galaxy segment has a positive flux sum.
-		# If not, this is bad enough to abort all calculations and return
-		# an empty object.
-		if self.check_total_flux_nonpositive():
-			return
-
-		cdef cnp.ndarray[double, ndim=1] cutout_not_in_mask = self._cutout_stamp[~self._mask_stamp_no_bg]
-
-		self.size = len(cutout_not_in_mask)
-		"""
-		用于计算的星系本体的全部像素的数量
-		"""
-
-		self.surface_brightness = np.mean(cutout_not_in_mask)
-		"""
-		用于计算的星系本体的大小每个像素流量的平均值
-		"""
-
-		if set_centroid == (-1, -1):
-			self._centroid = self.get_centroid()
-		else:
-			self._centroid = set_centroid
-		"""
-		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
-		"""
-
-		self.xc_centroid = self._centroid[0]
-		"""
-		星系光度质心的x坐标，相对于整个图像的
-		"""
-
-		self.yc_centroid = self._centroid[1]
-		"""
-		星系光度质心的y坐标，相对于整个图像的
-		"""
-
-		# Centroid of the source relative to the "postage stamp" cutout:
-		self._xc_stamp = self._centroid[0]
-		"""
-		星系光度质心的x坐标，相对于切片的
-		"""
-
-		self._yc_stamp = self._centroid[1]
-		"""
-		星系光度质心的x坐标，相对于切片的
-		"""
-
-		self._diagonal_distance = self.get_diagonal_distance()
-		"""
-		图像切片的对角线长度
-		"""
-
-		self._rpetro_circ_centroid = self.get_rpetro_circ_centroid()
-		"""
-		以光度质心为中心的Petrosian圆形孔径半径
-		"""
-
-
-	cdef int get_nx_stamp(self):
-		"""
-		Number of pixels in the 'postage stamp' along the ``x`` direction.
-		"""
-		return self._cutout_stamp.shape[1]
-
-	cdef int get_ny_stamp(self):
-		"""
-		Number of pixels in the 'postage stamp' along the ``y`` direction.
-		"""
-		return self._cutout_stamp.shape[0]
 
 	cpdef void close_all(self):
 		# self.dump_stamps()
@@ -1303,30 +1256,3 @@ cdef class ShapeAsymmetryInfo(MorphInfo):
 
 cdef class SersicInfo:
 	pass
-
-cdef class MorphInfo:
-	def __init__(self):
-		# These flags will be modified during the calculations:
-		self.flags = Flags()  # attempts to flag bad measurements
-		"""
-		bitmask用于标记错误
-		"""
-		self.runtime = 0
-
-	@staticmethod
-	cdef double get_duration_sec(double end, double start):
-		return <double> (end - start)
-
-	cdef void calc_runtime(self, double start):
-		self.runtime = MorphInfo.get_duration_sec(time(), start)
-
-	def get_values(self):
-		pass
-
-	@staticmethod
-	def get_value_names():
-		pass
-
-	@staticmethod
-	def get_value_formats():
-		pass

@@ -2,7 +2,7 @@
 
 cimport numpy as cnp
 from .flags cimport Flags
-from .constants_setting cimport ConstantsSetting
+from .constants_setting cimport ConstantsSetting, CutoutConstants
 
 cdef class MorphInfo:
 	cdef readonly double runtime
@@ -13,21 +13,16 @@ cdef class MorphInfo:
 
 	cdef void calc_runtime(self, double start)
 
-cdef class BaseInfo(MorphInfo):
-	cdef cnp.ndarray _image
-	cdef cnp.ndarray _segmap
-	cdef tuple _segmap_slice
+cdef class StampMorphology:
+	cdef readonly logger
 	cdef readonly int label
-	cdef cnp.ndarray _mask
-	cdef cnp.ndarray _weightmap
+	cdef ConstantsSetting constants
+
 	cdef double _gain
 
 	cdef readonly bint flag_catastrophic
 	cdef bint _use_centroid
 
-	cdef ConstantsSetting constants
-
-	cdef tuple _slice_stamp
 	cdef cnp.ndarray _cutout_stamp
 	cdef cnp.ndarray _segmap_stamp
 	cdef cnp.ndarray _weightmap_stamp_old
@@ -58,7 +53,7 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly double sn_per_pixel
 
 	cdef str output_image_dir
-	cdef str save_stamp_dir
+
 	cdef readonly bint calc_cas
 	cdef readonly bint calc_g_m20
 	cdef readonly bint calc_mid
@@ -71,31 +66,22 @@ cdef class BaseInfo(MorphInfo):
 	cdef readonly ShapeAsymmetryInfo shape_asymmetry
 	cdef readonly MIDInfo mid
 	cdef readonly double multiplicity
-	cdef cnp.ndarray image_compare
 	cdef cnp.ndarray image_compare_stamp
 	cdef readonly CompareInfo compare_info
 	cdef readonly G2Info g2
 	cdef readonly long global_start
-	cdef readonly logger
 
 	cdef bint check_total_flux_nonpositive(self)
 
-	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid, bint calc_multiply,
-				 bint calc_color_dispersion, bint calc_g2, (double,double) set_asym_center)
+	cpdef void calculate_morphology(self, bint calc_cas, bint calc_g_m20, bint calc_shape_asymmetry, bint calc_mid,
+									bint calc_multiply,
+									bint calc_color_dispersion, bint calc_g2, (double, double) set_asym_center)
+
+	cdef void calc_morphology_uncertainties(self, int times)
 
 	cdef void _check_segmaps(self)
 
 	cdef void _check_stamp_size(self)
-
-	cdef tuple get_slice_stamp(self)
-
-	cdef int get_xmin_stamp(self)
-
-	cdef int get_ymin_stamp(self)
-
-	cdef int get_xmax_stamp(self)
-
-	cdef int get_ymax_stamp(self)
 
 	cdef int get_nx_stamp(self)
 
@@ -115,7 +101,7 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef cnp.ndarray[double, ndim=2] get_cutout_stamp_maskzeroed_no_bg(self)
 
-	cdef (double,double) get_centroid(self)
+	cdef (double, double) get_centroid(self)
 
 	cdef double get_xc_centroid(self)
 
@@ -131,13 +117,39 @@ cdef class BaseInfo(MorphInfo):
 
 	cdef void _abort_calculations(self)
 
+	cdef tuple get_image_extent(self)
+
 	cdef void save_image(self)
 
 	cdef void save_stamp(self)
 
 	cdef void dump_stamps(self)
 
-cdef class IndividualBaseInfo(BaseInfo):
+
+cdef class BigImageMorphology(StampMorphology):
+	cdef CutoutConstants cutout_constants
+	cdef str save_stamp_dir
+	cdef cnp.ndarray _image
+	cdef cnp.ndarray _segmap
+	cdef cnp.ndarray _mask
+	cdef cnp.ndarray _weightmap
+	cdef cnp.ndarray image_compare
+
+	cdef tuple _segmap_slice
+	cdef tuple _slice_stamp
+
+	cdef tuple get_slice_stamp(self)
+
+	cdef int get_xmin_stamp(self)
+
+	cdef int get_ymin_stamp(self)
+
+	cdef int get_xmax_stamp(self)
+
+	cdef int get_ymax_stamp(self)
+
+
+cdef class FileStampMorphology(StampMorphology):
 	cdef _image_fits
 	cdef _segmap_fits
 	cdef _mask_fits
@@ -184,7 +196,7 @@ cdef class G2Info(MorphInfo):
 
 cdef class CompareInfo(MorphInfo):
 	cdef cnp.ndarray _image_compare_stamp
-	cdef BaseInfo base_info
+	cdef StampMorphology base_info
 	cdef int num_badpixels
 
 	cdef cnp.ndarray _mask_stamp_nan_compare

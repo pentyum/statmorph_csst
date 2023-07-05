@@ -1,16 +1,6 @@
 # cython: language_level=3
 
 cdef class ConstantsSetting:
-	cdef double cutout_extent
-	"""
-	图像切片往外延伸的倍率
-	"""
-
-	cdef int min_cutout_size
-	"""
-	最小切片大小，默认48
-	"""
-
 	cdef int n_sigma_outlier
 	"""
 	排除几倍sigma，默认10
@@ -76,3 +66,14 @@ cdef class ConstantsSetting:
 
 	cdef bint verbose
 	cdef int label
+
+cdef class CutoutConstants:
+	cdef double cutout_extent
+	"""
+	图像切片往外延伸的倍率
+	"""
+
+	cdef int min_cutout_size
+	"""
+	最小切片大小，默认48
+	"""
