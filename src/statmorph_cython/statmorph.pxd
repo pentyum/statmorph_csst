@@ -110,6 +110,8 @@ cdef class StampMorphology:
 
 	cdef double get_sn_per_pixel(self)
 
+	cdef cnp.ndarray[double, ndim=2] generate_noise_stamp(self)
+
 	cdef void _abort_calculations(self)
 
 	cdef tuple get_image_extent(self)

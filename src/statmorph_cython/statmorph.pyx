@@ -574,7 +574,7 @@ cdef class StampMorphology(MorphInfo):
 
 		return snp
 
-	cdef np.ndarray[double,ndim=2] generate_noise_stamp(self):
+	cdef cnp.ndarray[double,ndim=2] generate_noise_stamp(self):
 		return np.random.normal(0,self._weightmap_stamp_old)
 
 	cdef void _abort_calculations(self):
