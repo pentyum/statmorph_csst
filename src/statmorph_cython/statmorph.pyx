@@ -809,7 +809,7 @@ cdef class BigImageMorphology(StampMorphology):
 		图像切片的y终点在整幅图像中的下标
 		"""
 
-		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+		super().__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
 		self.xc_centroid = self.get_xc_centroid()
 		"""
