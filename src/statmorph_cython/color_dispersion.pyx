@@ -18,7 +18,7 @@ import scipy.optimize as opt
 
 cimport numpy as cnp
 
-from .statmorph cimport BaseInfo, CompareInfo
+from .statmorph cimport StampMorphology, CompareInfo
 
 cnp.import_array()
 
@@ -93,7 +93,7 @@ cdef double get_color_dispersion(CompareInfo compare_info):
 
 	return color_dispersion
 
-cdef CompareInfo calc_color_dispersion(BaseInfo base_info, cnp.ndarray[double, ndim=2] image_compare_stamp):
+cdef CompareInfo calc_color_dispersion(StampMorphology base_info, cnp.ndarray[double, ndim=2] image_compare_stamp):
 	cdef CompareInfo compare_info = CompareInfo()
 
 	compare_info._image_compare_stamp = image_compare_stamp
