@@ -29,10 +29,7 @@ cdef class StampMorphology:
 	cdef cnp.ndarray _weightmap_stamp
 	cdef cnp.ndarray _mask_stamp_old
 	cdef cnp.ndarray _mask_stamp_nan
-	cdef int xmin_stamp
-	cdef int ymin_stamp
-	cdef int xmax_stamp
-	cdef int ymax_stamp
+
 	cdef int nx_stamp
 	cdef int ny_stamp
 	cdef int num_badpixels
@@ -44,8 +41,6 @@ cdef class StampMorphology:
 	cdef readonly int size
 	cdef readonly double surface_brightness
 	cdef readonly (double, double) _centroid
-	cdef double xc_centroid
-	cdef double yc_centroid
 	cdef double _xc_stamp
 	cdef double _yc_stamp
 	cdef double _diagonal_distance
@@ -138,6 +133,14 @@ cdef class BigImageMorphology(StampMorphology):
 	cdef tuple _segmap_slice
 	cdef tuple _slice_stamp
 
+	cdef int xmin_stamp
+	cdef int ymin_stamp
+	cdef int xmax_stamp
+	cdef int ymax_stamp
+
+	cdef double xc_centroid
+	cdef double yc_centroid
+
 	cdef tuple get_slice_stamp(self)
 
 	cdef int get_xmin_stamp(self)
@@ -162,7 +165,7 @@ cdef class CASInfo(MorphInfo):
 	cdef tuple _slice_skybox
 	cdef cnp.ndarray _bkg
 	cdef readonly double _sky_asymmetry
-	cdef double xc_asymmetry, yc_asymmetry
+	# cdef double xc_asymmetry, yc_asymmetry
 	cdef readonly double concentration, asymmetry, smoothness, rpetro_circ, r20, r80
 	cdef readonly (double,double) _asymmetry_center
 	cdef readonly double sky_mean, sky_sigma, _sky_smoothness

@@ -411,7 +411,7 @@ cdef double get_smoothness(cnp.ndarray[double,ndim=2] _cutout_stamp_maskzeroed, 
 cdef CASInfo calc_cas(StampMorphology base_info, (double, double) set_asym_center):
 	cdef CASInfo cas_info = CASInfo()
 
-	check_rp_beyond_edge(base_info.xc_centroid, base_info.yc_centroid, base_info._rpetro_circ_centroid, base_info._image.shape, cas_info.flags, base_info.constants)
+	check_rp_beyond_edge(base_info._xc_stamp[0], base_info._yc_stamp, base_info._rpetro_circ_centroid, base_info._cutout_stamp.shape, cas_info.flags, base_info.constants)
 	"""
 	检查1.5倍rp是否超出图像边缘
 	"""
@@ -446,8 +446,8 @@ cdef CASInfo calc_cas(StampMorphology base_info, (double, double) set_asym_cente
 	获得不对称中心，依次为x和y，坐标是相对于切片的
 	"""
 
-	cas_info.xc_asymmetry = base_info.xmin_stamp + cas_info._asymmetry_center[0]
-	cas_info.yc_asymmetry = base_info.ymin_stamp + cas_info._asymmetry_center[1]
+	# cas_info.xc_asymmetry = base_info.xmin_stamp + cas_info._asymmetry_center[0]
+	# cas_info.yc_asymmetry = base_info.ymin_stamp + cas_info._asymmetry_center[1]
 
 	cas_info.asymmetry = get_asymmetry(base_info._cutout_stamp_maskzeroed, cas_info._asymmetry_center, base_info._mask_stamp, base_info._rpetro_circ_centroid, cas_info._sky_asymmetry, cas_info.flags, base_info.constants)
 	"""

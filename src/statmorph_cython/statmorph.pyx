@@ -131,15 +131,6 @@ cdef class StampMorphology(MorphInfo):
 
 		self._check_stamp_size()
 
-		self.xmin_stamp = 0
-		"""
-		图像切片的x起点在整幅图像中的下标
-		"""
-
-		self.ymin_stamp = 0
-		"""
-		图像切片的y起点在整幅图像中的下标
-		"""
 
 		self.nx_stamp = self.get_nx_stamp()
 		"""
@@ -149,16 +140,6 @@ cdef class StampMorphology(MorphInfo):
 		self.ny_stamp = self.get_ny_stamp()
 		"""
 		图像切片的高度
-		"""
-
-		self.xmax_stamp = self.nx_stamp
-		"""
-		图像切片的x终点在整幅图像中的下标
-		"""
-
-		self.ymax_stamp = self.ny_stamp
-		"""
-		图像切片的y终点在整幅图像中的下标
 		"""
 
 		if self.nx_stamp * self.ny_stamp > 10000000:
@@ -231,16 +212,6 @@ cdef class StampMorphology(MorphInfo):
 			self._centroid = set_centroid
 		"""
 		星系本体图像切片的一阶矩，即光度分布的质心，依次为x和y，坐标是相对于切片的
-		"""
-
-		self.xc_centroid = self._centroid[0]
-		"""
-		星系光度质心的x坐标，相对于整个图像的
-		"""
-
-		self.yc_centroid = self._centroid[1]
-		"""
-		星系光度质心的y坐标，相对于整个图像的
 		"""
 
 		# Centroid of the source relative to the "postage stamp" cutout:
@@ -822,8 +793,6 @@ cdef class BigImageMorphology(StampMorphology):
 		else:
 			image_compare_stamp = None
 
-		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
-
 		self.xmin_stamp = self.get_xmin_stamp()
 		"""
 		图像切片的x起点在整幅图像中的下标
@@ -842,6 +811,18 @@ cdef class BigImageMorphology(StampMorphology):
 		self.ymax_stamp = self.get_ymax_stamp()
 		"""
 		图像切片的y终点在整幅图像中的下标
+		"""
+
+		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+
+		self.xc_centroid = self._centroid[0]
+		"""
+		星系光度质心的x坐标，相对于整个图像的
+		"""
+
+		self.yc_centroid = self._centroid[1]
+		"""
+		星系光度质心的y坐标，相对于整个图像的
 		"""
 
 
