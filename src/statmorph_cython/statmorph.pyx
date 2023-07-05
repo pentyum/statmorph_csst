@@ -843,7 +843,10 @@ cdef class IndividualBaseInfo(BaseInfo):
 		该星系在在segmap中的label
 		"""
 
-		self._weightmap_fits = fits.open(weightmap)
+		if weightmap != "None":
+			self._weightmap_fits = fits.open(weightmap)
+		else:
+			self._weightmap_fits = None
 		"""
 		权重图
 		"""
