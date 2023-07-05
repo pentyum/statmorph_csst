@@ -1014,7 +1014,7 @@ cdef class FileStampMorphology(StampMorphology):
 
 cdef class CASInfo(MorphInfo):
 	def __init__(self):
-		super().__init__()
+		MorphInfo.__init__(self)
 
 	def get_values(self):
 		return [self._asymmetry_center[0], self._asymmetry_center[1], self.rpetro_circ, self.concentration, self.asymmetry, self.smoothness, self._sky_asymmetry, self.runtime, self.flags.value()]
@@ -1029,7 +1029,7 @@ cdef class CASInfo(MorphInfo):
 
 cdef class GiniM20Info(MorphInfo):
 	def __init__(self):
-		super().__init__()
+		MorphInfo.__init__(self)
 
 	def get_values(self):
 		return [self.rpetro_ellip, self.gini, self.m20, self.runtime, self.flags.value()]
@@ -1044,7 +1044,7 @@ cdef class GiniM20Info(MorphInfo):
 
 cdef class MIDInfo(MorphInfo):
 	def __init__(self):
-		super().__init__()
+		MorphInfo.__init__(self)
 
 	def get_values(self):
 		return [self.multimode, self.intensity, self.deviation, self.runtime, self.flags.value()]
