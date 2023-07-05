@@ -308,6 +308,7 @@ cdef class StampMorphology(MorphInfo):
 		self.calc_runtime(self.global_start)
 
 	cdef void calc_morphology_uncertainties(self, int times):
+		cdef int i
 		for i in range(times):
 			noise = self.generate_noise_stamp()
 			new_stamp = None
