@@ -809,7 +809,7 @@ cdef class BigImageMorphology(StampMorphology):
 		图像切片的y终点在整幅图像中的下标
 		"""
 
-		super(StampMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+		super(BigImageMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
 		self.xc_centroid = self.get_xc_centroid()
 		"""
@@ -1003,8 +1003,17 @@ cdef class FileStampMorphology(StampMorphology):
 			image_compare_stamp = cnp.PyArray_Cast(self._image_compare_fits[image_compare_hdu_index].data, cnp.NPY_DOUBLE)
 
 		print("开始stampmorphology")
-		print((label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid))
-		super(StampMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
+		print(label)
+		print(cutout_stamp)
+		print(segmap_stamp)
+		print(mask_stamp_old)
+		print(weightmap_stamp_old)
+		print(gain)
+		print(image_compare_stamp)
+		print(output_image_dir)
+		print(set_centroid)
+
+		super(FileStampMorphology, self).__init__(label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
 
 	cpdef void close_all(self):
