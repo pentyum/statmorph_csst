@@ -254,6 +254,7 @@ cdef class StampMorphology(MorphInfo):
 		self.calc_color_dispersion = calc_color_dispersion
 		self.calc_g2 = calc_g2
 
+		print("开始cas")
 		if calc_cas:
 			start = time()
 			self.cas = statmorph_cython.cas.calc_cas(self, set_asym_center)
@@ -263,6 +264,7 @@ cdef class StampMorphology(MorphInfo):
 			self._use_centroid = True
 			center_used = self._centroid
 
+		print("开始g_m20")
 		if calc_g_m20:
 			start = time()
 			self.g_m20 = statmorph_cython.g_m20.calc_g_m20(self, center_used)
