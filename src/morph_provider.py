@@ -137,6 +137,7 @@ class StatmorphVanilla(MorphProvider):
 
 class StatmorphCython(MorphProvider):
 	def _calc(self, morph: statmorph.StampMorphology, set_asym_center: Tuple[float, float]):
+		print(morph.flag_catastrophic)
 		if not morph.flag_catastrophic:
 			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_shape_asymmetry, self.calc_mid, self.calc_multiplicity,
 									   self.calc_color_dispersion, self.calc_g2,
@@ -184,7 +185,4 @@ class StatmorphCython(MorphProvider):
 		morph = statmorph.BigImageMorphology(
 			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
 			output_image_dir=output_image_dir, save_stamp_dir=save_stamp_dir, set_centroid=set_centroid)
-		print("BigImageMorphology构造完成")
-		print(morph)
-		print(set_asym_center)
 		return self._calc(morph, set_asym_center)
