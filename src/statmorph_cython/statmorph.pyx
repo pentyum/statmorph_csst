@@ -204,8 +204,6 @@ cdef class StampMorphology(MorphInfo):
 		用于计算的星系本体的大小每个像素流量的平均值
 		"""
 
-		print("开始get_centroid")
-
 		if set_centroid == (-1, -1):
 			self._centroid = self.get_centroid()
 		else:
@@ -236,6 +234,8 @@ cdef class StampMorphology(MorphInfo):
 		"""
 		以光度质心为中心的Petrosian圆形孔径半径
 		"""
+
+		print("完成get_rpetro_circ_centroid")
 
 	cdef bint check_total_flux_nonpositive(self):
 		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
