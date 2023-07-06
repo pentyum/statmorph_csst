@@ -228,14 +228,11 @@ cdef class StampMorphology(MorphInfo):
 		图像切片的对角线长度
 		"""
 
-		print("开始get_rpetro_circ_centroid")
-
 		self._rpetro_circ_centroid = self.get_rpetro_circ_centroid()
 		"""
 		以光度质心为中心的Petrosian圆形孔径半径
 		"""
 
-		print("完成get_rpetro_circ_centroid")
 
 	cdef bint check_total_flux_nonpositive(self):
 		if np.sum(self._cutout_stamp_maskzeroed_no_bg) <= 0:
@@ -810,16 +807,21 @@ cdef class BigImageMorphology(StampMorphology):
 
 		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
+		print("StampMorphology构造函数调用完成")
+
 		self.xc_centroid = self.get_xc_centroid()
 		"""
 		星系光度质心的x坐标，相对于整个图像的
 		"""
+
+		print("get_xc_centroid完成")
 
 		self.yc_centroid = self.get_yc_centroid()
 		"""
 		星系光度质心的y坐标，相对于整个图像的
 		"""
 
+		print("get_yc_centroid完成")
 
 	cdef tuple get_slice_stamp(self):
 		"""
