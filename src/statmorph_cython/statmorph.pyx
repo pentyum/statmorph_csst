@@ -807,21 +807,16 @@ cdef class BigImageMorphology(StampMorphology):
 
 		StampMorphology.__init__(self, label, cutout_stamp, segmap_stamp, mask_stamp_old, weightmap_stamp_old, gain, image_compare_stamp, output_image_dir, set_centroid)
 
-		print("StampMorphology构造函数调用完成")
-
 		self.xc_centroid = self.get_xc_centroid()
 		"""
 		星系光度质心的x坐标，相对于整个图像的
 		"""
-
-		print("get_xc_centroid完成")
 
 		self.yc_centroid = self.get_yc_centroid()
 		"""
 		星系光度质心的y坐标，相对于整个图像的
 		"""
 
-		print("get_yc_centroid完成")
 
 	cdef tuple get_slice_stamp(self):
 		"""

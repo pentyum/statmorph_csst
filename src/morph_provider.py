@@ -184,4 +184,7 @@ class StatmorphCython(MorphProvider):
 		morph = statmorph.BigImageMorphology(
 			image, segmap, segm_slice, label, weightmap=noisemap, image_compare=image_compare,
 			output_image_dir=output_image_dir, save_stamp_dir=save_stamp_dir, set_centroid=set_centroid)
+		print("BigImageMorphology构造完成")
+		print(morph)
+		print(set_asym_center)
 		return self._calc(morph, set_asym_center)
