@@ -137,7 +137,6 @@ class StatmorphVanilla(MorphProvider):
 
 class StatmorphCython(MorphProvider):
 	def _calc(self, morph: statmorph.StampMorphology, set_asym_center: Tuple[float, float]):
-		print(morph.flag_catastrophic)
 		if not morph.flag_catastrophic:
 			morph.calculate_morphology(self.calc_cas, self.calc_g_m20, self.calc_shape_asymmetry, self.calc_mid, self.calc_multiplicity,
 									   self.calc_color_dispersion, self.calc_g2,
