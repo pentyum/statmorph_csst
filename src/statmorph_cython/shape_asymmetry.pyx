@@ -256,7 +256,8 @@ cdef double get_rhalf_ellip(cnp.ndarray cutout_stamp_maskzeroed, (double, double
 	# In theory, this return value can also be NaN
 	return r
 
-cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym, (double, double) asymmetry_center, _mask_stamp, rmax_circ, Flags flags, ConstantsSetting constants):
+cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym, (double, double) asymmetry_center,
+								cnp.ndarray[cnp.npy_bool,ndim=2] _mask_stamp, double rmax_circ, Flags flags, ConstantsSetting constants):
 	"""
 	Calculate shape asymmetry as described in Pawlik et al. (2016).
 	Note that the center is the one used for the standard asymmetry.
