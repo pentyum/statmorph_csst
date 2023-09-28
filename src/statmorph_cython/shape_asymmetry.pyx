@@ -23,7 +23,9 @@ from .statmorph cimport StampMorphology, ShapeAsymmetryInfo, CASInfo, GiniM20Inf
 
 cnp.import_array()
 
-cdef double _shape_asymmetry_function((double, double) center, cnp.ndarray[double,ndim=2] image, cnp.ndarray[cnp.npy_bool,ndim=2] _mask_stamp, double rmax_circ, Flags flags, ConstantsSetting constants):
+cdef double _shape_asymmetry_function((double, double) center, cnp.ndarray[double,ndim=2] image,
+									  cnp.ndarray[cnp.npy_bool,ndim=2] _mask_stamp,
+									  double rmax_circ, Flags flags, ConstantsSetting constants):
 	cdef int ny = image.shape[0]
 	cdef int nx = image.shape[1]
 	cdef double xc = center[0]
@@ -80,7 +82,11 @@ cdef double _shape_asymmetry_function((double, double) center, cnp.ndarray[doubl
 
 	return asym
 
-cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed, (double,double) asymmetry_center, double rpetro_ellip, cnp.ndarray mask_stamp, tuple slice_skybox, cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_no_bg, Flags flags, ConstantsSetting constants):
+cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_asym(cnp.ndarray[double,ndim=2] cutout_stamp_maskzeroed,
+														(double,double) asymmetry_center, double rpetro_ellip,
+														cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp, tuple slice_skybox,
+														cnp.ndarray[cnp.npy_bool,ndim=2] mask_stamp_no_bg,
+														Flags flags, ConstantsSetting constants):
 
 	cdef int ny = cutout_stamp_maskzeroed.shape[0]
 	cdef int nx = cutout_stamp_maskzeroed.shape[1]
@@ -270,7 +276,7 @@ cdef double get_shape_asymmetry(cnp.ndarray[cnp.npy_bool,ndim=2] segmap_shape_as
 cdef ShapeAsymmetryInfo calc_shape_asymmetry(StampMorphology base_info, CASInfo cas, GiniM20Info g_m20):
 	cdef ShapeAsymmetryInfo shape_asym_info = ShapeAsymmetryInfo()
 
-	cdef cnp.ndarray segmap = segmap_shape_asym(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.rpetro_ellip, base_info._mask_stamp, cas._slice_skybox, base_info._mask_stamp_no_bg, shape_asym_info.flags, base_info.constants)
+	cdef cnp.ndarray[cnp.npy_bool,ndim=2] segmap = segmap_shape_asym(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.rpetro_ellip, base_info._mask_stamp, cas._slice_skybox, base_info._mask_stamp_no_bg, shape_asym_info.flags, base_info.constants)
 
 	cdef rmax_circ = get_rmax_circ(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, segmap, shape_asym_info.flags)
 	cdef rmax_ellip = get_rmax_ellip(base_info._cutout_stamp_maskzeroed, cas._asymmetry_center, g_m20.orientation_asymmetry, g_m20.elongation_asymmetry, segmap, shape_asym_info.flags)

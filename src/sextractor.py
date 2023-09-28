@@ -605,7 +605,7 @@ NTHREADS         4              # 1 single thread
 			wht_header = wht_fits[0].header
 			if self.config["WEIGHT_TYPE"] == "MAP_WEIGHT":
 				noise = 1 / np.sqrt(wht)
-			if self.config["WEIGHT_TYPE"] == "MAP_VAR":
+			elif self.config["WEIGHT_TYPE"] == "MAP_VAR":
 				noise = np.sqrt(wht)
 			else:
 				raise TypeError("未知WEIGHT_TYPE: " + self.config["WEIGHT_TYPE"])
