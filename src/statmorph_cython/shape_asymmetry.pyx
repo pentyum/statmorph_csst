@@ -40,7 +40,7 @@ cdef double _shape_asymmetry_function((double, double) center, cnp.ndarray[doubl
 		return 100.0
 
 	# Rotate around given center
-	cdef cnp.ndarray[cnp.npy_bool,ndim=2] image_180
+	cdef cnp.ndarray image_180
 	# cdef cnp.ndarray image_180 = skimage.transform.rotate(image, 180.0, center=center)
 	if 0 <= constants.simplified_rot_threshold < image_size:
 		image_180 = simplified_rot180(image, center)
