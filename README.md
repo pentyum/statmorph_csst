@@ -1,18 +1,20 @@
 # statmorph_csst
 
-#### 介绍
-statmorph CSST专用版，采用cython进行优化
+#### Introduction
+statmorph for CSST, optimized by cython
 
-地址：[Gitee](https://gitee.com/pentyum/statmorph_csst) ｜ [Github](https://github.com/pentyum/statmorph_csst)
+URL：[Gitee](https://gitee.com/pentyum/statmorph_csst) ｜ [Github](https://github.com/pentyum/statmorph_csst)
 
-#### 安装教程
+#### Installation
 
-运行`./build.sh`
+Clone this repo and enter the statmorph_csst directory
 
-#### 使用说明
+Execute `./build.sh`
 
-1.  进入src目录，然后运行main.py
-2.  `python3 main.py -h`进入帮助
+#### Usage
+
+1.  Enter the src directory and execute `python3 main.py`
+2.  Execute `python3 main.py -h` for help
 
 ```
 SExtractor-Statmorph_csst 简化合并版使用说明
@@ -51,10 +53,10 @@ SExtractor-Statmorph_csst 简化合并版使用说明
         -h, --help 显示此帮助
 ```
 
-#### 配置文件
-默认配置文件为src/config.properties，内容和命令行参数的配置内容一样，命令行的配置将覆盖配置文件中的配置。
+#### Configuration
+The default configuration file is `src/config.properties`. The contents is the same as the arguments on command line, but the arguments on the command line will overwrite the configuration file.
 
-通过-C可以指定配置文件路径。
+We can use `-C` to modify the path of the configuration file.
 
-#### 程序更新
-进入src目录，运行./update.sh
+#### Update
+Enter the src directory and execute `./update.sh`.
