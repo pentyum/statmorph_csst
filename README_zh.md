@@ -25,7 +25,7 @@ SExtractor-Statmorph_csst 简化合并版使用说明
         -p, --run_percentage=运行全部源数量的百分比，100表示全部运行
         -l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
         -s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式下默认文件名还会包括measure_file，如果跳过sextractor，那么必须指定该项
-        -k, --skip_sextractor 是否直接利用SExtractor已经生成的结果，SExtractor的输出文件夹必须包含subback.fits,segmap.fits,noise.fits三个图像文件和catalog.txt星表文件
+        -k, --skip_sextractor 是否直接利用SExtractor已经生成的结果，SExtractor的输出文件夹必须包含subback.fits,segmap.fits,noise.fits三个图像文件和catalog.txt星表文件，星表文件至少包含三列，分别为NUMBER, MAG_AUTO和CLASS_STAR。NUMBER指的就是segmap中的label。
         -D, --sextractor_detect_minarea
         -T, --sextractor_detect_thresh
         -A, --sextractor_analysis_thresh
