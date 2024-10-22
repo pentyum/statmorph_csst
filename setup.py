@@ -27,6 +27,32 @@ compiler_directives = {"language_level": 3, "embedsignature": True}
 extensions = cythonize(extensions, compiler_directives=compiler_directives)
 
 setup(
+	name='statmorph_csst',
+	version='0.5.0',
+	description='Non-parametric morphological diagnostics of galaxy images (Cython version)',
+	url='https://gitee.com/pentyum/statmorph_csst',
+    author='Vicente Rodriguez-Gomez & Yao Yao',
+    author_email='vrodgom.astro@gmail.com & pentyum@189.cn',
+    license='BSD',
+	classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Topic :: Scientific/Engineering :: Astronomy',
+    ],
+    keywords='astronomy galaxies galaxy-morphology non-parametric',
+	packages=['statmorph_cython'],
+    install_requires=['numpy',
+                      'scipy',
+                      'scikit-image',
+                      'astropy',
+                      'opencv-python',
+					  'photutils',
+					  'Cython',
+					  'setuptools'],
+
 	include_dirs=[np.get_include()],
 	ext_modules=extensions
 )
