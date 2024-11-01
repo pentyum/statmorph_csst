@@ -1,17 +1,25 @@
 # statmorph_csst
 
-#### Introduction
+### 1. Introduction
 statmorph for CSST, optimized by cython
 
 URL：[Gitee](https://gitee.com/pentyum/statmorph_csst) ｜ [Github](https://github.com/pentyum/statmorph_csst)
 
-#### Installation
+### 2. Installation instruction
+
+#### 2.1. Installation
 
 Clone this repo and enter the statmorph_csst directory
 
+Install the dependencies, including: `numpy`, `scipy`, `astropy`, `photutils`, `scikit-image`, `Cython`, `setuptools`.
+
+You can also install dependencies through `pip install -r requirements.txt`.
+
+#### 2.2. Build
+
 Execute `./build.sh`
 
-#### Usage
+### Usage
 
 1.  Enter the src directory and execute `python3 main.py`
 2.  Execute `python3 main.py -h` for help
@@ -54,10 +62,10 @@ SExtractor-Statmorph_csst 简化合并版使用说明
         -h, --help show this help
 ```
 
-#### Configuration
+#### 3.1. Configuration file
 The default configuration file is `src/config.properties`. The contents is the same as the arguments on command line, but the arguments on the command line will overwrite the configuration file.
 
 We can use `-C` to modify the path of the configuration file.
 
-#### Update
-Enter the src directory and execute `./update.sh`.
+### 4. Update
+Enter the src directory and execute `./update.sh`. It would be better to run `./clean.sh` to remove `.c` and `.so` files before updating.

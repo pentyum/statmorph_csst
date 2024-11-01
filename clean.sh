@@ -1,3 +1,3 @@
 #!/bin/sh
-rm src/*/*.c
-rm src/*/*.so
+find src -type f -name "*.c" -delete
+find src -type f -name "*.so" -delete

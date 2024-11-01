@@ -1,17 +1,25 @@
 # statmorph_csst
 
-#### 介绍
+### 1. 介绍
 statmorph CSST专用版，采用cython进行优化
 
 地址：[Gitee](https://gitee.com/pentyum/statmorph_csst) ｜ [Github](https://github.com/pentyum/statmorph_csst)
 
-#### 安装教程
+### 2. 安装教程
 
-克隆本仓库，进入statmorph_csst文件夹
+#### 2.1. 安装
+
+克隆本仓库，进入statmorph_csst文件夹。
+
+安装依赖，依赖包括：`numpy`, `scipy`, `astropy`, `photutils`, `scikit-image`, `Cython`, `setuptools`。
+
+也可以用 `pip install -r requirements.txt` 来安装。
+
+#### 2.2. 构建
 
 运行`./build.sh`
 
-#### 使用说明
+### 3. 使用说明
 
 1.  进入src目录，然后运行main.py
 2.  `python3 main.py -h`进入帮助
@@ -28,7 +36,7 @@ SExtractor-Statmorph_csst 简化合并版使用说明
         -l, --run_specified_label=仅运行指定编号的源，若为0则运行全部源
         -s, --sextractor_work_dir=SExtractor的输出文件存放文件夹，若不指定则默认为image_file的文件名(不包括后缀)，双图像模式下默认文件名还会包括measure_file，如果跳过sextractor，那么必须指定该项
         -k, --skip_sextractor 是否直接利用SExtractor已经生成的结果，SExtractor的输出文件夹必须包含subback.fits,segmap.fits,noise.fits三个图像文件和catalog.txt星表文件，星表文件至少包含三列，分别为NUMBER, MAG_AUTO和CLASS_STAR。NUMBER指的就是segmap中的label。
-        -X, --sextractor_command=运行SExtractor的命令，默认为source-extractor，如果采用的是不同的方式安装，可能配置此设置。
+        -X, --sextractor_command=运行SExtractor的命令，默认为source-extractor，如果采用的是不同的方式安装，可能需要配置此设置。
         -D, --sextractor_detect_minarea
         -T, --sextractor_detect_thresh
         -A, --sextractor_analysis_thresh
@@ -54,10 +62,10 @@ SExtractor-Statmorph_csst 简化合并版使用说明
         -h, --help 显示此帮助
 ```
 
-#### 配置文件
+#### 3.1. 配置文件
 默认配置文件为src/config.properties，内容和命令行参数的配置内容一样，命令行的配置将覆盖配置文件中的配置。
 
 通过-C可以指定配置文件路径。
 
-#### 程序更新
-进入src目录，运行./update.sh
+### 4. 程序更新
+进入src目录，运行`./update.sh`，建议先运行`./clean.sh`清理掉`.c`和`.so`文件后再更新。
