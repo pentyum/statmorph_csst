@@ -331,7 +331,7 @@ cdef int _get_contour_count(cnp.ndarray[double,ndim=2] image):
 	return contourMask.sum()
 
 cdef G2Info get_G2(StampMorphology base_info, (double,double) _asymmetry_center):
-	cdef cnp.ndarray[double,ndim=2] image = _recenter_image(base_info._cutout_stamp_maskzeroed, _asymmetry_center)
+	cdef cnp.ndarray[double,ndim=2] image = _recenter_image(base_info._cutout_stamp_maskzeroed_no_bg, _asymmetry_center)
 	# image = np.float32(image)
 
 	g2 = G2Info(image, base_info.constants)
