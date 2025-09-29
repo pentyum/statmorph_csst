@@ -13,7 +13,7 @@ from libc.math cimport sqrt, floor, ceil, pi, cos, sin, asin, fabs, isnan
 from photutils.geometry import elliptical_overlap_grid
 import scipy.optimize as opt
 from numpy.math cimport NAN
-from .array_utils cimport sum_1d_d
+from .array_utils cimport sum_1d_d, sum_2d_d
 
 cnp.import_array()
 
@@ -27,6 +27,18 @@ cdef double _aperture_area(PixelAperture ap, cnp.ndarray[cnp.npy_bool,ndim=2] ma
 	excluding masked pixels.
 	"""
 	return do_photometry(ap, cnp.PyArray_Cast(~mask, cnp.NPY_DOUBLE))
+
+cdef double _aperture_mean(PixelAperture ap, cnp.ndarray[double,ndim=2] image, cnp.ndarray[cnp.npy_bool,ndim=2] mask):
+	"""
+	Calculate the mean flux of an image for a given photutils
+	aperture object, accounting for masked and out-of-range pixels.
+	If the area overlap is zero, return 0.0 instead of NaN.
+	"""
+	cdef double ap_area = ap.area_overlap(image, mask)
+	if ap_area == NAN:
+		return 0.0
+	else:
+		return do_photometry(ap, image) / ap_area
 
 cdef double _aperture_mean_nomask(PixelAperture ap, cnp.ndarray[double,ndim=2] image):
 	"""
@@ -304,6 +316,28 @@ cdef class PixelAperture(Aperture):
 
 	cdef double area(self):
 		raise NotImplementedError('Needs to be implemented in a subclass.')
+
+	cdef double area_overlap(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray[cnp.npy_bool, ndim=2] mask):
+		cdef int subpixels = 5
+		cdef ApertureMask apermask = self.to_mask()
+		cdef double area
+		cdef cnp.ndarray[double, ndim=2] aper_weights
+
+		if mask is not None:
+			assert cnp.PyArray_SAMESHAPE(mask, data), 'mask and data must have the same shape'
+
+		slc_large, slc_small = apermask.get_overlap_slices((data.shape[0], data.shape[1]))
+
+		# if the aperture does not overlap the data return np.nan
+		if slc_large is None:
+			area = NAN
+		else:
+			aper_weights = apermask.data[slc_small]
+			if mask is not None:
+				aper_weights[mask[slc_large]] = 0.0
+			area = sum_2d_d(aper_weights)
+
+		return area
 
 	cdef ApertureMask to_mask(self):
 		raise NotImplementedError('Needs to be implemented in a subclass.')

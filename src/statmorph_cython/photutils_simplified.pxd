@@ -6,6 +6,8 @@ cdef double do_photometry(PixelAperture ap, cnp.ndarray[double,ndim=2] image)
 
 cdef double _aperture_area(PixelAperture ap, cnp.ndarray[cnp.npy_bool,ndim=2] mask)
 
+cdef double _aperture_mean(PixelAperture ap, cnp.ndarray[double,ndim=2] image, cnp.ndarray[cnp.npy_bool,ndim=2] mask)
+
 cdef double _aperture_mean_nomask(PixelAperture ap, cnp.ndarray[double,ndim=2] image)
 
 cdef (double, bint) _radius_at_fraction_of_total_circ(cnp.ndarray[double,ndim=2] image, (double,double) center, double r_total, double fraction)
@@ -55,6 +57,8 @@ cdef class PixelAperture(Aperture):
 	cdef (double, double, double, double) get_centered_edges(self)
 
 	cdef double area(self)
+
+	cdef double area_overlap(self, cnp.ndarray[double, ndim=2] data, cnp.ndarray[cnp.npy_bool, ndim=2] mask)
 
 	cdef ApertureMask to_mask(self)
 	cdef ApertureMask to_mask_mode(self, int use_exact)
